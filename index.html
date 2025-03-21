@@ -34,11 +34,9 @@
                         <label for="engagement-type" class="block text-sm font-medium text-gray-700">Engagement Type</label>
                         <select id="engagement-type" name="engagement-type" required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
-                            <option value="email">Email</option>
-                            <option value="call">Call</option>
-                            <option value="meeting">Meeting</option>
-                            <option value="demo">Demo</option>
-                            <option value="follow-up">Follow-up</option>
+                            <option value="youtube">Youtube</option>
+                            <option value="servicenow-community">ServiceNow Community blog page</option>
+                            <option value="linkedin">LinkedIn</option>
                             <option value="other">Other</option>
                         </select>
                     </div>
@@ -241,7 +239,16 @@
                 
                 const typeCell = document.createElement('td');
                 typeCell.className = 'px-6 py-4 whitespace-nowrap';
-                typeCell.textContent = capitalizeFirstLetter(engagement.type);
+                // Use the proper display name for engagement types
+                if (engagement.type === 'youtube') {
+                    typeCell.textContent = 'Youtube';
+                } else if (engagement.type === 'servicenow-community') {
+                    typeCell.textContent = 'ServiceNow Community blog page';
+                } else if (engagement.type === 'linkedin') {
+                    typeCell.textContent = 'LinkedIn';
+                } else {
+                    typeCell.textContent = capitalizeFirstLetter(engagement.type.replace('-', ' '));
+                }
                 
                 const outcomeCell = document.createElement('td');
                 outcomeCell.className = 'px-6 py-4 whitespace-nowrap';
@@ -338,6 +345,14 @@
                 typeChart.destroy();
             }
             
+            // Format display names for engagement types
+            const getTypeDisplayName = (type) => {
+                if (type === 'youtube') return 'Youtube';
+                if (type === 'servicenow-community') return 'ServiceNow Community blog page';
+                if (type === 'linkedin') return 'LinkedIn';
+                return capitalizeFirstLetter(type.replace('-', ' '));
+            };
+            
             typeChart = new Chart(typeCtx, {
                 type: 'doughnut',
                 data: {
@@ -408,7 +423,12 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">Type</h4>
-                        <p class="text-gray-900">${capitalizeFirstLetter(engagement.type)}</p>
+                        <p class="text-gray-900">${
+                            engagement.type === 'youtube' ? 'Youtube' :
+                            engagement.type === 'servicenow-community' ? 'ServiceNow Community blog page' :
+                            engagement.type === 'linkedin' ? 'LinkedIn' :
+                            capitalizeFirstLetter(engagement.type.replace('-', ' '))
+                        }</p>
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">Date</h4>

@@ -2,7 +2,7 @@
  * Authentication module for Platform Engagement Tracker
  */
 
-import { setCurrentUser, getCurrentUser, saveUsers, loadUsers } from './storage.js';
+import { setCurrentUser, getCurrentUser, saveUsers, loadUsers, removeUserData } from './storage.js';
 import { loadDashboard } from '../components/dashboard.js';
 import { showAuth, hideAuth } from '../components/auth-ui.js';
 
@@ -58,13 +58,17 @@ export async function handleLogin(e) {
     const password = document.getElementById('login-password').value;
     const rememberMe = document.getElementById('remember-me').checked;
     
+    console.log('Login attempt:', email, password); // Debug
+    
     // Find user by email
     const user = users.find(u => u.email === email);
+    console.log('Found user:', user); // Debug
     
     if (!user || user.password !== hashPassword(password)) {
         const loginError = document.getElementById('login-error');
         loginError.textContent = 'Invalid email or password';
         loginError.classList.remove('hidden');
+        console.log('Hash comparison:', user?.password, hashPassword(password)); // Debug
         return;
     }
     
@@ -146,7 +150,11 @@ export async function loginUser(user) {
     setCurrentUser(user);
     
     // Update UI
-    document.getElementById('current-user-name').textContent = user.name;
+    const userNameEl = document.getElementById('current-user-name');
+    if (userNameEl) {
+        userNameEl.textContent = user.name;
+    }
+    
     hideAuth();
     await loadDashboard();
 }
@@ -231,17 +239,4 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-/**
- * Remove user data on account deletion
- * @param {string} userId - ID of user to remove
- */
-async function removeUserData(userId) {
-    const keys = await localforage.keys();
-    const userPrefix = `user_${userId}_`;
-    
-    for (const key of keys) {
-        if (key.startsWith(userPrefix)) {
-            await localforage.removeItem(key);
-        }
-    }
-}
+// removeUserData is now imported from storage.js

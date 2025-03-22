@@ -94,30 +94,36 @@ function initDarkMode() {
  * @param {Event} e - Change event
  */
 export function toggleDarkMode(e) {
-    const isDarkMode = e.target.checked;
-    
-    if (isDarkMode) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
+    try {
+        const isDarkMode = e && e.target ? e.target.checked : false;
+        
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        
+        // Save preference
+        savePreference('darkMode', isDarkMode);
+        
+        // Keep both toggles in sync
+        const mainToggle = document.getElementById('dark-mode-toggle');
+        const authToggle = document.getElementById('auth-dark-mode-toggle');
+        
+        if (e && e.target && e.target.id === 'dark-mode-toggle' && authToggle) {
+            authToggle.checked = isDarkMode;
+        } else if (e && e.target && e.target.id === 'auth-dark-mode-toggle' && mainToggle) {
+            mainToggle.checked = isDarkMode;
+        }
+        
+        // Update charts for better visibility in dark mode
+        const updateChartsEvent = new CustomEvent('darkModeChanged', { detail: { isDarkMode } });
+        document.dispatchEvent(updateChartsEvent);
+        
+        console.log('Dark mode toggled:', isDarkMode ? 'on' : 'off');
+    } catch (error) {
+        console.error('Error toggling dark mode:', error);
     }
-    
-    // Save preference
-    savePreference('darkMode', isDarkMode);
-    
-    // Keep both toggles in sync
-    const mainToggle = document.getElementById('dark-mode-toggle');
-    const authToggle = document.getElementById('auth-dark-mode-toggle');
-    
-    if (e.target.id === 'dark-mode-toggle' && authToggle) {
-        authToggle.checked = isDarkMode;
-    } else if (e.target.id === 'auth-dark-mode-toggle' && mainToggle) {
-        mainToggle.checked = isDarkMode;
-    }
-    
-    // Update charts for better visibility in dark mode
-    const updateChartsEvent = new CustomEvent('darkModeChanged', { detail: { isDarkMode } });
-    document.dispatchEvent(updateChartsEvent);
 }
 
 /**

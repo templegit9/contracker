@@ -8,14 +8,8 @@
     <title>Platform Engagement Tracker</title>
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Localforage for local storage -->
-    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
-    <!-- Crypto.js for password hashing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- App loader script to manage dependencies -->
+    <script src="./js/loader.js"></script>
     <!-- Custom CSS -->
     <link href="./css/styles.css" rel="stylesheet">
     <script>
@@ -34,6 +28,14 @@
     </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+    <!-- Loading indicator -->
+    <div id="loading-indicator" class="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 mb-4"></div>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">Loading Application</h2>
+            <p class="text-gray-600 dark:text-gray-400">Please wait while we prepare everything...</p>
+        </div>
+    </div>
     <!-- Authentication content (shown before login) -->
     <div id="auth-content" class="min-h-screen flex flex-col justify-center">
         <div class="max-w-md mx-auto p-6">
@@ -524,7 +526,6 @@
         </div>
     </div>
     
-    <!-- Application scripts -->
-    <script type="module" src="./js/app.js"></script>
+    <!-- App will be loaded by loader.js -->
 </body>
 </html>

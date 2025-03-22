@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Engagement Tracker - Tests</title>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Localforage for local storage -->
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <!-- Crypto.js for password hashing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- Custom CSS -->
+    <link href="./css/styles.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        youtubeRed: '#FF0000',
+                        serviceNowGreen: '#00c487',
+                        linkedinBlue: '#0A66C2',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #test-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .test-pass {
+            color: #10B981;
+        }
+        .test-fail {
+            color: #EF4444;
+        }
+        .test-error {
+            color: #9333EA;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Platform Engagement Tracker - Test Suite</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Run tests to verify the application functionality</p>
+        </div>
+
+        <div class="p-6">
+            <div class="flex space-x-2 mb-4">
+                <button id="run-all-tests" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
+                    Run All Tests
+                </button>
+                <button id="clear-results" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded">
+                    Clear Results
+                </button>
+            </div>
+
+            <div class="bg-gray-100 dark:bg-gray-700 rounded p-4 mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Test Results</h2>
+                <div id="test-summary" class="mb-4"></div>
+                <div id="test-container" class="font-mono text-sm whitespace-pre-wrap dark:text-gray-300"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include DOM elements from original app for testing -->
+    <div class="hidden">
+        <!-- Authentication content (shown before login) -->
+        <div id="auth-content">
+            <div id="login-form"></div>
+            <div id="register-form" class="hidden"></div>
+            <div id="login-tab"></div>
+            <div id="register-tab"></div>
+            <div id="login-error" class="hidden"></div>
+            <div id="register-error" class="hidden"></div>
+            <div id="auth-dark-mode-toggle"></div>
+        </div>
+
+        <!-- Main application content (hidden until authenticated) -->
+        <div id="main-content">
+            <div id="current-user-name"></div>
+            <div id="content-list"></div>
+            <div id="engagement-list"></div>
+            <div id="total-content"></div>
+            <div id="total-engagements"></div>
+            <div id="top-platform"></div>
+            <div id="content-published"></div>
+            <div id="user-menu-button"></div>
+            <div id="user-dropdown" class="hidden"></div>
+            <div id="dark-mode-toggle"></div>
+        </div>
+    </div>
+
+    <!-- Load test script -->
+    <script type="module" src="./js/tests.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const testContainer = document.getElementById('test-container');
+            const testSummary = document.getElementById('test-summary');
+            const runAllTestsBtn = document.getElementById('run-all-tests');
+            const clearResultsBtn = document.getElementById('clear-results');
+
+            // Override console.log and console.error to display in the test container
+            const originalLog = console.log;
+            const originalError = console.error;
+
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                const message = args.map(arg => {
+                    if (typeof arg === 'object') {
+                        return JSON.stringify(arg, null, 2);
+                    }
+                    return arg;
+                }).join(' ');
+                
+                let className = '';
+                if (message.includes('PASS:')) {
+                    className = 'test-pass';
+                } else if (message.includes('FAIL:')) {
+                    className = 'test-fail';
+                } else if (message.includes('ERROR:')) {
+                    className = 'test-error';
+                }
+
+                const line = document.createElement('div');
+                line.className = className;
+                line.textContent = message;
+                testContainer.appendChild(line);
+                testContainer.scrollTop = testContainer.scrollHeight;
+            };
+
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                const message = args.map(arg => {
+                    if (typeof arg === 'object' && arg instanceof Error) {
+                        return arg.toString();
+                    } else if (typeof arg === 'object') {
+                        return JSON.stringify(arg, null, 2);
+                    }
+                    return arg;
+                }).join(' ');
+                
+                const line = document.createElement('div');
+                line.className = 'test-fail';
+                line.textContent = message;
+                testContainer.appendChild(line);
+                testContainer.scrollTop = testContainer.scrollHeight;
+            };
+
+            // Run all tests button
+            runAllTestsBtn.addEventListener('click', async () => {
+                testContainer.innerHTML = '';
+                testSummary.innerHTML = '<div class="animate-pulse text-blue-500">Running tests...</div>';
+                
+                try {
+                    // Wait for tests module to be fully loaded
+                    setTimeout(async () => {
+                        if (window.runAllTests) {
+                            const results = await window.runAllTests();
+                            
+                            // Update summary
+                            testSummary.innerHTML = `
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded text-center">
+                                        <div class="text-lg font-bold text-blue-800 dark:text-blue-200">Total</div>
+                                        <div class="text-3xl font-bold text-blue-600 dark:text-blue-300">${results.total}</div>
+                                    </div>
+                                    <div class="bg-green-100 dark:bg-green-900 p-4 rounded text-center">
+                                        <div class="text-lg font-bold text-green-800 dark:text-green-200">Passed</div>
+                                        <div class="text-3xl font-bold text-green-600 dark:text-green-300">${results.passed}</div>
+                                    </div>
+                                    <div class="bg-red-100 dark:bg-red-900 p-4 rounded text-center">
+                                        <div class="text-lg font-bold text-red-800 dark:text-red-200">Failed</div>
+                                        <div class="text-3xl font-bold text-red-600 dark:text-red-300">${results.failed}</div>
+                                    </div>
+                                    <div class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-center">
+                                        <div class="text-lg font-bold text-gray-800 dark:text-gray-200">Success Rate</div>
+                                        <div class="text-3xl font-bold text-gray-600 dark:text-gray-300">${Math.round((results.passed / results.total) * 100)}%</div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            testSummary.innerHTML = '<div class="text-red-500">Error: Test module not loaded properly.</div>';
+                        }
+                    }, 500);
+                } catch (error) {
+                    testSummary.innerHTML = `<div class="text-red-500">Error: ${error.message}</div>`;
+                    console.error(error);
+                }
+            });
+
+            // Clear results button
+            clearResultsBtn.addEventListener('click', () => {
+                testContainer.innerHTML = '';
+                testSummary.innerHTML = '';
+            });
+        });
+    </script>
+</body>
+</html>

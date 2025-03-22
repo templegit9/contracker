@@ -261,13 +261,19 @@ export function hashPassword(password) {
             return '';
         }
         
+        // Check if window is defined (browser environment)
+        if (typeof window === 'undefined') {
+            console.error('hashPassword: window is not defined');
+            return 'HASH_ERROR';
+        }
+        
         // Check if CryptoJS is available
-        if (typeof CryptoJS === 'undefined' || !CryptoJS.SHA256) {
+        if (typeof window.CryptoJS === 'undefined' || !window.CryptoJS.SHA256) {
             console.error('CryptoJS is not available for password hashing');
             return 'HASH_ERROR';
         }
         
-        const hash = CryptoJS.SHA256(password).toString();
+        const hash = window.CryptoJS.SHA256(password).toString();
         // Debug: Log the first 6 characters of the hash for debugging
         console.log('Password hash generated:', hash.substring(0, 6) + '...');
         return hash;

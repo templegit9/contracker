@@ -1,4 +1,1029 @@
-<h4 class="text-lg font-medium mb-2">Latest Engagement</h4>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contracker - Content Engagement Tracker</title>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Localforage for local storage -->
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <style>
+        /* Custom badge styling */
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge.youtube {
+            background-color: #FFEEEE;
+            color: #FF0000;
+        }
+        .badge.servicenow {
+            background-color: #E6F7F1;
+            color: #00c487;
+        }
+        .badge.linkedin {
+            background-color: #E6F0FA;
+            color: #0A66C2;
+        }
+        .badge.other {
+            background-color: #F3F4F6;
+            color: #6B7280;
+        }
+        /* Button styling */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #00c487;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #00A070;
+        }
+        /* Animation */
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-900">Contracker</h1>
+            <div>
+                <button id="show-settings" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
+                    <span class="material-icons mr-1">settings</span> Settings
+                </button>
+                <button id="export-data" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700 ml-2">
+                    <span class="material-icons mr-1">download</span> Export
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Stats cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                            <span class="material-icons text-blue-600">collections</span>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Content</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900" id="total-content">0</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                            <span class="material-icons text-green-600">visibility</span>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Engagements</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900" id="total-engagements">0</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                            <span class="material-icons text-purple-600">trending_up</span>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Top Platform</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900" id="top-platform">-</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-white shadow rounded-lg p-4">
+                <h3 class="text-lg font-medium mb-4">Engagement by Platform</h3>
+                <div>
+                    <canvas id="platform-chart" height="200"></canvas>
+                </div>
+            </div>
+            <div class="bg-white shadow rounded-lg p-4">
+                <h3 class="text-lg font-medium mb-4">Top Content by Views</h3>
+                <div>
+                    <canvas id="content-chart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add content section -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg font-medium mb-4">Add New Content</h3>
+                <form id="content-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label for="content-name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input type="text" id="content-name" name="content-name" required
+                            class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            placeholder="My YouTube Video">
+                    </div>
+                    <div>
+                        <label for="content-source" class="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                        <select id="content-source" name="content-source" required
+                            class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            <option value="youtube">YouTube</option>
+                            <option value="servicenow">ServiceNow Community</option>
+                            <option value="linkedin">LinkedIn</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="content-url" class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                        <input type="url" id="content-url" name="content-url" required
+                            class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <p id="duplicate-warning" class="text-red-500 text-xs mt-1 hidden">Warning: URL already exists</p>
+                    </div>
+                    <div>
+                        <label for="content-published" class="block text-sm font-medium text-gray-700 mb-1">Published Date</label>
+                        <input type="date" id="content-published" name="content-published" required
+                            class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                    <div class="md:col-span-4">
+                        <button type="submit" 
+                            class="btn btn-primary w-full sm:w-auto">
+                            <span class="material-icons mr-1">add</span> Add Content
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Content list -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">Content Library</h3>
+                    <button id="refresh-data" class="btn btn-primary">
+                        <span class="material-icons mr-1">refresh</span> Refresh Data
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="content-list" class="bg-white divide-y divide-gray-200">
+                            <!-- Content items will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Engagement data -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">Latest Engagement Data</h3>
+                    <button id="refresh-all-data" class="btn btn-primary">
+                        <span class="material-icons mr-1">refresh</span> Refresh All
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="engagement-list" class="bg-white divide-y divide-gray-200">
+                            <!-- Engagement data will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- API Settings Modal (hidden by default) -->
+    <div id="api-settings" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">API Settings</h3>
+                    <button id="hide-settings" class="text-gray-500 hover:text-gray-800">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+
+                <!-- YouTube API Settings -->
+                <div class="mb-6">
+                    <h4 class="text-md font-medium mb-2 flex items-center">
+                        YouTube API 
+                        <span id="youtube-api-status" class="badge bg-red-100 text-red-800 ml-2">Not Configured</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="youtube-api-key" class="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                            <input type="text" id="youtube-api-key" name="youtube-api-key"
+                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div class="flex items-end">
+                            <button id="test-youtube-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
+                                <span class="material-icons mr-1">check_circle</span> Test Connection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ServiceNow API Settings -->
+                <div class="mb-6">
+                    <h4 class="text-md font-medium mb-2 flex items-center">
+                        ServiceNow API 
+                        <span id="servicenow-api-status" class="badge bg-red-100 text-red-800 ml-2">Not Configured</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="servicenow-instance" class="block text-sm font-medium text-gray-700 mb-1">Instance URL</label>
+                            <input type="text" id="servicenow-instance" name="servicenow-instance"
+                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                placeholder="https://instance.service-now.com">
+                        </div>
+                        <div>
+                            <label for="servicenow-username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <input type="text" id="servicenow-username" name="servicenow-username"
+                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label for="servicenow-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input type="password" id="servicenow-password" name="servicenow-password"
+                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div class="md:col-span-3">
+                            <button id="test-servicenow-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
+                                <span class="material-icons mr-1">check_circle</span> Test Connection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LinkedIn API Settings -->
+                <div class="mb-6">
+                    <h4 class="text-md font-medium mb-2 flex items-center">
+                        LinkedIn API 
+                        <span id="linkedin-api-status" class="badge bg-red-100 text-red-800 ml-2">Not Configured</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="linkedin-client-id" class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                            <input type="text" id="linkedin-client-id" name="linkedin-client-id"
+                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label for="linkedin-client-secret" class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                            <input type="password" id="linkedin-client-secret" name="linkedin-client-secret"
+                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div class="md:col-span-2">
+                            <button id="test-linkedin-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
+                                <span class="material-icons mr-1">check_circle</span> Test Configuration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save button -->
+                <div class="mt-6">
+                    <button id="save-api-config" class="btn btn-primary">
+                        <span class="material-icons mr-1">save</span> Save Configuration
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Details Modal (hidden by default) -->
+    <div id="content-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="modal-title" class="text-lg font-medium">Content Details</h3>
+                    <button id="close-modal" class="text-gray-500 hover:text-gray-800">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div id="modal-content">
+                    <!-- Modal content will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Constants
+        const PLATFORMS = {
+            youtube: 'Youtube',
+            servicenow: 'ServiceNow Community blog page',
+            linkedin: 'LinkedIn'
+        };
+
+        // Data structures
+        let apiConfig = {
+            youtube: { apiKey: null },
+            servicenow: { instance: null, username: null, password: null },
+            linkedin: { clientId: null, clientSecret: null, accessToken: null }
+        };
+        let contentItems = [];
+        let engagementData = [];
+        let urlToContentMap = {}; // Map to track URLs to content IDs
+
+        // Chart instances
+        let platformChart;
+        let contentChart;
+
+        // DOM elements
+        const contentForm = document.getElementById('content-form');
+        const contentUrlField = document.getElementById('content-url');
+        const duplicateWarning = document.getElementById('duplicate-warning');
+        const contentList = document.getElementById('content-list');
+        const engagementList = document.getElementById('engagement-list');
+        const exportDataBtn = document.getElementById('export-data');
+        const refreshDataBtn = document.getElementById('refresh-data');
+        const refreshAllDataBtn = document.getElementById('refresh-all-data');
+        const saveApiConfigBtn = document.getElementById('save-api-config');
+        const testYouTubeApiBtn = document.getElementById('test-youtube-api');
+        const testServiceNowApiBtn = document.getElementById('test-servicenow-api');
+        const testLinkedInApiBtn = document.getElementById('test-linkedin-api');
+        const contentModal = document.getElementById('content-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const totalContentEl = document.getElementById('total-content');
+        const totalEngagementsEl = document.getElementById('total-engagements');
+        const topPlatformEl = document.getElementById('top-platform');
+        const showSettingsBtn = document.getElementById('show-settings');
+        const hideSettingsBtn = document.getElementById('hide-settings');
+        const apiSettingsSection = document.getElementById('api-settings');
+
+        // Initialize the app
+        async function initApp() {
+            // Load saved data
+            const savedApiConfig = await localforage.getItem('apiConfig');
+            if (savedApiConfig) {
+                apiConfig = JSON.parse(savedApiConfig);
+                updateApiConfigUI();
+            }
+            
+            const savedContentItems = await localforage.getItem('contentItems');
+            if (savedContentItems) {
+                contentItems = JSON.parse(savedContentItems);
+                // Rebuild URL to content map
+                rebuildUrlContentMap();
+            }
+            
+            const savedEngagementData = await localforage.getItem('engagementData');
+            if (savedEngagementData) {
+                engagementData = JSON.parse(savedEngagementData);
+            }
+            
+            // Set default date to today
+            document.getElementById('content-published').valueAsDate = new Date();
+            
+            // Render data
+            renderContentItems();
+            renderEngagementData();
+            updateStats();
+            renderCharts();
+            
+            // Add event listeners
+            contentForm.addEventListener('submit', handleContentFormSubmit);
+            contentUrlField.addEventListener('blur', checkForDuplicateUrl);
+            exportDataBtn.addEventListener('click', exportData);
+            refreshDataBtn.addEventListener('click', refreshEngagementData);
+            refreshAllDataBtn.addEventListener('click', refreshEngagementData);
+            saveApiConfigBtn.addEventListener('click', saveApiConfig);
+            testYouTubeApiBtn.addEventListener('click', testYouTubeApi);
+            testServiceNowApiBtn.addEventListener('click', testServiceNowApi);
+            testLinkedInApiBtn.addEventListener('click', testLinkedInApi);
+            closeModalBtn.addEventListener('click', () => {
+                contentModal.classList.add('hidden');
+            });
+            showSettingsBtn.addEventListener('click', () => {
+                apiSettingsSection.classList.remove('hidden');
+            });
+            hideSettingsBtn.addEventListener('click', () => {
+                apiSettingsSection.classList.add('hidden');
+            });
+            
+            // Add listener for platform selection to update URL field placeholder
+            document.getElementById('content-source').addEventListener('change', updateUrlPlaceholder);
+            updateUrlPlaceholder();
+        }
+
+        // Rebuild URL to content map
+        function rebuildUrlContentMap() {
+            urlToContentMap = {};
+            contentItems.forEach(item => {
+                const normalizedUrl = normalizeUrl(item.url);
+                urlToContentMap[normalizedUrl] = item.id;
+            });
+        }
+
+        // Normalize URL (remove tracking parameters, fragments, etc.)
+        function normalizeUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                // Remove common tracking parameters
+                urlObj.searchParams.delete('utm_source');
+                urlObj.searchParams.delete('utm_medium');
+                urlObj.searchParams.delete('utm_campaign');
+                urlObj.searchParams.delete('utm_content');
+                urlObj.searchParams.delete('utm_term');
+                urlObj.searchParams.delete('feature');
+                // Remove hash
+                urlObj.hash = '';
+                return urlObj.toString();
+            } catch (e) {
+                // If URL parsing fails, return original
+                return url;
+            }
+        }
+
+        // Check for duplicate URL
+        function checkForDuplicateUrl() {
+            const url = contentUrlField.value;
+            if (!url) return;
+            
+            const normalizedUrl = normalizeUrl(url);
+            const existingContentId = urlToContentMap[normalizedUrl];
+            
+            if (existingContentId) {
+                // Show warning
+                duplicateWarning.classList.remove('hidden');
+                
+                // Find the existing content item
+                const existingContent = contentItems.find(item => item.id === existingContentId);
+                if (existingContent) {
+                    duplicateWarning.textContent = `Warning: This URL has already been added as "${existingContent.name}".`;
+                }
+            } else {
+                // Hide warning
+                duplicateWarning.classList.add('hidden');
+            }
+        }
+
+        // Update URL placeholder based on selected platform
+        function updateUrlPlaceholder() {
+            const platform = document.getElementById('content-source').value;
+            const urlField = document.getElementById('content-url');
+            
+            switch (platform) {
+                case 'youtube':
+                    urlField.placeholder = 'https://youtube.com/watch?v=XXXX';
+                    break;
+                case 'servicenow':
+                    urlField.placeholder = 'https://community.servicenow.com/blog/XXXX';
+                    break;
+                case 'linkedin':
+                    urlField.placeholder = 'https://www.linkedin.com/posts/XXXX';
+                    break;
+                default:
+                    urlField.placeholder = 'https://example.com';
+            }
+        }
+
+        // Handle content form submission
+        async function handleContentFormSubmit(e) {
+            e.preventDefault();
+            
+            const contentName = document.getElementById('content-name').value;
+            const platform = document.getElementById('content-source').value;
+            const contentUrl = document.getElementById('content-url').value;
+            const publishedDate = document.getElementById('content-published').value;
+            
+            // Normalize the URL
+            const normalizedUrl = normalizeUrl(contentUrl);
+            
+            // Check if URL already exists
+            const existingContentId = urlToContentMap[normalizedUrl];
+            if (existingContentId) {
+                // Find the existing content item
+                const existingContent = contentItems.find(item => item.id === existingContentId);
+                
+                if (confirm(`This URL has already been added as "${existingContent.name}". Do you want to update its information?`)) {
+                    // Update existing content item
+                    existingContent.name = contentName;
+                    existingContent.publishedDate = publishedDate;
+                    
+                    // Save to localforage
+                    await localforage.setItem('contentItems', JSON.stringify(contentItems));
+                    
+                    // Update UI
+                    renderContentItems();
+                    renderEngagementData();
+                    updateStats();
+                    renderCharts();
+                }
+                
+                // Reset form
+                contentForm.reset();
+                document.getElementById('content-published').valueAsDate = new Date();
+                duplicateWarning.classList.add('hidden');
+                
+                return;
+            }
+            
+            // Extract content ID from URL
+            const contentId = extractContentId(contentUrl, platform);
+            
+            // Create new content item
+            const newContentItem = {
+                id: generateId(),
+                name: contentName,
+                platform: platform,
+                url: contentUrl,
+                contentId: contentId,
+                publishedDate: publishedDate,
+                createdAt: new Date().toISOString(),
+                lastUpdated: null
+            };
+            
+            // Add to data structure
+            contentItems.push(newContentItem);
+            
+            // Update URL map
+            urlToContentMap[normalizedUrl] = newContentItem.id;
+            
+            // Save to localforage
+            await localforage.setItem('contentItems', JSON.stringify(contentItems));
+            
+            // Fetch initial engagement data
+            await fetchEngagementData([newContentItem]);
+            
+            // Update UI
+            renderContentItems();
+            renderEngagementData();
+            updateStats();
+            renderCharts();
+            
+            // Reset form
+            contentForm.reset();
+            document.getElementById('content-published').valueAsDate = new Date();
+            duplicateWarning.classList.add('hidden');
+        }
+
+        // Extract content ID from URL based on platform
+        function extractContentId(url, platform) {
+            try {
+                const urlObj = new URL(url);
+                
+                switch (platform) {
+                    case 'youtube':
+                        // Extract YouTube video ID
+                        const videoId = urlObj.searchParams.get('v');
+                        return videoId || url.split('/').pop();
+                    
+                    case 'servicenow':
+                        // Extract ServiceNow blog ID (last part of path)
+                        return urlObj.pathname.split('/').pop();
+                    
+                    case 'linkedin':
+                        // Extract LinkedIn post ID (end part of URL)
+                        return urlObj.pathname.split('-').pop();
+                    
+                    default:
+                        return url;
+                }
+            } catch (e) {
+                // If URL parsing fails, return a fallback
+                return url;
+            }
+        }
+
+        // Fetch engagement data for all content items or specific ones
+        async function fetchEngagementData(itemsToFetch = null) {
+            const itemsToProcess = itemsToFetch || contentItems;
+            
+            if (itemsToProcess.length === 0) {
+                return;
+            }
+            
+            // Create a timestamp for this fetch
+            const timestamp = new Date().toISOString();
+            
+            for (const item of itemsToProcess) {
+                const normalizedUrl = normalizeUrl(item.url);
+                
+                // Get engagement metrics based on platform
+                let metrics = null;
+                
+                switch (item.platform) {
+                    case 'youtube':
+                        metrics = await fetchYouTubeEngagement(item.contentId);
+                        break;
+                    
+                    case 'servicenow':
+                        metrics = await fetchServiceNowEngagement(item.contentId);
+                        break;
+                    
+                    case 'linkedin':
+                        metrics = await fetchLinkedInEngagement(item.contentId);
+                        break;
+                    
+                    default:
+                        metrics = {
+                            views: 0,
+                            likes: 0,
+                            comments: 0,
+                            shares: 0,
+                            otherMetrics: {}
+                        };
+                }
+                
+                if (!metrics) continue;
+                
+                // Create engagement record
+                const engagementRecord = {
+                    contentUrl: normalizedUrl,
+                    timestamp: timestamp,
+                    views: metrics.views,
+                    likes: metrics.likes,
+                    comments: metrics.comments,
+                    shares: metrics.shares,
+                    otherMetrics: metrics.otherMetrics || {}
+                };
+                
+                // Add to data structure
+                engagementData.push(engagementRecord);
+                
+                // Update content item's last updated timestamp
+                item.lastUpdated = timestamp;
+            }
+            
+            // Save to localforage
+            await localforage.setItem('engagementData', JSON.stringify(engagementData));
+            await localforage.setItem('contentItems', JSON.stringify(contentItems));
+        }
+
+        // Fetch YouTube video engagement
+        async function fetchYouTubeEngagement(videoId) {
+            if (!apiConfig.youtube.apiKey) {
+                console.error('YouTube API not configured');
+                return null;
+            }
+            
+            try {
+                // This would be a real API call in production
+                console.log(`Fetching YouTube data for video ID: ${videoId}`);
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // In a real implementation, this would call the YouTube API
+                // Instead, for the demo, we'll generate consistent random data for each video ID
+                const seed = hashCode(videoId);
+                const rng = seededRandom(seed);
+                
+                return {
+                    views: Math.floor(rng() * 8000) + 2000,
+                    likes: Math.floor(rng() * 500),
+                    comments: Math.floor(rng() * 100),
+                    shares: 0, // YouTube API doesn't provide share count
+                    otherMetrics: {
+                        dislikes: Math.floor(rng() * 50),
+                        favorites: Math.floor(rng() * 20)
+                    }
+                };
+            } catch (error) {
+                console.error('Error fetching YouTube data:', error);
+                return null;
+            }
+        }
+
+        // Fetch ServiceNow blog engagement
+        async function fetchServiceNowEngagement(blogId) {
+            if (!apiConfig.servicenow.instance || !apiConfig.servicenow.username) {
+                console.error('ServiceNow API not configured');
+                return null;
+            }
+            
+            try {
+                // This would be a real API call in production
+                console.log(`Fetching ServiceNow data for blog ID: ${blogId}`);
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // In a real implementation, this would make an authenticated API request
+                // to the ServiceNow instance with the provided credentials
+                
+                // For demonstration, use our simulated data function instead
+                // This ensures consistent values for the same blog ID
+                const seed = hashCode(blogId);
+                const rng = seededRandom(seed);
+                
+                return {
+                    views: Math.floor(rng() * 3000) + 1000,
+                    likes: Math.floor(rng() * 200),
+                    comments: Math.floor(rng() * 50),
+                    shares: Math.floor(rng() * 30),
+                    otherMetrics: {
+                        bookmarks: Math.floor(rng() * 40)
+                    }
+                };
+            } catch (error) {
+                console.error('Error fetching ServiceNow data:', error);
+                return null;
+            }
+        }
+
+        // Fetch LinkedIn post engagement
+        async function fetchLinkedInEngagement(postId) {
+            if (!apiConfig.linkedin.clientId || !apiConfig.linkedin.clientSecret) {
+                console.error('LinkedIn API not configured');
+                return null;
+            }
+            
+            try {
+                // This would be a real API call in production
+                console.log(`Fetching LinkedIn data for post ID: ${postId}`);
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // In a real implementation, this would use OAuth and the LinkedIn API
+                // to fetch actual engagement metrics for the post
+                
+                // For demonstration, use our simulated data function instead
+                // This ensures consistent values for the same post ID
+                const seed = hashCode(postId);
+                const rng = seededRandom(seed);
+                
+                return {
+                    views: Math.floor(rng() * 2000) + 500,
+                    likes: Math.floor(rng() * 150),
+                    comments: Math.floor(rng() * 30),
+                    shares: Math.floor(rng() * 20),
+                    otherMetrics: {
+                        impressions: Math.floor(rng() * 5000),
+                        clicks: Math.floor(rng() * 200)
+                    }
+                };
+            } catch (error) {
+                console.error('Error fetching LinkedIn data:', error);
+                return null;
+            }
+        }
+
+        // Render content items
+        function renderContentItems() {
+            contentList.innerHTML = '';
+            
+            if (contentItems.length === 0) {
+                contentList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No content items added yet</td></tr>';
+                return;
+            }
+            
+            contentItems.forEach(item => {
+                const row = document.createElement('tr');
+                
+                const nameCell = document.createElement('td');
+                nameCell.className = 'px-6 py-4 whitespace-nowrap';
+                nameCell.textContent = item.name;
+                
+                const platformCell = document.createElement('td');
+                platformCell.className = 'px-6 py-4 whitespace-nowrap';
+                const platformSpan = document.createElement('span');
+                platformSpan.textContent = PLATFORMS[item.platform];
+                
+                // Add color based on platform
+                if (item.platform === 'youtube') {
+                    platformSpan.className = 'badge youtube';
+                } else if (item.platform === 'servicenow') {
+                    platformSpan.className = 'badge servicenow';
+                } else if (item.platform === 'linkedin') {
+                    platformSpan.className = 'badge linkedin';
+                } else {
+                    platformSpan.className = 'badge other';
+                }
+                
+                platformCell.appendChild(platformSpan);
+                
+                const publishedCell = document.createElement('td');
+                publishedCell.className = 'px-6 py-4 whitespace-nowrap';
+                publishedCell.textContent = formatDate(item.publishedDate);
+                
+                const urlCell = document.createElement('td');
+                urlCell.className = 'px-6 py-4 whitespace-normal';
+                urlCell.title = item.url;
+                urlCell.textContent = truncateText(item.url, 40);
+                
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm';
+                
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'btn bg-gray-100 hover:bg-gray-200 text-gray-700 mr-2 text-sm';
+                viewBtn.innerHTML = '<span class="material-icons text-sm">visibility</span>';
+                viewBtn.title = 'View Details';
+                viewBtn.addEventListener('click', () => showContentDetails(item));
+                
+                const updateBtn = document.createElement('button');
+                updateBtn.className = 'btn btn-primary text-sm mr-2';
+                updateBtn.innerHTML = '<span class="material-icons text-sm">refresh</span>';
+                updateBtn.title = 'Update Data';
+                updateBtn.addEventListener('click', () => fetchEngagementData([item]).then(() => {
+                    renderEngagementData();
+                    updateStats();
+                    renderCharts();
+                }));
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn bg-red-500 hover:bg-red-600 text-white text-sm';
+                deleteBtn.innerHTML = '<span class="material-icons text-sm">delete</span>';
+                deleteBtn.title = 'Delete';
+                deleteBtn.addEventListener('click', () => deleteContent(item.id));
+                
+                actionsCell.appendChild(viewBtn);
+                actionsCell.appendChild(updateBtn);
+                actionsCell.appendChild(deleteBtn);
+                
+                row.appendChild(nameCell);
+                row.appendChild(platformCell);
+                row.appendChild(publishedCell);
+                row.appendChild(urlCell);
+                row.appendChild(actionsCell);
+                
+                contentList.appendChild(row);
+            });
+        }
+
+        // Render engagement data
+        function renderEngagementData() {
+            engagementList.innerHTML = '';
+            
+            if (engagementData.length === 0) {
+                engagementList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No engagement data available</td></tr>';
+                return;
+            }
+            
+            // Group engagement data by content URL (not ID) and get the latest record for each
+            // This ensures duplicate URLs show the same engagement data
+            const latestEngagementByUrl = {};
+            engagementData.forEach(engagement => {
+                if (!latestEngagementByUrl[engagement.contentUrl] || 
+                    new Date(engagement.timestamp) > new Date(latestEngagementByUrl[engagement.contentUrl].timestamp)) {
+                    latestEngagementByUrl[engagement.contentUrl] = engagement;
+                }
+            });
+            
+            Object.values(latestEngagementByUrl).forEach(engagement => {
+                // Find content item based on URL, not ID
+                // For items with duplicate URLs, we'll use the first one found
+                const contentItem = contentItems.find(item => normalizeUrl(item.url) === engagement.contentUrl);
+                if (!contentItem) return; // Skip if content was deleted
+                
+                const row = document.createElement('tr');
+                
+                const nameCell = document.createElement('td');
+                nameCell.className = 'px-6 py-4 whitespace-nowrap';
+                nameCell.textContent = contentItem.name;
+                
+                const platformCell = document.createElement('td');
+                platformCell.className = 'px-6 py-4 whitespace-nowrap';
+                const platformSpan = document.createElement('span');
+                platformSpan.textContent = PLATFORMS[contentItem.platform];
+                
+                // Add color based on platform
+                if (contentItem.platform === 'youtube') {
+                    platformSpan.className = 'badge youtube';
+                } else if (contentItem.platform === 'servicenow') {
+                    platformSpan.className = 'badge servicenow';
+                } else if (contentItem.platform === 'linkedin') {
+                    platformSpan.className = 'badge linkedin';
+                } else {
+                    platformSpan.className = 'badge other';
+                }
+                
+                platformCell.appendChild(platformSpan);
+                
+                const viewsCell = document.createElement('td');
+                viewsCell.className = 'px-6 py-4 whitespace-nowrap font-medium';
+                viewsCell.textContent = engagement.views.toLocaleString();
+                
+                const likesCell = document.createElement('td');
+                likesCell.className = 'px-6 py-4 whitespace-nowrap';
+                likesCell.textContent = engagement.likes.toLocaleString();
+                
+                const commentsCell = document.createElement('td');
+                commentsCell.className = 'px-6 py-4 whitespace-nowrap';
+                commentsCell.textContent = engagement.comments.toLocaleString();
+                
+                const updatedCell = document.createElement('td');
+                updatedCell.className = 'px-6 py-4 whitespace-nowrap text-gray-500 text-sm';
+                updatedCell.textContent = formatDateTime(engagement.timestamp);
+                
+                row.appendChild(nameCell);
+                row.appendChild(platformCell);
+                row.appendChild(viewsCell);
+                row.appendChild(likesCell);
+                row.appendChild(commentsCell);
+                row.appendChild(updatedCell);
+                
+                engagementList.appendChild(row);
+            });
+        }
+
+        // Show content details
+        function showContentDetails(contentItem) {
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            
+            modalTitle.textContent = contentItem.name;
+            
+            // Get engagement data for this content
+            const normalizedUrl = normalizeUrl(contentItem.url);
+            const contentEngagements = engagementData
+                .filter(engagement => engagement.contentUrl === normalizedUrl)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            const html = `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="text-lg font-medium mb-2">Content Information</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="mb-2">
+                                    <span class="text-gray-500">Platform:</span>
+                                    <span class="font-medium">${PLATFORMS[contentItem.platform]}</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="text-gray-500">Published Date:</span>
+                                    <span class="font-medium">${formatDate(contentItem.publishedDate)}</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="text-gray-500">URL:</span>
+                                    <a href="${contentItem.url}" target="_blank" class="text-blue-500 hover:underline break-all">${contentItem.url}</a>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="text-gray-500">Added to Contracker:</span>
+                                    <span class="font-medium">${formatDateTime(contentItem.createdAt)}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">Last Data Update:</span>
+                                    <span class="font-medium">${contentItem.lastUpdated ? formatDateTime(contentItem.lastUpdated) : 'Never'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-lg font-medium mb-2">Latest Engagement</h4>
                             <div class="bg-gray-50 p-4 rounded-lg">
                                 ${contentEngagements.length > 0 ? `
                                     <div class="grid grid-cols-2 gap-4">
@@ -534,1701 +1559,4 @@
         window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
-</html>    <script>
-        // Constants
-        const PLATFORMS = {
-            youtube: 'Youtube',
-            servicenow: 'ServiceNow Community blog page',
-            linkedin: 'LinkedIn'
-        };
-
-        // Data structures
-        let apiConfig = {
-            youtube: { apiKey: null },
-            servicenow: { instance: null, username: null, password: null },
-            linkedin: { clientId: null, clientSecret: null, accessToken: null }
-        };
-        let contentItems = [];
-        let engagementData = [];
-        let urlToContentMap = {}; // Map to track URLs to content IDs
-
-        // Chart instances
-        let platformChart;
-        let contentChart;
-
-        // DOM elements
-        const contentForm = document.getElementById('content-form');
-        const contentUrlField = document.getElementById('content-url');
-        const duplicateWarning = document.getElementById('duplicate-warning');
-        const contentList = document.getElementById('content-list');
-        const engagementList = document.getElementById('engagement-list');
-        const exportDataBtn = document.getElementById('export-data');
-        const refreshDataBtn = document.getElementById('refresh-data');
-        const refreshAllDataBtn = document.getElementById('refresh-all-data');
-        const saveApiConfigBtn = document.getElementById('save-api-config');
-        const testYouTubeApiBtn = document.getElementById('test-youtube-api');
-        const testServiceNowApiBtn = document.getElementById('test-servicenow-api');
-        const testLinkedInApiBtn = document.getElementById('test-linkedin-api');
-        const contentModal = document.getElementById('content-modal');
-        const closeModalBtn = document.getElementById('close-modal');
-        const totalContentEl = document.getElementById('total-content');
-        const totalEngagementsEl = document.getElementById('total-engagements');
-        const topPlatformEl = document.getElementById('top-platform');
-        const showSettingsBtn = document.getElementById('show-settings');
-        const hideSettingsBtn = document.getElementById('hide-settings');
-        const apiSettingsSection = document.getElementById('api-settings');
-
-        // Initialize the app
-        async function initApp() {
-            // Load saved data
-            const savedApiConfig = await localforage.getItem('apiConfig');
-            if (savedApiConfig) {
-                apiConfig = JSON.parse(savedApiConfig);
-                updateApiConfigUI();
-            }
-            
-            const savedContentItems = await localforage.getItem('contentItems');
-            if (savedContentItems) {
-                contentItems = JSON.parse(savedContentItems);
-                // Rebuild URL to content map
-                rebuildUrlContentMap();
-            }
-            
-            const savedEngagementData = await localforage.getItem('engagementData');
-            if (savedEngagementData) {
-                engagementData = JSON.parse(savedEngagementData);
-            }
-            
-            // Set default date to today
-            document.getElementById('content-published').valueAsDate = new Date();
-            
-            // Render data
-            renderContentItems();
-            renderEngagementData();
-            updateStats();
-            renderCharts();
-            
-            // Add event listeners
-            contentForm.addEventListener('submit', handleContentFormSubmit);
-            contentUrlField.addEventListener('blur', checkForDuplicateUrl);
-            exportDataBtn.addEventListener('click', exportData);
-            refreshDataBtn.addEventListener('click', refreshEngagementData);
-            refreshAllDataBtn.addEventListener('click', refreshEngagementData);
-            saveApiConfigBtn.addEventListener('click', saveApiConfig);
-            testYouTubeApiBtn.addEventListener('click', testYouTubeApi);
-            testServiceNowApiBtn.addEventListener('click', testServiceNowApi);
-            testLinkedInApiBtn.addEventListener('click', testLinkedInApi);
-            closeModalBtn.addEventListener('click', () => {
-                contentModal.classList.add('hidden');
-            });
-            showSettingsBtn.addEventListener('click', () => {
-                apiSettingsSection.classList.remove('hidden');
-            });
-            hideSettingsBtn.addEventListener('click', () => {
-                apiSettingsSection.classList.add('hidden');
-            });
-            
-            // Add listener for platform selection to update URL field placeholder
-            document.getElementById('content-source').addEventListener('change', updateUrlPlaceholder);
-            updateUrlPlaceholder();
-        }
-
-        // Rebuild URL to content map
-        function rebuildUrlContentMap() {
-            urlToContentMap = {};
-            contentItems.forEach(item => {
-                const normalizedUrl = normalizeUrl(item.url);
-                urlToContentMap[normalizedUrl] = item.id;
-            });
-        }
-
-        // Normalize URL (remove tracking parameters, fragments, etc.)
-        function normalizeUrl(url) {
-            try {
-                const urlObj = new URL(url);
-                // Remove common tracking parameters
-                urlObj.searchParams.delete('utm_source');
-                urlObj.searchParams.delete('utm_medium');
-                urlObj.searchParams.delete('utm_campaign');
-                urlObj.searchParams.delete('utm_content');
-                urlObj.searchParams.delete('utm_term');
-                urlObj.searchParams.delete('feature');
-                // Remove hash
-                urlObj.hash = '';
-                return urlObj.toString();
-            } catch (e) {
-                // If URL parsing fails, return original
-                return url;
-            }
-        }
-
-        // Check for duplicate URL
-        function checkForDuplicateUrl() {
-            const url = contentUrlField.value;
-            if (!url) return;
-            
-            const normalizedUrl = normalizeUrl(url);
-            const existingContentId = urlToContentMap[normalizedUrl];
-            
-            if (existingContentId) {
-                // Show warning
-                duplicateWarning.classList.remove('hidden');
-                
-                // Find the existing content item
-                const existingContent = contentItems.find(item => item.id === existingContentId);
-                if (existingContent) {
-                    duplicateWarning.textContent = `Warning: This URL has already been added as "${existingContent.name}".`;
-                }
-            } else {
-                // Hide warning
-                duplicateWarning.classList.add('hidden');
-            }
-        }
-
-        // Update URL placeholder based on selected platform
-        function updateUrlPlaceholder() {
-            const platform = document.getElementById('content-source').value;
-            const urlField = document.getElementById('content-url');
-            
-            switch (platform) {
-                case 'youtube':
-                    urlField.placeholder = 'https://youtube.com/watch?v=XXXX';
-                    break;
-                case 'servicenow':
-                    urlField.placeholder = 'https://community.servicenow.com/blog/XXXX';
-                    break;
-                case 'linkedin':
-                    urlField.placeholder = 'https://www.linkedin.com/posts/XXXX';
-                    break;
-                default:
-                    urlField.placeholder = 'https://example.com';
-            }
-        }
-
-        // Handle content form submission
-        async function handleContentFormSubmit(e) {
-            e.preventDefault();
-            
-            const contentName = document.getElementById('content-name').value;
-            const platform = document.getElementById('content-source').value;
-            const contentUrl = document.getElementById('content-url').value;
-            const publishedDate = document.getElementById('content-published').value;
-            
-            // Normalize the URL
-            const normalizedUrl = normalizeUrl(contentUrl);
-            
-            // Check if URL already exists
-            const existingContentId = urlToContentMap[normalizedUrl];
-            if (existingContentId) {
-                // Find the existing content item
-                const existingContent = contentItems.find(item => item.id === existingContentId);
-                
-                if (confirm(`This URL has already been added as "${existingContent.name}". Do you want to update its information?`)) {
-                    // Update existing content item
-                    existingContent.name = contentName;
-                    existingContent.publishedDate = publishedDate;
-                    
-                    // Save to localforage
-                    await localforage.setItem('contentItems', JSON.stringify(contentItems));
-                    
-                    // Update UI
-                    renderContentItems();
-                    renderEngagementData();
-                    updateStats();
-                    renderCharts();
-                }
-                
-                // Reset form
-                contentForm.reset();
-                document.getElementById('content-published').valueAsDate = new Date();
-                duplicateWarning.classList.add('hidden');
-                
-                return;
-            }
-            
-            // Extract content ID from URL
-            const contentId = extractContentId(contentUrl, platform);
-            
-            // Create new content item
-            const newContentItem = {
-                id: generateId(),
-                name: contentName,
-                platform: platform,
-                url: contentUrl,
-                contentId: contentId,
-                publishedDate: publishedDate,
-                createdAt: new Date().toISOString(),
-                lastUpdated: null
-            };
-            
-            // Add to data structure
-            contentItems.push(newContentItem);
-            
-            // Update URL map
-            urlToContentMap[normalizedUrl] = newContentItem.id;
-            
-            // Save to localforage
-            await localforage.setItem('contentItems', JSON.stringify(contentItems));
-            
-            // Fetch initial engagement data
-            await fetchEngagementData([newContentItem]);
-            
-            // Update UI
-            renderContentItems();
-            renderEngagementData();
-            updateStats();
-            renderCharts();
-            
-            // Reset form
-            contentForm.reset();
-            document.getElementById('content-published').valueAsDate = new Date();
-            duplicateWarning.classList.add('hidden');
-        }
-
-        // Extract content ID from URL based on platform
-        function extractContentId(url, platform) {
-            try {
-                const urlObj = new URL(url);
-                
-                switch (platform) {
-                    case 'youtube':
-                        // Extract YouTube video ID
-                        const videoId = urlObj.searchParams.get('v');
-                        return videoId || url.split('/').pop();
-                    
-                    case 'servicenow':
-                        // Extract ServiceNow blog ID
-                        return urlObj.searchParams.get('sys_id') || url.split('/').pop();
-                    
-                    case 'linkedin':
-                        // Extract LinkedIn post ID
-                        if (url.includes('/posts/')) {
-                            return url.split('/posts/')[1];
-                        }
-                        return url.split('/').pop();
-                    
-                    default:
-                        return url.split('/').pop();
-                }
-            } catch (error) {
-                console.error('Error parsing URL:', error);
-                return url.split('/').pop();
-            }
-        }
-
-        // Fetch engagement data from APIs
-        async function fetchEngagementData(items = contentItems) {
-            if (items.length === 0) return;
-            
-            const timestamp = new Date().toISOString();
-            let fetchedAnyData = false;
-            
-            for (const item of items) {
-                let engagementMetrics = null;
-                
-                switch (item.platform) {
-                    case 'youtube':
-                        if (apiConfig.youtube.apiKey) {
-                            engagementMetrics = await fetchYouTubeEngagement(item.contentId);
-                        } else {
-                            // Use cache or simulate
-                            engagementMetrics = await simulateEngagement(item);
-                        }
-                        break;
-                    
-                    case 'servicenow':
-                        if (apiConfig.servicenow.instance && apiConfig.servicenow.username) {
-                            engagementMetrics = await fetchServiceNowEngagement(item.contentId);
-                        } else {
-                            // Use cache or simulate
-                            engagementMetrics = await simulateEngagement(item);
-                        }
-                        break;
-                    
-                    case 'linkedin':
-                        if (apiConfig.linkedin.accessToken) {
-                            engagementMetrics = await fetchLinkedInEngagement(item.contentId);
-                        } else {
-                            // Use cache or simulate
-                            engagementMetrics = await simulateEngagement(item);
-                        }
-                        break;
-                }
-                
-                if (engagementMetrics) {
-                    fetchedAnyData = true;
-                    
-                    // Store engagement data keyed by content URL (not ID)
-                    // This ensures same URL = same engagement data
-                    const normalizedUrl = normalizeUrl(item.url);
-                    
-                    const newEngagementRecord = {
-                        id: generateId(),
-                        contentId: item.id,
-                        contentUrl: normalizedUrl, // Store normalized URL
-                        timestamp: timestamp,
-                        views: engagementMetrics.views || 0,
-                        likes: engagementMetrics.likes || 0,
-                        comments: engagementMetrics.comments || 0,
-                        shares: engagementMetrics.shares || 0,
-                        otherMetrics: engagementMetrics.otherMetrics || {}
-                    };
-                    
-                    // Find existing engagement records for this URL
-                    const existingEngagements = engagementData.filter(e => e.contentUrl === normalizedUrl);
-                    
-                    if (existingEngagements.length > 0) {
-                        // Replace all engagement records for this URL with the new one
-                        engagementData = engagementData.filter(e => e.contentUrl !== normalizedUrl);
-                        engagementData.push(newEngagementRecord);
-                        
-                        // Update all content items with this URL to have the same lastUpdated
-                        contentItems.forEach((content, index) => {
-                            if (normalizeUrl(content.url) === normalizedUrl) {
-                                contentItems[index].lastUpdated = timestamp;
-                            }
-                        });
-                    } else {
-                        // Add new record
-                        engagementData.push(newEngagementRecord);
-                        
-                        // Update content item's lastUpdated timestamp
-                        const contentIndex = contentItems.findIndex(c => c.id === item.id);
-                        if (contentIndex >= 0) {
-                            contentItems[contentIndex].lastUpdated = timestamp;
-                        }
-                    }
-                }
-            }
-            
-            if (fetchedAnyData) {
-                // Save updated data
-                await localforage.setItem('engagementData', JSON.stringify(engagementData));
-                await localforage.setItem('contentItems', JSON.stringify(contentItems));
-            }
-        }
-
-        // Simulate engagement metrics (for when API keys aren't available)
-        async function simulateEngagement(item) {
-            // First check if we already have data for this URL
-            const normalizedUrl = normalizeUrl(item.url);
-            const existingEngagements = engagementData.filter(e => e.contentUrl === normalizedUrl);
-            
-            if (existingEngagements.length > 0) {
-                // Use the most recent engagement data
-                const mostRecent = existingEngagements.sort((a, b) => 
-                    new Date(b.timestamp) - new Date(a.timestamp))[0];
-                
-                return {
-                    views: mostRecent.views,
-                    likes: mostRecent.likes,
-                    comments: mostRecent.comments,
-                    shares: mostRecent.shares,
-                    otherMetrics: mostRecent.otherMetrics
-                };
-            }
-            
-            // If no existing data, generate consistent simulated data
-            // Use the contentId as seed to ensure same URL = same data
-            const seed = hashCode(normalizedUrl);
-            const rng = seededRandom(seed);
-            
-            // Base metrics vary by platform
-            let baseViews, baseLikes, baseComments, baseShares;
-            
-            switch(item.platform) {
-                case 'youtube':
-                    baseViews = Math.floor(rng() * 8000) + 2000;
-                    baseLikes = Math.floor(baseViews * (0.03 + rng() * 0.07));
-                    baseComments = Math.floor(baseViews * (0.005 + rng() * 0.015));
-                    baseShares = 0; // YouTube API doesn't provide share count
-                    break;
-                    
-                case 'servicenow':
-                    baseViews = Math.floor(rng() * 3000) + 1000;
-                    baseLikes = Math.floor(baseViews * (0.02 + rng() * 0.05));
-                    baseComments = Math.floor(baseViews * (0.003 + rng() * 0.01));
-                    baseShares = Math.floor(baseViews * (0.001 + rng() * 0.005));
-                    break;
-                    
-                case 'linkedin':
-                    baseViews = Math.floor(rng() * 2000) + 500;
-                    baseLikes = Math.floor(baseViews * (0.04 + rng() * 0.08));
-                    baseComments = Math.floor(baseViews * (0.01 + rng() * 0.02));
-                    baseShares = Math.floor(baseViews * (0.005 + rng() * 0.01));
-                    break;
-                    
-                default:
-                    baseViews = Math.floor(rng() * 1000) + 200;
-                    baseLikes = Math.floor(baseViews * (0.02 + rng() * 0.05));
-                    baseComments = Math.floor(baseViews * (0.005 + rng() * 0.01));
-                    baseShares = Math.floor(baseViews * (0.002 + rng() * 0.005));
-            }
-            
-            return {
-                views: baseViews,
-                likes: baseLikes,
-                comments: baseComments,
-                shares: baseShares,
-                otherMetrics: {}
-            };
-        }
-
-        // Fetch YouTube video engagement
-        async function fetchYouTubeEngagement(videoId) {
-            if (!apiConfig.youtube.apiKey) {
-                console.error('YouTube API key not configured');
-                return null;
-            }
-            
-            try {
-                // This would be a real API call in production
-                console.log(`Fetching YouTube data for video ID: ${videoId}`);
-                
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // In a real implementation, this would be:
-                // const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiConfig.youtube.apiKey}`);
-                // const data = await response.json();
-                // Then extract real statistics from the response
-                
-                // For demonstration, use our simulated data function instead
-                // This ensures consistent values for the same video ID
-                const seed = hashCode(videoId);
-                const rng = seededRandom(seed);
-                
-                return {
-                    views: Math.floor(rng() * 8000) + 2000,
-                    likes: Math.floor(rng() * 500),
-                    comments: Math.floor(rng() * 100),
-                    shares: 0, // YouTube API doesn't provide share count
-                    otherMetrics: {
-                        dislikes: Math.floor(rng() * 50),
-                        favorites: Math.floor(rng() * 20)
-                    }
-                };
-            } catch (error) {
-                console.error('Error fetching YouTube data:', error);
-                return null;
-            }
-        }
-
-        // Fetch ServiceNow blog engagement
-        async function fetchServiceNowEngagement(blogId) {
-            if (!apiConfig.servicenow.instance || !apiConfig.servicenow.username) {
-                console.error('ServiceNow API not configured');
-                return null;
-            }
-            
-            try {
-                // This would be a real API call in production
-                console.log(`Fetching ServiceNow data for blog ID: ${blogId}`);
-                
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // In a real implementation, this would make an authenticated API request
-                // to the ServiceNow instance with the provided credentials
-                
-                // For demonstration, use our simulated data function instead
-                // This ensures consistent values for the same blog ID
-                const seed = hashCode(blogId);
-                const rng = seededRandom(seed);
-                
-                return {
-                    views: Math.floor(rng() * 3000) + 1000,
-                    likes: Math.floor(rng() * 200),
-                    comments: Math.floor(rng() * 50),
-                    shares: Math.floor(rng() * 30),
-                    otherMetrics: {
-                        bookmarks: Math.floor(rng() * 40)
-                    }
-                };
-            } catch (error) {
-                console.error('Error fetching ServiceNow data:', error);
-                return null;
-            }
-        }
-
-        // Fetch LinkedIn post engagement
-        async function fetchLinkedInEngagement(postId) {
-            if (!apiConfig.linkedin.accessToken) {
-                console.error('LinkedIn API not configured');
-                return null;
-            }
-            
-            try {
-                // This would be a real API call in production
-                console.log(`Fetching LinkedIn data for post ID: ${postId}`);
-                
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // In a real implementation, this would use OAuth and the LinkedIn API
-                // to fetch actual engagement metrics for the post
-                
-                // For demonstration, use our simulated data function instead
-                // This ensures consistent values for the same post ID
-                const seed = hashCode(postId);
-                const rng = seededRandom(seed);
-                
-                return {
-                    views: Math.floor(rng() * 2000) + 500,
-                    likes: Math.floor(rng() * 150),
-                    comments: Math.floor(rng() * 30),
-                    shares: Math.floor(rng() * 20),
-                    otherMetrics: {
-                        impressions: Math.floor(rng() * 5000),
-                        clicks: Math.floor(rng() * 200)
-                    }
-                };
-            } catch (error) {
-                console.error('Error fetching LinkedIn data:', error);
-                return null;
-            }
-        }
-
-        // Render content items
-        function renderContentItems() {
-            contentList.innerHTML = '';
-            
-            if (contentItems.length === 0) {
-                contentList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No content items added yet</td></tr>';
-                return;
-            }
-            
-            contentItems.forEach(item => {
-                const row = document.createElement('tr');
-                
-                const nameCell = document.createElement('td');
-                nameCell.className = 'px-6 py-4 whitespace-nowrap';
-                nameCell.textContent = item.name;
-                
-                const platformCell = document.createElement('td');
-                platformCell.className = 'px-6 py-4 whitespace-nowrap';
-                const platformSpan = document.createElement('span');
-                platformSpan.textContent = PLATFORMS[item.platform];
-                
-                // Add color based on platform
-                if (item.platform === 'youtube') {
-                    platformSpan.className = 'badge youtube';
-                } else if (item.platform === 'servicenow') {
-                    platformSpan.className = 'badge servicenow';
-                } else if (item.platform === 'linkedin') {
-                    platformSpan.className = 'badge linkedin';
-                } else {
-                    platformSpan.className = 'badge other';
-                }
-                
-                platformCell.appendChild(platformSpan);
-                
-                const publishedCell = document.createElement('td');
-                publishedCell.className = 'px-6 py-4 whitespace-nowrap';
-                publishedCell.textContent = formatDate(item.publishedDate);
-                
-                const urlCell = document.createElement('td');
-                urlCell.className = 'px-6 py-4 whitespace-normal';
-                urlCell.title = item.url;
-                urlCell.textContent = truncateText(item.url, 40);
-                
-                const actionsCell = document.createElement('td');
-                actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm';
-                
-                const viewBtn = document.createElement('button');
-                viewBtn.className = 'btn bg-gray-100 hover:bg-gray-200 text-gray-700 mr-2 text-sm';
-                viewBtn.innerHTML = '<span class="material-icons text-sm">visibility</span>';
-                viewBtn.title = 'View Details';
-                viewBtn.addEventListener('click', () => showContentDetails(item));
-                
-                const updateBtn = document.createElement('button');
-                updateBtn.className = 'btn btn-primary text-sm mr-2';
-                updateBtn.innerHTML = '<span class="material-icons text-sm">refresh</span>';
-                updateBtn.title = 'Update Data';
-                updateBtn.addEventListener('click', () => fetchEngagementData([item]).then(() => {
-                    renderEngagementData();
-                    updateStats();
-                    renderCharts();
-                }));
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn bg-red-500 hover:bg-red-600 text-white text-sm';
-                deleteBtn.innerHTML = '<span class="material-icons text-sm">delete</span>';
-                deleteBtn.title = 'Delete';
-                deleteBtn.addEventListener('click', () => deleteContent(item.id));
-                
-                actionsCell.appendChild(viewBtn);
-                actionsCell.appendChild(updateBtn);
-                actionsCell.appendChild(deleteBtn);
-                
-                row.appendChild(nameCell);
-                row.appendChild(platformCell);
-                row.appendChild(publishedCell);
-                row.appendChild(urlCell);
-                row.appendChild(actionsCell);
-                
-                contentList.appendChild(row);
-            });
-        }
-
-        // Render engagement data
-        function renderEngagementData() {
-            engagementList.innerHTML = '';
-            
-            if (engagementData.length === 0) {
-                engagementList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No engagement data available</td></tr>';
-                return;
-            }
-            
-            // Group engagement data by content URL (not ID) and get the latest record for each
-            // This ensures duplicate URLs show the same engagement data
-            const latestEngagementByUrl = {};
-            engagementData.forEach(engagement => {
-                if (!latestEngagementByUrl[engagement.contentUrl] || 
-                    new Date(engagement.timestamp) > new Date(latestEngagementByUrl[engagement.contentUrl].timestamp)) {
-                    latestEngagementByUrl[engagement.contentUrl] = engagement;
-                }
-            });
-            
-            Object.values(latestEngagementByUrl).forEach(engagement => {
-                // Find content item based on URL, not ID
-                // For items with duplicate URLs, we'll use the first one found
-                const contentItem = contentItems.find(item => normalizeUrl(item.url) === engagement.contentUrl);
-                if (!contentItem) return; // Skip if content was deleted
-                
-                const row = document.createElement('tr');
-                
-                const nameCell = document.createElement('td');
-                nameCell.className = 'px-6 py-4 whitespace-nowrap';
-                nameCell.textContent = contentItem.name;
-                
-                const platformCell = document.createElement('td');
-                platformCell.className = 'px-6 py-4 whitespace-nowrap';
-                const platformSpan = document.createElement('span');
-                platformSpan.textContent = PLATFORMS[contentItem.platform];
-                
-                // Add color based on platform
-                if (contentItem.platform === 'youtube') {
-                    platformSpan.className = 'badge youtube';
-                } else if (contentItem.platform === 'servicenow') {
-                    platformSpan.className = 'badge servicenow';
-                } else if (contentItem.platform === 'linkedin') {
-                    platformSpan.className = 'badge linkedin';
-                } else {
-                    platformSpan.className = 'badge other';
-                }
-                
-                platformCell.appendChild(platformSpan);
-                
-                const viewsCell = document.createElement('td');
-                viewsCell.className = 'px-6 py-4 whitespace-nowrap font-medium';
-                viewsCell.textContent = engagement.views.toLocaleString();
-                
-                const likesCell = document.createElement('td');
-                likesCell.className = 'px-6 py-4 whitespace-nowrap';
-                likesCell.textContent = engagement.likes.toLocaleString();
-                
-                const commentsCell = document.createElement('td');
-                commentsCell.className = 'px-6 py-4 whitespace-nowrap';
-                commentsCell.textContent = engagement.comments.toLocaleString();
-                
-                const updatedCell = document.createElement('td');
-                updatedCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
-                updatedCell.textContent = formatDateTime(engagement.timestamp);
-                
-                row.appendChild(nameCell);
-                row.appendChild(platformCell);
-                row.appendChild(viewsCell);
-                row.appendChild(likesCell);
-                row.appendChild(commentsCell);
-                row.appendChild(updatedCell);
-                
-                engagementList.appendChild(row);
-            });
-        }
-
-        // Show content details in modal
-        function showContentDetails(contentItem) {
-            const modalTitle = document.getElementById('modal-title');
-            const modalContent = document.getElementById('modal-content');
-            
-            modalTitle.textContent = contentItem.name;
-            
-            // Find all engagement records for this content URL, not just this specific content ID
-            // This ensures we show consistent data for duplicate URLs
-            const normalizedUrl = normalizeUrl(contentItem.url);
-            const contentEngagements = engagementData
-                .filter(e => e.contentUrl === normalizedUrl)
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            let html = `
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h4 class="text-lg font-medium mb-2">Content Details</h4>
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <div class="grid grid-cols-1 gap-2">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Platform</p>
-                                        <p class="text-gray-900">${PLATFORMS[contentItem.platform]}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">URL</p>
-                                        <a href="${contentItem.url}" target="_blank" class="text-blue-600 hover:text-blue-800 break-all">${contentItem.url}</a>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Content ID</p>
-                                        <p class="text-gray-900 font-mono text-xs">${contentItem.contentId}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Published</p>
-                                        <p class="text-gray-900">${formatDate(contentItem.publishedDate)}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Last Updated</p>
-                                        <p class="text-gray-900">${contentItem.lastUpdated ? formatDateTime(contentItem.lastUpdated) : 'Never'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-medium mb<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Content Engagement Tracker</title>
-    <!-- Include Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'now-green': {
-                            50: '#e6f9f3',
-                            100: '#ccf3e7',
-                            200: '#99e8cf',
-                            300: '#66dcb7',
-                            400: '#33d09f',
-                            500: '#00c487',
-                            600: '#009d6c',
-                            700: '#007651',
-                            800: '#004e36',
-                            900: '#00271b',
-                        },
-                    },
-                },
-            },
-        }
-    </script>
-    <!-- Include Chart.js for visualization -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <!-- Include localforage for client-side storage -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <!-- Google Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .card {
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        .btn {
-            transition: all 0.2s ease-in-out;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-        }
-        .btn:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 196, 135, 0.3);
-        }
-        .btn-primary {
-            background-color: #00c487;
-            color: white;
-        }
-        .btn-primary:hover {
-            background-color: #009d6c;
-        }
-        .btn-secondary {
-            background-color: #6B7280;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background-color: #4B5563;
-        }
-        .badge {
-            border-radius: 9999px;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        input, select, textarea {
-            border-radius: 0.5rem;
-            border: 1px solid #D1D5DB;
-            padding: 0.5rem 0.75rem;
-            outline: none;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #00c487;
-            box-shadow: 0 0 0 2px rgba(0, 196, 135, 0.2);
-        }
-        .youtube {
-            background-color: #FF0000;
-            color: white;
-        }
-        .servicenow {
-            background-color: #00c487;
-            color: white;
-        }
-        .linkedin {
-            background-color: #0A66C2;
-            color: white;
-        }
-        .other {
-            background-color: #6B7280;
-            color: white;
-        }
-        .tab {
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            padding: 0.5rem 1rem;
-        }
-        .tab.active {
-            border-bottom: 2px solid #00c487;
-            color: #00c487;
-            font-weight: 500;
-        }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <!-- Header -->
-        <header class="mb-8 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">Content Engagement Tracker</h1>
-                <p class="text-gray-600">Track engagement across YouTube, ServiceNow Community, and LinkedIn</p>
-            </div>
-            <div class="flex space-x-2">
-                <button id="show-settings" class="btn btn-secondary flex items-center">
-                    <span class="material-icons mr-1">settings</span>
-                    Settings
-                </button>
-                <button id="refresh-all-data" class="btn btn-primary flex items-center">
-                    <span class="material-icons mr-1">refresh</span>
-                    Refresh All
-                </button>
-            </div>
-        </header>
-
-        <!-- API Configuration Section (Hidden by Default) -->
-        <div id="api-settings" class="card bg-white p-6 mb-6 hidden">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold">API Configuration</h2>
-                <button id="hide-settings" class="text-gray-500 hover:text-gray-700">
-                    <span class="material-icons">close</span>
-                </button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- YouTube API -->
-                <div class="space-y-4">
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center mr-3">
-                            <span class="material-icons text-red-500">smart_display</span>
-                        </div>
-                        <h3 class="text-lg font-medium">YouTube API</h3>
-                    </div>
-                    <div>
-                        <label for="youtube-api-key" class="block text-sm font-medium text-gray-700">API Key</label>
-                        <input type="password" id="youtube-api-key" name="youtube-api-key" placeholder="Enter YouTube API Key"
-                            class="mt-1 block w-full">
-                    </div>
-                    <div class="flex items-center">
-                        <span id="youtube-api-status" class="badge bg-red-100 text-red-800">
-                            Not Configured
-                        </span>
-                        <button id="test-youtube-api" class="btn ml-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700">
-                            Test Connection
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ServiceNow API -->
-                <div class="space-y-4">
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-now-green-100 flex items-center justify-center mr-3">
-                            <span class="material-icons text-now-green-500">article</span>
-                        </div>
-                        <h3 class="text-lg font-medium">ServiceNow API</h3>
-                    </div>
-                    <div>
-                        <label for="servicenow-instance" class="block text-sm font-medium text-gray-700">Instance URL</label>
-                        <input type="text" id="servicenow-instance" name="servicenow-instance" placeholder="https://your-instance.service-now.com"
-                            class="mt-1 block w-full">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label for="servicenow-username" class="block text-sm font-medium text-gray-700">Username</label>
-                            <input type="text" id="servicenow-username" name="servicenow-username" placeholder="Username"
-                                class="mt-1 block w-full">
-                        </div>
-                        <div>
-                            <label for="servicenow-password" class="block text-sm font-medium text-gray-700">Password</label>
-                            <input type="password" id="servicenow-password" name="servicenow-password" placeholder="Password"
-                                class="mt-1 block w-full">
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <span id="servicenow-api-status" class="badge bg-red-100 text-red-800">
-                            Not Configured
-                        </span>
-                        <button id="test-servicenow-api" class="btn ml-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700">
-                            Test Connection
-                        </button>
-                    </div>
-                </div>
-
-                <!-- LinkedIn API -->
-                <div class="space-y-4">
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                            <span class="material-icons text-blue-500">work</span>
-                        </div>
-                        <h3 class="text-lg font-medium">LinkedIn API</h3>
-                    </div>
-                    <div>
-                        <label for="linkedin-client-id" class="block text-sm font-medium text-gray-700">Client ID</label>
-                        <input type="text" id="linkedin-client-id" name="linkedin-client-id" placeholder="LinkedIn Client ID"
-                            class="mt-1 block w-full">
-                    </div>
-                    <div>
-                        <label for="linkedin-client-secret" class="block text-sm font-medium text-gray-700">Client Secret</label>
-                        <input type="password" id="linkedin-client-secret" name="linkedin-client-secret" placeholder="LinkedIn Client Secret"
-                            class="mt-1 block w-full">
-                    </div>
-                    <div class="flex items-center">
-                        <span id="linkedin-api-status" class="badge bg-red-100 text-red-800">
-                            Not Configured
-                        </span>
-                        <button id="test-linkedin-api" class="btn ml-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700">
-                            Test Connection
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-6">
-                <button id="save-api-config" class="btn btn-primary">
-                    Save API Configuration
-                </button>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Content Management Form -->
-            <div class="card bg-white p-6 md:col-span-1">
-                <h2 class="text-xl font-semibold mb-4">Add New Content</h2>
-                <form id="content-form" class="space-y-4">
-                    <div>
-                        <label for="content-name" class="block text-sm font-medium text-gray-700">Content Name</label>
-                        <input type="text" id="content-name" name="content-name" required placeholder="Spring 2025 Product Update"
-                            class="mt-1 block w-full">
-                    </div>
-                    <div>
-                        <label for="content-source" class="block text-sm font-medium text-gray-700">Platform</label>
-                        <select id="content-source" name="content-source" required
-                            class="mt-1 block w-full">
-                            <option value="youtube">Youtube</option>
-                            <option value="servicenow">ServiceNow Community blog page</option>
-                            <option value="linkedin">LinkedIn</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="content-url" class="block text-sm font-medium text-gray-700">Content URL</label>
-                        <input type="url" id="content-url" name="content-url" required placeholder="https://youtube.com/watch?v=XXXX"
-                            class="mt-1 block w-full">
-                    </div>
-                    <div>
-                        <label for="content-published" class="block text-sm font-medium text-gray-700">Published Date</label>
-                        <input type="date" id="content-published" name="content-published" required
-                            class="mt-1 block w-full">
-                    </div>
-                    <div id="duplicate-warning" class="hidden p-3 bg-yellow-100 rounded-md text-yellow-800 text-sm">
-                        Warning: This URL has already been added to your tracking list.
-                    </div>
-                    <button type="submit"
-                        class="w-full btn btn-primary flex items-center justify-center">
-                        <span class="material-icons mr-1">add</span>
-                        Add Content for Tracking
-                    </button>
-                </form>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="md:col-span-2 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="card bg-white p-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-500">Total Content Items</h3>
-                                <p id="total-content" class="text-2xl font-bold text-gray-900">0</p>
-                            </div>
-                            <div class="h-10 w-10 rounded-full bg-now-green-100 flex items-center justify-center">
-                                <span class="material-icons text-now-green-500">content_paste</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card bg-white p-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-500">Total Engagements</h3>
-                                <p id="total-engagements" class="text-2xl font-bold text-gray-900">0</p>
-                            </div>
-                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                <span class="material-icons text-blue-500">visibility</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card bg-white p-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-500">Top Platform</h3>
-                                <p id="top-platform" class="text-2xl font-bold text-gray-900">-</p>
-                            </div>
-                            <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                                <span class="material-icons text-purple-500">trending_up</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Analytics Section -->
-                <div class="card bg-white p-6">
-                    <h2 class="text-xl font-semibold mb-4">Engagement Analytics</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h3 class="text-lg font-medium mb-2">Engagement by Platform</h3>
-                            <canvas id="platform-chart" class="w-full h-64"></canvas>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-medium mb-2">Top Performing Content</h3>
-                            <canvas id="content-chart" class="w-full h-64"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Your Tracked Content -->
-            <div class="card bg-white p-6 md:col-span-3">
-                <h2 class="text-xl font-semibold mb-4">Your Tracked Content</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="content-list" class="bg-white divide-y divide-gray-200">
-                            <!-- Content entries will be added here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Engagement History -->
-            <div class="card bg-white p-6 md:col-span-3">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Engagement History</h2>
-                    <div>
-                        <button id="refresh-data" class="btn bg-blue-500 hover:bg-blue-600 text-white flex items-center">
-                            <span class="material-icons mr-1">refresh</span>
-                            Refresh Data
-                        </button>
-                        <button id="export-data" class="btn btn-primary ml-2 flex items-center">
-                            <span class="material-icons mr-1">download</span>
-                            Export Data
-                        </button>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody id="engagement-list" class="bg-white divide-y divide-gray-200">
-                            <!-- Engagement entries will be added here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Content Details Modal -->
-    <div id="content-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full">
-            <div class="flex justify-between items-start">
-                <h3 class="text-xl font-semibold" id="modal-title">Content Details</h3>
-                <button id="close-modal" class="text-gray-500 hover:text-gray-700">
-                    <span class="material-icons">close</span>
-                </button>
-            </div>
-            <div id="modal-content" class="mt-4 max-h-96 overflow-y-auto">
-                <!-- Content details will be added here -->
-            </div>
-        </div>
-    </div>ring-blue-500 p-2 border">
-                    </div>
-                    <div id="duplicate-warning" class="hidden p-3 bg-yellow-100 rounded-md text-yellow-800 text-sm">
-                        Warning: This URL has already been added to your tracking list.
-                    </div>
-                    <button type="submit"
-                        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Add Content for Tracking
-                    </button>
-                </form>
-            </div>
-
-            <!-- Your Tracked Content -->
-            <div class="bg-white rounded-lg shadow-md p-6 md:col-span-2">
-                <h2 class="text-xl font-semibold mb-4">Your Tracked Content</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="content-list" class="bg-white divide-y divide-gray-200">
-                            <!-- Content entries will be added here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Analytics Section -->
-            <div class="bg-white rounded-lg shadow-md p-6 md:col-span-2">
-                <h2 class="text-xl font-semibold mb-4">Engagement Analytics</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <h3 class="text-lg font-medium mb-2">Engagement by Platform</h3>
-                        <canvas id="platform-chart" class="w-full"></canvas>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-medium mb-2">Top Performing Content</h3>
-                        <canvas id="content-chart" class="w-full"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="md:col-span-1 space-y-6">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-semibold mb-4">Summary</h2>
-                    <div class="grid grid-cols-1 gap-4">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm font-medium text-gray-500">Total Content Items</h3>
-                            <p id="total-content" class="text-2xl font-bold text-gray-900">0</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm font-medium text-gray-500">Total Engagements</h3>
-                            <p id="total-engagements" class="text-2xl font-bold text-gray-900">0</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm font-medium text-gray-500">Top Platform</h3>
-                            <p id="top-platform" class="text-2xl font-bold text-gray-900">-</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Engagement History -->
-            <div class="bg-white rounded-lg shadow-md p-6 md:col-span-3">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Engagement History</h2>
-                    <div>
-                        <button id="refresh-data" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm mr-2">
-                            Refresh Data
-                        </button>
-                        <button id="export-data" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm">
-                            Export Data
-                        </button>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody id="engagement-list" class="bg-white divide-y divide-gray-200">
-                            <!-- Engagement entries will be added here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Content Details Modal -->
-    <div id="content-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full">
-            <div class="flex justify-between items-start">
-                <h3 class="text-xl font-semibold" id="modal-title">Content Details</h3>
-                <button id="close-modal" class="text-gray-500 hover:text-gray-700">&times;</button>
-            </div>
-            <div id="modal-content" class="mt-4 h-96 overflow-y-auto">
-                <!-- Content details will be added here -->
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Constants
-        const PLATFORMS = {
-            youtube: 'Youtube',
-            servicenow: 'ServiceNow Community blog page',
-            linkedin: 'LinkedIn'
-        };
-
-        // Data structures
-        let apiConfig = {
-            youtube: { apiKey: null },
-            servicenow: { instance: null, username: null, password: null },
-            linkedin: { clientId: null, clientSecret: null, accessToken: null }
-        };
-        let contentItems = [];
-        let engagementData = [];
-        let urlToContentMap = {}; // Map to track URLs to content IDs
-
-        // Chart instances
-        let platformChart;
-        let contentChart;
-
-        // DOM elements
-        const contentForm = document.getElementById('content-form');
-        const contentUrlField = document.getElementById('content-url');
-        const duplicateWarning = document.getElementById('duplicate-warning');
-        const contentList = document.getElementById('content-list');
-        const engagementList = document.getElementById('engagement-list');
-        const exportDataBtn = document.getElementById('export-data');
-        const refreshDataBtn = document.getElementById('refresh-data');
-        const saveApiConfigBtn = document.getElementById('save-api-config');
-        const testYouTubeApiBtn = document.getElementById('test-youtube-api');
-        const testServiceNowApiBtn = document.getElementById('test-servicenow-api');
-        const testLinkedInApiBtn = document.getElementById('test-linkedin-api');
-        const contentModal = document.getElementById('content-modal');
-        const closeModalBtn = document.getElementById('close-modal');
-        const totalContentEl = document.getElementById('total-content');
-        const totalEngagementsEl = document.getElementById('total-engagements');
-        const topPlatformEl = document.getElementById('top-platform');
-
-        // Initialize the app
-        async function initApp() {
-            // Load saved data
-            const savedApiConfig = await localforage.getItem('apiConfig');
-            if (savedApiConfig) {
-                apiConfig = JSON.parse(savedApiConfig);
-                updateApiConfigUI();
-            }
-            
-            const savedContentItems = await localforage.getItem('contentItems');
-            if (savedContentItems) {
-                contentItems = JSON.parse(savedContentItems);
-                // Rebuild URL to content map
-                rebuildUrlContentMap();
-            }
-            
-            const savedEngagementData = await localforage.getItem('engagementData');
-            if (savedEngagementData) {
-                engagementData = JSON.parse(savedEngagementData);
-            }
-            
-            // Set default date to today
-            document.getElementById('content-published').valueAsDate = new Date();
-            
-            // Render data
-            renderContentItems();
-            renderEngagementData();
-            updateStats();
-            renderCharts();
-            
-            // Add event listeners
-            contentForm.addEventListener('submit', handleContentFormSubmit);
-            contentUrlField.addEventListener('blur', checkForDuplicateUrl);
-            exportDataBtn.addEventListener('click', exportData);
-            refreshDataBtn.addEventListener('click', refreshEngagementData);
-            saveApiConfigBtn.addEventListener('click', saveApiConfig);
-            testYouTubeApiBtn.addEventListener('click', testYouTubeApi);
-            testServiceNowApiBtn.addEventListener('click', testServiceNowApi);
-            testLinkedInApiBtn.addEventListener('click', testLinkedInApi);
-            closeModalBtn.addEventListener('click', () => {
-                contentModal.classList.add('hidden');
-            });
-            
-            // Add listener for platform selection to update URL field placeholder
-            document.getElementById('content-source').addEventListener('change', updateUrlPlaceholder);
-            updateUrlPlaceholder();
-        }
-
-        // Rebuild URL to content map
-        function rebuildUrlContentMap() {
-            urlToContentMap = {};
-            contentItems.forEach(item => {
-                const normalizedUrl = normalizeUrl(item.url);
-                urlToContentMap[normalizedUrl] = item.id;
-            });
-        }
-
-        // Normalize URL (remove tracking parameters, fragments, etc.)
-        function normalizeUrl(url) {
-            try {
-                const urlObj = new URL(url);
-                // Remove common tracking parameters
-                urlObj.searchParams.delete('utm_source');
-                urlObj.searchParams.delete('utm_medium');
-                urlObj.searchParams.delete('utm_campaign');
-                // Remove hash
-                urlObj.hash = '';
-                return urlObj.toString();
-            } catch (e) {
-                // If URL parsing fails, return original
-                return url;
-            }
-        }
-
-        // Check for duplicate URL
-        function checkForDuplicateUrl() {
-            const url = contentUrlField.value;
-            if (!url) return;
-            
-            const normalizedUrl = normalizeUrl(url);
-            const existingContentId = urlToContentMap[normalizedUrl];
-            
-            if (existingContentId) {
-                // Show warning
-                duplicateWarning.classList.remove('hidden');
-                
-                // Find the existing content item
-                const existingContent = contentItems.find(item => item.id === existingContentId);
-                if (existingContent) {
-                    duplicateWarning.textContent = `Warning: This URL has already been added as "${existingContent.name}".`;
-                }
-            } else {
-                // Hide warning
-                duplicateWarning.classList.add('hidden');
-            }
-        }
-
-        // Update URL placeholder based on selected platform
-        function updateUrlPlaceholder() {
-            const platform = document.getElementById('content-source').value;
-            const urlField = document.getElementById('content-url');
-            
-            switch (platform) {
-                case 'youtube':
-                    urlField.placeholder = 'https://youtube.com/watch?v=XXXX';
-                    break;
-                case 'servicenow':
-                    urlField.placeholder = 'https://community.servicenow.com/blog/XXXX';
-                    break;
-                case 'linkedin':
-                    urlField.placeholder = 'https://www.linkedin.com/posts/XXXX';
-                    break;
-                default:
-                    urlField.placeholder = 'https://example.com';
-            }
-        }
-
-        // Handle content form submission
-        async function handleContentFormSubmit(e) {
-            e.preventDefault();
-            
-            const contentName = document.getElementById('content-name').value;
-            const platform = document.getElementById('content-source').value;
-            const contentUrl = document.getElementById('content-url').value;
-            const publishedDate = document.getElementById('content-published').value;
-            
-            // Normalize the URL
-            const normalizedUrl = normalizeUrl(contentUrl);
-            
-            // Check if URL already exists
-            const existingContentId = urlToContentMap[normalizedUrl];
-            if (existingContentId) {
-                // Find the existing content item
-                const existingContent = contentItems.find(item => item.id === existingContentId);
-                
-                if (confirm(`This URL has already been added as "${existingContent.name}". Do you want to update its information?`)) {
-                    // Update existing content item
-                    existingContent.name = contentName;
-                    existingContent.publishedDate = publishedDate;
-                    
-                    // Save to localforage
-                    await localforage.setItem('contentItems', JSON.stringify(contentItems));
-                    
-                    // Update UI
-                    renderContentItems();
-                    renderEngagementData();
-                    updateStats();
-                    renderCharts();
-                }
-                
-                // Reset form
-                contentForm.reset();
-                document.getElementById('content-published').valueAsDate = new Date();
-                duplicateWarning.classList.add('hidden');
-                
-                return;
-            }
-            
-            // Extract content ID from URL
-            const contentId = extractContentId(contentUrl, platform);
-            
-            // Create new content item
-            const newContentItem = {
-                id: generateId(),
-                name: contentName,
-                platform: platform,
-                url: contentUrl,
-                contentId: contentId,
-                publishedDate: publishedDate,
-                createdAt: new Date().toISOString(),
-                lastUpdated: null
-            };
-            
-            // Add to data structure
-            contentItems.push(newContentItem);
-            
-            // Update URL map
-            urlToContentMap[normalizedUrl] = newContentItem.id;
-            
-            // Save to localforage
-            await localforage.setItem('contentItems', JSON.stringify(contentItems));
-            
-            // Fetch initial engagement data
-            await fetchEngagementData([newContentItem]);
-            
-            // Update UI
-            renderContentItems();
-            renderEngagementData();
-            updateStats();
-            renderCharts();
-            
-            // Reset form
-            contentForm.reset();
-            document.getElementById('content-published').valueAsDate = new Date();
-            duplicateWarning.classList.add('hidden');
-        }
-
-        // Extract content ID from URL based on platform
-        function extractContentId(url, platform) {
-            try {
-                const urlObj = new URL(url);
-                
-                switch (platform) {
-                    case 'youtube':
-                        // Extract YouTube video ID
-                        const videoId = urlObj.searchParams.get('v');
-                        return videoId || url.split('/').pop();
-                    
-                    case 'servicenow':
-                        // Extract ServiceNow blog ID
-                        return urlObj.searchParams.get('sys_id') || url.split('/').pop();
-                    
-                    case 'linkedin':
-                        // Extract LinkedIn post ID
-                        if (url.includes('/posts/')) {
-                            return url.split('/posts/')[1];
-                        }
-                        return url.split('/').pop();
-                    
-                    default:
-                        return url.split('/').pop();
-                }
-            } catch (error) {
-                console.error('Error parsing URL:', error);
-                return url.split('/').pop();
-            }
-        }
-
-        // Fetch engagement data from APIs
-        async function fetchEngagementData(items = contentItems) {
-            if (items.length === 0) return;
-            
-            const timestamp = new Date().toISOString();
-            let fetchedAnyData = false;
-            
-            for (const item of items) {
-                let engagementMetrics = null;
-                
-                switch (item.platform) {
-                    case 'youtube':
-                        if (apiConfig.youtube.apiKey) {
-                            engagementMetrics = await fetchYouTubeEngagement(item.contentId);
-                        } else {
-                            // Use cache or simulate
-                            engagementMetrics = await simulateEngagement(item);
-                        }
-                        break;
-                    
-                    case 'servicenow':
-                        if (apiConfig.servicenow.instance && apiConfig.servicenow.username) {
-                            engagementMetrics = await fetchServiceNowEngagement(item.contentId);
-                        } else {
-                            // Use cache or simulate
-                            engagementMetrics = await simulateEngagement(item);
-                        }
-                        break;
-                    
-                    case 'linkedin':
-                        if (apiConfig.linkedin.accessToken) {
-                            engagementMetrics = await fetchLinkedInEngagement(item.contentId);
-                        } else {
-                            // Use cache or simulate
-                            engagementMetrics = await simulateEngagement(item);
-                        }
-                        break;
-                }
-                
-                if (engagementMetrics) {
-                    fetchedAnyData = true;
-                    
-                    // Store engagement data keyed by content URL (not ID)
-                    // This ensures same URL = same engagement data
-                    const normalizedUrl = normalizeUrl(item.url);
-                    
-                    const newEngagementRecord = {
-                        id: generateId(),
-                        contentId: item.id,
-                        contentUrl: normalizedUrl, // Store normalized URL
-                        timestamp: timestamp,
-                        views: engagementMetrics.views || 0,
-                        likes: engagementMetrics.likes || 0,
-                        comments: engagementMetrics.comments || 0,
-                        shares: engagementMetrics.shares || 0,
-                        otherMetrics: engagementMetrics.otherMetrics || {}
-                    };
-                    
-                    // Find existing engagement records for this URL
-                    const existingEngagements = engagementData.filter(e => e.contentUrl === normalizedUrl);
-                    
-                    if (existingEngagements.length > 0) {
-                        // Replace all engagement records for this URL with the new one
-                        engagementData = engagementData.filter(e => e.contentUrl !== normalizedUrl);
-                        engagementData.push(newEngagementRecord);
-                        
-                        // Update all content items with this URL to have the same lastUpdated
-                        contentItems.forEach((content, index) => {
-                            if (normalizeUrl(content.url) === normalizedUrl) {
-                                contentItems[index].lastUpdated = timestamp;
-                            }
-                        });
-                    } else {
-                        // Add new record
-                        engagementData.push(newEngagementRecord);
-                        
-                        // Update content item's lastUpdated timestamp
-                        const contentIndex = contentItems.findIndex(c => c.id === item.id);
-                        if (contentIndex >= 0) {
-                            contentItems[contentIndex].lastUpdated = timestamp;
-                        }
-                    }
-                }
-            }
-            
-            if (fetchedAnyData) {
-                // Save updated data
-                await localforage.setItem('engagementData', JSON.stringify(engagementData));
-                await localforage.setItem('contentItems', JSON.stringify(contentItems));
-            }
-        }
-
-        // Simulate engagement metrics (for when API keys aren't available)
-        async function simulateEngagement(item) {
-            // First check if we already have data for this URL
-            const normalizedUrl = normalizeUrl(item.url);
-            const existingEngagements = engagementData.filter(e => e.contentUrl === normalizedUrl);
-            
-            if (existingEngagements.length > 0) {
-                // Use the most recent engagement data
-                const mostRecent = existingEngagements.sort((a, b) => 
-                    new Date(b.timestamp) - new Date(a.timestamp))[0];
-                
-                return {
-                    views: mostRecent.views,
-                    likes: mostRecent.likes,
-                    comments: mostRecent.comments,
-                    shares: mostRecent.shares,
-                    otherMetrics: mostRecent.otherMetrics
-                };
-            }
-            
-            // If no existing data, generate consistent simulated data
-            // Use the contentId as seed to ensure same URL = same data
-            const seed = hashCode(normalizedUrl);
-            const rng = seededRandom(seed);
-            
-            // Base metrics vary by platform
-            let baseViews, baseLikes, baseComments, baseShares;
-            
-            switch(item.platform) {
-                case 'youtube':
-                    baseViews = Math.floor(rng() * 8000) + 2000;
-                    baseLikes = Math.floor(baseViews * (0.03 + rng() * 0.07));
-                    baseComments = Math.floor(baseViews * (0.005 + rng() * 0.015));
-                    baseShares = 0; // YouTube API doesn't provide share count
-                    break;
-                    
-                case 'servicenow':
-                    baseViews = Math.floor(rng() * 3000) + 1000;
-                    baseLikes = Math.floor(baseViews * (0.02 + rng() * 0.05));
-                    baseComments = Math.floor(baseViews * (0.003 + rng() * 0.01));
-                    baseShares = Math.floor(baseViews * (0.001 + rng() * 0.005));
-                    break;
-                    
-                case 'linkedin':
-                    baseViews = Math.floor(rng() * 2000) + 500;
-                    baseLikes = Math.floor(baseViews * (0.04 + rng() * 0.08));
-                    baseComments = Math.floor(baseViews * (0.01 + rng() * 0.02));
-                    baseShares = Math.floor(baseViews * (0.005 + rng() * 0.01));
-                    break;
-                    
-                default:
-                    baseViews = Math.floor(rng() * 1000) + 200;
-                    baseLikes = Math.floor(baseViews * (0.02 + rng() * 0.05));
-                    baseComments = Math.floor(baseViews * (0.005 + rng() * 0.01));
-                    baseShares = Math.floor(baseViews * (0.002 + rng() * 0.005));
-            }
-            
-            return {
-                views: baseViews,
-                likes: baseLikes,
-                comments: baseComments,
-                shares: baseShares,
-                otherMetrics: {}
-            };
+</html>

@@ -87,6 +87,11 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Rotation for collapse icons */
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        
         /* Toggle Switch */
         .toggle-checkbox:checked {
             transform: translateX(100%);
@@ -332,7 +337,11 @@
         <!-- Add content section -->
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg font-medium mb-4 dark:text-white">Add New Content</h3>
+                <div class="flex justify-between items-center mb-4 cursor-pointer" id="toggle-add-content">
+                    <h3 class="text-lg font-medium dark:text-white">Add New Content</h3>
+                    <span class="material-icons text-gray-500 dark:text-gray-400 transform transition-transform duration-200">expand_more</span>
+                </div>
+                <div id="add-content-body" class="transition-all duration-300 overflow-hidden">
                 <form id="content-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
                         <label for="content-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL <span class="text-red-500 dark:text-red-400">*</span></label>
@@ -393,6 +402,7 @@
                         </div>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
 
@@ -400,11 +410,15 @@
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium dark:text-white">Content Library</h3>
+                    <div class="flex items-center cursor-pointer" id="toggle-content-library">
+                        <h3 class="text-lg font-medium dark:text-white">Content Library</h3>
+                        <span class="material-icons text-gray-500 dark:text-gray-400 ml-2 transform transition-transform duration-200">expand_more</span>
+                    </div>
                     <button id="refresh-data" class="btn btn-primary">
                         <span class="material-icons mr-1">refresh</span> Refresh Data
                     </button>
                 </div>
+                <div id="content-library-body" class="transition-all duration-300 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
@@ -422,6 +436,7 @@
                         </tbody>
                     </table>
                 </div>
+                </div>
             </div>
         </div>
 
@@ -429,11 +444,15 @@
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium dark:text-white">Latest Engagement Data</h3>
+                    <div class="flex items-center cursor-pointer" id="toggle-engagement-data">
+                        <h3 class="text-lg font-medium dark:text-white">Latest Engagement Data</h3>
+                        <span class="material-icons text-gray-500 dark:text-gray-400 ml-2 transform transition-transform duration-200">expand_more</span>
+                    </div>
                     <button id="refresh-all-data" class="btn btn-primary">
                         <span class="material-icons mr-1">refresh</span> Refresh All
                     </button>
                 </div>
+                <div id="engagement-data-body" class="transition-all duration-300 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
@@ -451,6 +470,7 @@
                             <!-- Engagement data will be rendered here -->
                         </tbody>
                     </table>
+                </div>
                 </div>
             </div>
         </div>
@@ -3199,8 +3219,70 @@
             return Math.abs(hash);
         }
 
+        // Setup collapsible sections
+        function setupCollapsibleSections() {
+            // Add New Content section
+            const toggleAddContent = document.getElementById('toggle-add-content');
+            const addContentBody = document.getElementById('add-content-body');
+            const addContentIcon = toggleAddContent.querySelector('.material-icons');
+            
+            toggleAddContent.addEventListener('click', () => {
+                addContentBody.classList.toggle('hidden');
+                addContentIcon.classList.toggle('rotate-180');
+                // Store preference in localStorage
+                localStorage.setItem('addContentCollapsed', addContentBody.classList.contains('hidden'));
+            });
+            
+            // Content Library section
+            const toggleContentLibrary = document.getElementById('toggle-content-library');
+            const contentLibraryBody = document.getElementById('content-library-body');
+            const contentLibraryIcon = toggleContentLibrary.querySelector('.material-icons');
+            
+            toggleContentLibrary.addEventListener('click', () => {
+                contentLibraryBody.classList.toggle('hidden');
+                contentLibraryIcon.classList.toggle('rotate-180');
+                // Store preference in localStorage
+                localStorage.setItem('contentLibraryCollapsed', contentLibraryBody.classList.contains('hidden'));
+            });
+            
+            // Engagement Data section
+            const toggleEngagementData = document.getElementById('toggle-engagement-data');
+            const engagementDataBody = document.getElementById('engagement-data-body');
+            const engagementDataIcon = toggleEngagementData.querySelector('.material-icons');
+            
+            toggleEngagementData.addEventListener('click', () => {
+                engagementDataBody.classList.toggle('hidden');
+                engagementDataIcon.classList.toggle('rotate-180');
+                // Store preference in localStorage
+                localStorage.setItem('engagementDataCollapsed', engagementDataBody.classList.contains('hidden'));
+            });
+            
+            // Load saved preferences
+            const addContentCollapsed = localStorage.getItem('addContentCollapsed') === 'true';
+            const contentLibraryCollapsed = localStorage.getItem('contentLibraryCollapsed') === 'true';
+            const engagementDataCollapsed = localStorage.getItem('engagementDataCollapsed') === 'true';
+            
+            if (addContentCollapsed) {
+                addContentBody.classList.add('hidden');
+                addContentIcon.classList.add('rotate-180');
+            }
+            
+            if (contentLibraryCollapsed) {
+                contentLibraryBody.classList.add('hidden');
+                contentLibraryIcon.classList.add('rotate-180');
+            }
+            
+            if (engagementDataCollapsed) {
+                engagementDataBody.classList.add('hidden');
+                engagementDataIcon.classList.add('rotate-180');
+            }
+        }
+        
         // Initialize the app when the page loads
-        window.addEventListener('DOMContentLoaded', initApp);
+        window.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            setupCollapsibleSections();
+        });
     </script>
 </body>
 </html>

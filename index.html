@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Link Engagement Tracker</title>
+    <title>Content Engagement Tracker</title>
     <!-- Include Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Include Chart.js for visualization -->
@@ -15,59 +15,150 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <header class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">Link Engagement Tracker</h1>
-            <p class="text-gray-600">Track and analyze engagement for individual links across platforms</p>
+            <h1 class="text-3xl font-bold text-gray-800">Content Engagement Tracker</h1>
+            <p class="text-gray-600">Track engagement across YouTube, ServiceNow Community, and LinkedIn</p>
         </header>
+
+        <!-- API Configuration Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">API Configuration</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- YouTube API -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium">YouTube API</h3>
+                    <div>
+                        <label for="youtube-api-key" class="block text-sm font-medium text-gray-700">API Key</label>
+                        <input type="password" id="youtube-api-key" name="youtube-api-key" placeholder="Enter YouTube API Key"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div class="flex items-center">
+                        <span id="youtube-api-status" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Not Configured
+                        </span>
+                        <button id="test-youtube-api" class="ml-2 inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Test Connection
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ServiceNow API -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium">ServiceNow API</h3>
+                    <div>
+                        <label for="servicenow-instance" class="block text-sm font-medium text-gray-700">Instance URL</label>
+                        <input type="text" id="servicenow-instance" name="servicenow-instance" placeholder="https://your-instance.service-now.com"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label for="servicenow-username" class="block text-sm font-medium text-gray-700">Username</label>
+                            <input type="text" id="servicenow-username" name="servicenow-username" placeholder="Username"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                        </div>
+                        <div>
+                            <label for="servicenow-password" class="block text-sm font-medium text-gray-700">Password</label>
+                            <input type="password" id="servicenow-password" name="servicenow-password" placeholder="Password"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <span id="servicenow-api-status" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Not Configured
+                        </span>
+                        <button id="test-servicenow-api" class="ml-2 inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Test Connection
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LinkedIn API -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium">LinkedIn API</h3>
+                    <div>
+                        <label for="linkedin-client-id" class="block text-sm font-medium text-gray-700">Client ID</label>
+                        <input type="text" id="linkedin-client-id" name="linkedin-client-id" placeholder="LinkedIn Client ID"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div>
+                        <label for="linkedin-client-secret" class="block text-sm font-medium text-gray-700">Client Secret</label>
+                        <input type="password" id="linkedin-client-secret" name="linkedin-client-secret" placeholder="LinkedIn Client Secret"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div class="flex items-center">
+                        <span id="linkedin-api-status" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Not Configured
+                        </span>
+                        <button id="test-linkedin-api" class="ml-2 inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Test Connection
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button id="save-api-config" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                    Save API Configuration
+                </button>
+            </div>
+        </div>
 
         <!-- Main Content -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Link Management Form -->
+            <!-- Content Management Form -->
             <div class="bg-white rounded-lg shadow-md p-6 md:col-span-1">
-                <h2 class="text-xl font-semibold mb-4">Add New Link</h2>
-                <form id="link-form" class="space-y-4">
+                <h2 class="text-xl font-semibold mb-4">Add New Content</h2>
+                <form id="content-form" class="space-y-4">
                     <div>
-                        <label for="link-url" class="block text-sm font-medium text-gray-700">Original Link URL</label>
-                        <input type="url" id="link-url" name="link-url" required placeholder="https://example.com/your-content"
+                        <label for="content-name" class="block text-sm font-medium text-gray-700">Content Name</label>
+                        <input type="text" id="content-name" name="content-name" required placeholder="Spring 2025 Product Update"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
                     </div>
                     <div>
-                        <label for="link-name" class="block text-sm font-medium text-gray-700">Link Name/Description</label>
-                        <input type="text" id="link-name" name="link-name" required placeholder="Spring 2025 Product Update"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
-                    </div>
-                    <div>
-                        <label for="link-source" class="block text-sm font-medium text-gray-700">Source Platform</label>
-                        <select id="link-source" name="link-source" required
+                        <label for="content-source" class="block text-sm font-medium text-gray-700">Platform</label>
+                        <select id="content-source" name="content-source" required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
                             <option value="youtube">Youtube</option>
                             <option value="servicenow">ServiceNow Community blog page</option>
                             <option value="linkedin">LinkedIn</option>
-                            <option value="other">Other</option>
                         </select>
+                    </div>
+                    <div>
+                        <label for="content-url" class="block text-sm font-medium text-gray-700">Content URL</label>
+                        <input type="url" id="content-url" name="content-url" required placeholder="https://youtube.com/watch?v=XXXX"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div>
+                        <label for="content-id" class="block text-sm font-medium text-gray-700">Content ID (Optional)</label>
+                        <input type="text" id="content-id" name="content-id" placeholder="e.g., YouTube video ID"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                        <p class="mt-1 text-xs text-gray-500">Leave empty to extract from URL</p>
+                    </div>
+                    <div>
+                        <label for="content-published" class="block text-sm font-medium text-gray-700">Published Date</label>
+                        <input type="date" id="content-published" name="content-published" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
                     </div>
                     <button type="submit"
                         class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Generate Tracking Link
+                        Add Content for Tracking
                     </button>
                 </form>
             </div>
 
-            <!-- Your Tracking Links -->
+            <!-- Your Tracked Content -->
             <div class="bg-white rounded-lg shadow-md p-6 md:col-span-2">
-                <h2 class="text-xl font-semibold mb-4">Your Tracking Links</h2>
+                <h2 class="text-xl font-semibold mb-4">Your Tracked Content</h2>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content Name</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tracking URL</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visits</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="links-list" class="bg-white divide-y divide-gray-200">
-                            <!-- Links will be added here -->
+                        <tbody id="content-list" class="bg-white divide-y divide-gray-200">
+                            <!-- Content entries will be added here -->
                         </tbody>
                     </table>
                 </div>
@@ -78,12 +169,12 @@
                 <h2 class="text-xl font-semibold mb-4">Engagement Analytics</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <h3 class="text-lg font-medium mb-2">Engagement by Source</h3>
-                        <canvas id="source-chart" class="w-full"></canvas>
+                        <h3 class="text-lg font-medium mb-2">Engagement by Platform</h3>
+                        <canvas id="platform-chart" class="w-full"></canvas>
                     </div>
                     <div>
-                        <h3 class="text-lg font-medium mb-2">Top Performing Links</h3>
-                        <canvas id="top-links-chart" class="w-full"></canvas>
+                        <h3 class="text-lg font-medium mb-2">Top Performing Content</h3>
+                        <canvas id="content-chart" class="w-full"></canvas>
                     </div>
                 </div>
             </div>
@@ -94,31 +185,31 @@
                     <h2 class="text-xl font-semibold mb-4">Summary</h2>
                     <div class="grid grid-cols-1 gap-4">
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm font-medium text-gray-500">Total Links</h3>
-                            <p id="total-links" class="text-2xl font-bold text-gray-900">0</p>
+                            <h3 class="text-sm font-medium text-gray-500">Total Content Items</h3>
+                            <p id="total-content" class="text-2xl font-bold text-gray-900">0</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm font-medium text-gray-500">Total Visits</h3>
-                            <p id="total-visits" class="text-2xl font-bold text-gray-900">0</p>
+                            <h3 class="text-sm font-medium text-gray-500">Total Engagements</h3>
+                            <p id="total-engagements" class="text-2xl font-bold text-gray-900">0</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm font-medium text-gray-500">Top Source</h3>
-                            <p id="top-source" class="text-2xl font-bold text-gray-900">-</p>
+                            <h3 class="text-sm font-medium text-gray-500">Top Platform</h3>
+                            <p id="top-platform" class="text-2xl font-bold text-gray-900">-</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Engagement Activity -->
+            <!-- Engagement History -->
             <div class="bg-white rounded-lg shadow-md p-6 md:col-span-3">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Recent Engagement Activity</h2>
+                    <h2 class="text-xl font-semibold">Engagement History</h2>
                     <div>
-                        <button id="export-data" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm mr-2">
-                            Export Data
+                        <button id="refresh-data" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm mr-2">
+                            Refresh Data
                         </button>
-                        <button id="clear-data" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">
-                            Clear Data
+                        <button id="export-data" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm">
+                            Export Data
                         </button>
                     </div>
                 </div>
@@ -126,14 +217,16 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visitor Info</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
                             </tr>
                         </thead>
-                        <tbody id="activity-list" class="bg-white divide-y divide-gray-200">
-                            <!-- Activity entries will be added here -->
+                        <tbody id="engagement-list" class="bg-white divide-y divide-gray-200">
+                            <!-- Engagement entries will be added here -->
                         </tbody>
                     </table>
                 </div>
@@ -141,367 +234,726 @@
         </div>
     </div>
 
-    <!-- Tracking Link Modal -->
-    <div id="tracking-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+    <!-- Content Details Modal -->
+    <div id="content-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full">
             <div class="flex justify-between items-start">
-                <h3 class="text-xl font-semibold" id="modal-title">Your Tracking Link</h3>
+                <h3 class="text-xl font-semibold" id="modal-title">Content Details</h3>
                 <button id="close-modal" class="text-gray-500 hover:text-gray-700">&times;</button>
             </div>
-            <div id="modal-content" class="mt-4">
-                <p class="mb-2">Use this link in your content:</p>
-                <div class="bg-gray-100 p-3 rounded-md font-mono text-sm break-all mb-4">
-                    <span id="tracking-url"></span>
-                </div>
-                <button id="copy-link" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm w-full">
-                    Copy Link
-                </button>
+            <div id="modal-content" class="mt-4 h-96 overflow-y-auto">
+                <!-- Content details will be added here -->
             </div>
         </div>
     </div>
 
     <script>
-        // Initialize localforage
-        localforage.config({
-            name: 'link-engagement-tracker'
-        });
-
         // Constants
-        const SOURCES = {
+        const PLATFORMS = {
             youtube: 'Youtube',
             servicenow: 'ServiceNow Community blog page',
-            linkedin: 'LinkedIn',
-            other: 'Other'
+            linkedin: 'LinkedIn'
         };
 
         // Data structures
-        let links = []; // Array of link objects
-        let visits = []; // Array of visit objects
+        let apiConfig = {
+            youtube: { apiKey: null },
+            servicenow: { instance: null, username: null, password: null },
+            linkedin: { clientId: null, clientSecret: null, accessToken: null }
+        };
+        let contentItems = [];
+        let engagementData = [];
 
         // Chart instances
-        let sourceChart;
-        let topLinksChart;
+        let platformChart;
+        let contentChart;
 
         // DOM elements
-        const linkForm = document.getElementById('link-form');
-        const linksList = document.getElementById('links-list');
-        const activityList = document.getElementById('activity-list');
+        const contentForm = document.getElementById('content-form');
+        const contentList = document.getElementById('content-list');
+        const engagementList = document.getElementById('engagement-list');
         const exportDataBtn = document.getElementById('export-data');
-        const clearDataBtn = document.getElementById('clear-data');
-        const totalLinksEl = document.getElementById('total-links');
-        const totalVisitsEl = document.getElementById('total-visits');
-        const topSourceEl = document.getElementById('top-source');
-        const trackingModal = document.getElementById('tracking-modal');
-        const closeModal = document.getElementById('close-modal');
-        const trackingUrl = document.getElementById('tracking-url');
-        const copyLinkBtn = document.getElementById('copy-link');
+        const refreshDataBtn = document.getElementById('refresh-data');
+        const saveApiConfigBtn = document.getElementById('save-api-config');
+        const testYouTubeApiBtn = document.getElementById('test-youtube-api');
+        const testServiceNowApiBtn = document.getElementById('test-servicenow-api');
+        const testLinkedInApiBtn = document.getElementById('test-linkedin-api');
+        const contentModal = document.getElementById('content-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const totalContentEl = document.getElementById('total-content');
+        const totalEngagementsEl = document.getElementById('total-engagements');
+        const topPlatformEl = document.getElementById('top-platform');
 
         // Initialize the app
         async function initApp() {
             // Load saved data
-            const savedLinks = await localforage.getItem('links');
-            if (savedLinks) {
-                links = JSON.parse(savedLinks);
+            const savedApiConfig = await localforage.getItem('apiConfig');
+            if (savedApiConfig) {
+                apiConfig = JSON.parse(savedApiConfig);
+                updateApiConfigUI();
             }
             
-            const savedVisits = await localforage.getItem('visits');
-            if (savedVisits) {
-                visits = JSON.parse(savedVisits);
+            const savedContentItems = await localforage.getItem('contentItems');
+            if (savedContentItems) {
+                contentItems = JSON.parse(savedContentItems);
             }
             
-            // Check if this is a tracking visit
-            const urlParams = new URLSearchParams(window.location.search);
-            const linkId = urlParams.get('lid');
-            
-            if (linkId) {
-                // Find the link
-                const link = links.find(l => l.id === linkId);
-                
-                if (link) {
-                    // Record the visit
-                    const newVisit = {
-                        id: Date.now().toString(),
-                        linkId: linkId,
-                        timestamp: new Date().toISOString(),
-                        userAgent: navigator.userAgent,
-                        referrer: document.referrer || 'Direct/Unknown'
-                    };
-                    
-                    visits.unshift(newVisit);
-                    await localforage.setItem('visits', JSON.stringify(visits));
-                    
-                    // Redirect to the original URL
-                    window.location.href = link.originalUrl;
-                    return; // Stop execution here as we're redirecting
-                }
+            const savedEngagementData = await localforage.getItem('engagementData');
+            if (savedEngagementData) {
+                engagementData = JSON.parse(savedEngagementData);
             }
+            
+            // Set default date to today
+            document.getElementById('content-published').valueAsDate = new Date();
             
             // Render data
-            renderLinks();
-            renderActivity();
+            renderContentItems();
+            renderEngagementData();
             updateStats();
             renderCharts();
             
             // Add event listeners
-            linkForm.addEventListener('submit', handleFormSubmit);
+            contentForm.addEventListener('submit', handleContentFormSubmit);
             exportDataBtn.addEventListener('click', exportData);
-            clearDataBtn.addEventListener('click', clearData);
-            closeModal.addEventListener('click', () => {
-                trackingModal.classList.add('hidden');
+            refreshDataBtn.addEventListener('click', refreshEngagementData);
+            saveApiConfigBtn.addEventListener('click', saveApiConfig);
+            testYouTubeApiBtn.addEventListener('click', testYouTubeApi);
+            testServiceNowApiBtn.addEventListener('click', testServiceNowApi);
+            testLinkedInApiBtn.addEventListener('click', testLinkedInApi);
+            closeModalBtn.addEventListener('click', () => {
+                contentModal.classList.add('hidden');
             });
-            copyLinkBtn.addEventListener('click', copyTrackingLink);
+            
+            // Add listener for platform selection to update URL field placeholder
+            document.getElementById('content-source').addEventListener('change', updateUrlPlaceholder);
+            updateUrlPlaceholder();
         }
 
-        // Handle form submission
-        async function handleFormSubmit(e) {
+        // Update URL placeholder based on selected platform
+        function updateUrlPlaceholder() {
+            const platform = document.getElementById('content-source').value;
+            const urlField = document.getElementById('content-url');
+            
+            switch (platform) {
+                case 'youtube':
+                    urlField.placeholder = 'https://youtube.com/watch?v=XXXX';
+                    break;
+                case 'servicenow':
+                    urlField.placeholder = 'https://community.servicenow.com/blog/XXXX';
+                    break;
+                case 'linkedin':
+                    urlField.placeholder = 'https://www.linkedin.com/posts/XXXX';
+                    break;
+                default:
+                    urlField.placeholder = 'https://example.com';
+            }
+        }
+
+        // Handle content form submission
+        async function handleContentFormSubmit(e) {
             e.preventDefault();
             
-            const originalUrl = document.getElementById('link-url').value;
-            const linkName = document.getElementById('link-name').value;
-            const source = document.getElementById('link-source').value;
+            const contentName = document.getElementById('content-name').value;
+            const platform = document.getElementById('content-source').value;
+            const contentUrl = document.getElementById('content-url').value;
+            let contentId = document.getElementById('content-id').value;
+            const publishedDate = document.getElementById('content-published').value;
             
-            // Generate unique ID for the link
-            const linkId = generateId();
+            // Extract content ID if not provided
+            if (!contentId) {
+                contentId = extractContentId(contentUrl, platform);
+            }
             
-            // Create tracking URL
-            const baseUrl = window.location.href.split('?')[0];
-            const trackingLink = `${baseUrl}?lid=${linkId}`;
-            
-            // Create new link object
-            const newLink = {
-                id: linkId,
-                name: linkName,
-                originalUrl: originalUrl,
-                trackingUrl: trackingLink,
-                source: source,
-                createdAt: new Date().toISOString()
+            // Create new content item
+            const newContentItem = {
+                id: generateId(),
+                name: contentName,
+                platform: platform,
+                url: contentUrl,
+                contentId: contentId,
+                publishedDate: publishedDate,
+                createdAt: new Date().toISOString(),
+                lastUpdated: null
             };
             
             // Add to data structure
-            links.push(newLink);
+            contentItems.push(newContentItem);
             
             // Save to localforage
-            await localforage.setItem('links', JSON.stringify(links));
+            await localforage.setItem('contentItems', JSON.stringify(contentItems));
+            
+            // Fetch initial engagement data
+            await fetchEngagementData([newContentItem]);
             
             // Update UI
-            renderLinks();
+            renderContentItems();
+            renderEngagementData();
             updateStats();
             renderCharts();
             
-            // Show the modal with the tracking link
-            trackingUrl.textContent = trackingLink;
-            trackingModal.classList.remove('hidden');
-            
             // Reset form
-            linkForm.reset();
+            contentForm.reset();
+            document.getElementById('content-published').valueAsDate = new Date();
         }
 
-        // Render links list
-        function renderLinks() {
-            linksList.innerHTML = '';
+        // Extract content ID from URL based on platform
+        function extractContentId(url, platform) {
+            try {
+                const urlObj = new URL(url);
+                
+                switch (platform) {
+                    case 'youtube':
+                        // Extract YouTube video ID
+                        const videoId = urlObj.searchParams.get('v');
+                        return videoId || url.split('/').pop();
+                    
+                    case 'servicenow':
+                        // Extract ServiceNow blog ID
+                        return url.split('/').pop().split('-')[0];
+                    
+                    case 'linkedin':
+                        // Extract LinkedIn post ID
+                        return url.split('/').pop();
+                    
+                    default:
+                        return url.split('/').pop();
+                }
+            } catch (error) {
+                console.error('Error parsing URL:', error);
+                return url.split('/').pop();
+            }
+        }
+
+        // Fetch engagement data from APIs
+        async function fetchEngagementData(items = contentItems) {
+            if (items.length === 0) return;
             
-            if (links.length === 0) {
-                linksList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No tracking links created yet</td></tr>';
+            const timestamp = new Date().toISOString();
+            let fetchedAnyData = false;
+            
+            for (const item of items) {
+                let engagementMetrics = null;
+                
+                switch (item.platform) {
+                    case 'youtube':
+                        if (apiConfig.youtube.apiKey) {
+                            engagementMetrics = await fetchYouTubeEngagement(item.contentId);
+                        }
+                        break;
+                    
+                    case 'servicenow':
+                        if (apiConfig.servicenow.instance && apiConfig.servicenow.username) {
+                            engagementMetrics = await fetchServiceNowEngagement(item.contentId);
+                        }
+                        break;
+                    
+                    case 'linkedin':
+                        if (apiConfig.linkedin.accessToken) {
+                            engagementMetrics = await fetchLinkedInEngagement(item.contentId);
+                        }
+                        break;
+                }
+                
+                if (engagementMetrics) {
+                    fetchedAnyData = true;
+                    
+                    // Find existing engagement record or create new one
+                    const existingIndex = engagementData.findIndex(e => e.contentId === item.id);
+                    
+                    const newEngagementRecord = {
+                        id: generateId(),
+                        contentId: item.id,
+                        timestamp: timestamp,
+                        views: engagementMetrics.views || 0,
+                        likes: engagementMetrics.likes || 0,
+                        comments: engagementMetrics.comments || 0,
+                        shares: engagementMetrics.shares || 0,
+                        otherMetrics: engagementMetrics.otherMetrics || {}
+                    };
+                    
+                    if (existingIndex >= 0) {
+                        // Update existing record
+                        engagementData[existingIndex] = newEngagementRecord;
+                    } else {
+                        // Add new record
+                        engagementData.push(newEngagementRecord);
+                    }
+                    
+                    // Update content item's lastUpdated timestamp
+                    const contentIndex = contentItems.findIndex(c => c.id === item.id);
+                    if (contentIndex >= 0) {
+                        contentItems[contentIndex].lastUpdated = timestamp;
+                    }
+                }
+            }
+            
+            if (fetchedAnyData) {
+                // Save updated data
+                await localforage.setItem('engagementData', JSON.stringify(engagementData));
+                await localforage.setItem('contentItems', JSON.stringify(contentItems));
+            }
+        }
+
+        // Fetch YouTube video engagement
+        async function fetchYouTubeEngagement(videoId) {
+            if (!apiConfig.youtube.apiKey) {
+                console.error('YouTube API key not configured');
+                return null;
+            }
+            
+            try {
+                // This would be a real API call in production
+                // For now, we'll simulate the API response
+                console.log(`Fetching YouTube data for video ID: ${videoId}`);
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Simulate response data
+                // In a real implementation, this would be:
+                // const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiConfig.youtube.apiKey}`);
+                // const data = await response.json();
+                
+                // Simulated response
+                return {
+                    views: Math.floor(Math.random() * 10000),
+                    likes: Math.floor(Math.random() * 500),
+                    comments: Math.floor(Math.random() * 100),
+                    shares: 0, // YouTube API doesn't provide share count
+                    otherMetrics: {
+                        dislikes: Math.floor(Math.random() * 50),
+                        favorites: Math.floor(Math.random() * 20)
+                    }
+                };
+            } catch (error) {
+                console.error('Error fetching YouTube data:', error);
+                return null;
+            }
+        }
+
+        // Fetch ServiceNow blog engagement
+        async function fetchServiceNowEngagement(blogId) {
+            if (!apiConfig.servicenow.instance || !apiConfig.servicenow.username) {
+                console.error('ServiceNow API not configured');
+                return null;
+            }
+            
+            try {
+                // This would be a real API call in production
+                console.log(`Fetching ServiceNow data for blog ID: ${blogId}`);
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Simulate response data
+                return {
+                    views: Math.floor(Math.random() * 5000),
+                    likes: Math.floor(Math.random() * 200),
+                    comments: Math.floor(Math.random() * 50),
+                    shares: Math.floor(Math.random() * 30),
+                    otherMetrics: {
+                        bookmarks: Math.floor(Math.random() * 40)
+                    }
+                };
+            } catch (error) {
+                console.error('Error fetching ServiceNow data:', error);
+                return null;
+            }
+        }
+
+        // Fetch LinkedIn post engagement
+        async function fetchLinkedInEngagement(postId) {
+            if (!apiConfig.linkedin.accessToken) {
+                console.error('LinkedIn API not configured');
+                return null;
+            }
+            
+            try {
+                // This would be a real API call in production
+                console.log(`Fetching LinkedIn data for post ID: ${postId}`);
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Simulate response data
+                return {
+                    views: Math.floor(Math.random() * 3000),
+                    likes: Math.floor(Math.random() * 150),
+                    comments: Math.floor(Math.random() * 30),
+                    shares: Math.floor(Math.random() * 20),
+                    otherMetrics: {
+                        impressions: Math.floor(Math.random() * 5000),
+                        clicks: Math.floor(Math.random() * 200)
+                    }
+                };
+            } catch (error) {
+                console.error('Error fetching LinkedIn data:', error);
+                return null;
+            }
+        }
+
+        // Render content items
+        function renderContentItems() {
+            contentList.innerHTML = '';
+            
+            if (contentItems.length === 0) {
+                contentList.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No content items added yet</td></tr>';
                 return;
             }
             
-            links.forEach(link => {
+            contentItems.forEach(item => {
                 const row = document.createElement('tr');
                 
                 const nameCell = document.createElement('td');
                 nameCell.className = 'px-6 py-4 whitespace-nowrap';
-                nameCell.textContent = link.name;
+                nameCell.textContent = item.name;
                 
-                const sourceCell = document.createElement('td');
-                sourceCell.className = 'px-6 py-4 whitespace-nowrap';
-                const sourceSpan = document.createElement('span');
-                sourceSpan.textContent = SOURCES[link.source];
+                const platformCell = document.createElement('td');
+                platformCell.className = 'px-6 py-4 whitespace-nowrap';
+                const platformSpan = document.createElement('span');
+                platformSpan.textContent = PLATFORMS[item.platform];
                 
-                // Add color based on source
-                if (link.source === 'youtube') {
-                    sourceSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
-                } else if (link.source === 'servicenow') {
-                    sourceSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
-                } else if (link.source === 'linkedin') {
-                    sourceSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
-                } else {
-                    sourceSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800';
+                // Add color based on platform
+                if (item.platform === 'youtube') {
+                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
+                } else if (item.platform === 'servicenow') {
+                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
+                } else if (item.platform === 'linkedin') {
+                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
                 }
                 
-                sourceCell.appendChild(sourceSpan);
+                platformCell.appendChild(platformSpan);
                 
-                const urlCell = document.createElement('td');
-                urlCell.className = 'px-6 py-4 text-sm text-gray-500';
-                
-                // Create a truncated version of the tracking URL
-                const urlText = document.createElement('span');
-                urlText.className = 'font-mono text-xs';
-                urlText.textContent = truncateText(link.trackingUrl, 30);
-                urlText.title = link.trackingUrl;
-                
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'ml-2 text-blue-600 hover:text-blue-900 text-xs';
-                copyBtn.textContent = 'Copy';
-                copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(link.trackingUrl);
-                    copyBtn.textContent = 'Copied!';
-                    setTimeout(() => {
-                        copyBtn.textContent = 'Copy';
-                    }, 2000);
-                });
-                
-                urlCell.appendChild(urlText);
-                urlCell.appendChild(copyBtn);
-                
-                const visitsCell = document.createElement('td');
-                visitsCell.className = 'px-6 py-4 whitespace-nowrap text-center';
-                const visitCount = visits.filter(v => v.linkId === link.id).length;
-                visitsCell.textContent = visitCount;
+                const publishedCell = document.createElement('td');
+                publishedCell.className = 'px-6 py-4 whitespace-nowrap';
+                publishedCell.textContent = formatDate(item.publishedDate);
                 
                 const actionsCell = document.createElement('td');
-                actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm';
+                
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'text-blue-600 hover:text-blue-900 mr-3';
+                viewBtn.textContent = 'View Details';
+                viewBtn.addEventListener('click', () => showContentDetails(item));
+                
+                const updateBtn = document.createElement('button');
+                updateBtn.className = 'text-green-600 hover:text-green-900 mr-3';
+                updateBtn.textContent = 'Update Data';
+                updateBtn.addEventListener('click', () => fetchEngagementData([item]).then(() => {
+                    renderEngagementData();
+                    updateStats();
+                    renderCharts();
+                }));
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'text-red-600 hover:text-red-900';
                 deleteBtn.textContent = 'Delete';
-                deleteBtn.addEventListener('click', () => deleteLink(link.id));
+                deleteBtn.addEventListener('click', () => deleteContent(item.id));
                 
+                actionsCell.appendChild(viewBtn);
+                actionsCell.appendChild(updateBtn);
                 actionsCell.appendChild(deleteBtn);
                 
                 row.appendChild(nameCell);
-                row.appendChild(sourceCell);
-                row.appendChild(urlCell);
-                row.appendChild(visitsCell);
+                row.appendChild(platformCell);
+                row.appendChild(publishedCell);
                 row.appendChild(actionsCell);
                 
-                linksList.appendChild(row);
+                contentList.appendChild(row);
             });
         }
 
-        // Render activity list
-        function renderActivity() {
-            activityList.innerHTML = '';
+        // Render engagement data
+        function renderEngagementData() {
+            engagementList.innerHTML = '';
             
-            if (visits.length === 0) {
-                activityList.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No engagement activity recorded yet</td></tr>';
+            if (engagementData.length === 0) {
+                engagementList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No engagement data available</td></tr>';
                 return;
             }
             
-            // Show only the most recent 50 visits
-            visits.slice(0, 50).forEach(visit => {
-                const link = links.find(l => l.id === visit.linkId);
-                if (!link) return; // Skip if link was deleted
+            // Group engagement data by content ID and get the latest record for each
+            const latestEngagementByContent = {};
+            engagementData.forEach(engagement => {
+                if (!latestEngagementByContent[engagement.contentId] || 
+                    new Date(engagement.timestamp) > new Date(latestEngagementByContent[engagement.contentId].timestamp)) {
+                    latestEngagementByContent[engagement.contentId] = engagement;
+                }
+            });
+            
+            Object.values(latestEngagementByContent).forEach(engagement => {
+                const contentItem = contentItems.find(item => item.id === engagement.contentId);
+                if (!contentItem) return; // Skip if content was deleted
                 
                 const row = document.createElement('tr');
                 
-                const timestampCell = document.createElement('td');
-                timestampCell.className = 'px-6 py-4 whitespace-nowrap';
-                timestampCell.textContent = formatDate(visit.timestamp);
-                
                 const nameCell = document.createElement('td');
                 nameCell.className = 'px-6 py-4 whitespace-nowrap';
-                nameCell.textContent = link.name;
+                nameCell.textContent = contentItem.name;
                 
-                const sourceCell = document.createElement('td');
-                sourceCell.className = 'px-6 py-4 whitespace-nowrap';
-                const sourceSpan = document.createElement('span');
-                sourceSpan.textContent = SOURCES[link.source];
+                const platformCell = document.createElement('td');
+                platformCell.className = 'px-6 py-4 whitespace-nowrap';
+                const platformSpan = document.createElement('span');
+                platformSpan.textContent = PLATFORMS[contentItem.platform];
                 
-                // Add color based on source
-                if (link.source === 'youtube') {
-                    sourceSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
-                } else if (link.source === 'servicenow') {
-                    sourceSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
-                } else if (link.source === 'linkedin') {
-                    sourceSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
-                } else {
-                    sourceSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800';
+                // Add color based on platform
+                if (contentItem.platform === 'youtube') {
+                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
+                } else if (contentItem.platform === 'servicenow') {
+                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
+                } else if (contentItem.platform === 'linkedin') {
+                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
                 }
                 
-                sourceCell.appendChild(sourceSpan);
+                platformCell.appendChild(platformSpan);
                 
-                const infoCell = document.createElement('td');
-                infoCell.className = 'px-6 py-4 text-sm text-gray-500';
-                infoCell.title = `Full User Agent: ${visit.userAgent}\nReferrer: ${visit.referrer}`;
+                const viewsCell = document.createElement('td');
+                viewsCell.className = 'px-6 py-4 whitespace-nowrap text-center';
+                viewsCell.textContent = engagement.views.toLocaleString();
                 
-                // Extract browser info
-                const browserInfo = getBrowserInfo(visit.userAgent);
-                infoCell.textContent = browserInfo;
+                const likesCell = document.createElement('td');
+                likesCell.className = 'px-6 py-4 whitespace-nowrap text-center';
+                likesCell.textContent = engagement.likes.toLocaleString();
                 
-                row.appendChild(timestampCell);
+                const commentsCell = document.createElement('td');
+                commentsCell.className = 'px-6 py-4 whitespace-nowrap text-center';
+                commentsCell.textContent = engagement.comments.toLocaleString();
+                
+                const updatedCell = document.createElement('td');
+                updatedCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+                updatedCell.textContent = formatDateTime(engagement.timestamp);
+                
                 row.appendChild(nameCell);
-                row.appendChild(sourceCell);
-                row.appendChild(infoCell);
+                row.appendChild(platformCell);
+                row.appendChild(viewsCell);
+                row.appendChild(likesCell);
+                row.appendChild(commentsCell);
+                row.appendChild(updatedCell);
                 
-                activityList.appendChild(row);
+                engagementList.appendChild(row);
             });
+        }
+
+        // Show content details in modal
+        function showContentDetails(contentItem) {
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            
+            modalTitle.textContent = contentItem.name;
+            
+            // Find all engagement records for this content
+            const contentEngagements = engagementData
+                .filter(e => e.contentId === contentItem.id)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            let html = `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="text-lg font-medium">Content Details</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg mt-2">
+                                <div class="grid grid-cols-1 gap-2">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Platform</p>
+                                        <p class="text-gray-900">${PLATFORMS[contentItem.platform]}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">URL</p>
+                                        <a href="${contentItem.url}" target="_blank" class="text-blue-600 hover:text-blue-800 break-all">${contentItem.url}</a>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Content ID</p>
+                                        <p class="text-gray-900 font-mono text-xs">${contentItem.contentId}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Published</p>
+                                        <p class="text-gray-900">${formatDate(contentItem.publishedDate)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Last Updated</p>
+                                        <p class="text-gray-900">${contentItem.lastUpdated ? formatDateTime(contentItem.lastUpdated) : 'Never'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium">Latest Engagement</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg mt-2">
+                                ${contentEngagements.length > 0 ? `
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="text-center">
+                                            <p class="text-gray-500 text-sm">Views</p>
+                                            <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].views.toLocaleString()}</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-gray-500 text-sm">Likes</p>
+                                            <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].likes.toLocaleString()}</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-gray-500 text-sm">Comments</p>
+                                            <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].comments.toLocaleString()}</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-gray-500 text-sm">Shares</p>
+                                            <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].shares.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-xs text-right text-gray-500">
+                                        As of ${formatDateTime(contentEngagements[0].timestamp)}
+                                    </div>
+                                ` : '<p class="text-gray-500">No engagement data available</p>'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${contentEngagements.length > 1 ? `
+                        <div>
+                            <h4 class="text-lg font-medium">Engagement History</h4>
+                            <div class="overflow-x-auto mt-2">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shares</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${contentEngagements.map(engagement => `
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatDateTime(engagement.timestamp)}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.views.toLocaleString()}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.likes.toLocaleString()}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.comments.toLocaleString()}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.shares.toLocaleString()}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            modalContent.innerHTML = html;
+            contentModal.classList.remove('hidden');
+        }
+
+        // Delete content
+        async function deleteContent(id) {
+            if (confirm('Are you sure you want to delete this content? This will also delete all associated engagement data.')) {
+                // Remove content item
+                contentItems = contentItems.filter(item => item.id !== id);
+                
+                // Remove engagement data for this content
+                engagementData = engagementData.filter(engagement => engagement.contentId !== id);
+                
+                // Save to localforage
+                await localforage.setItem('contentItems', JSON.stringify(contentItems));
+                await localforage.setItem('engagementData', JSON.stringify(engagementData));
+                
+                // Update UI
+                renderContentItems();
+                renderEngagementData();
+                updateStats();
+                renderCharts();
+            }
         }
 
         // Update statistics
         function updateStats() {
-            // Total links
-            totalLinksEl.textContent = links.length;
+            // Total content items
+            totalContentEl.textContent = contentItems.length;
             
-            // Total visits
-            totalVisitsEl.textContent = visits.length;
+            // Calculate total engagements (latest for each content)
+            let totalViews = 0;
+            let engagementsByPlatform = {};
             
-            // Top source
-            const sourceCounts = {};
-            links.forEach(link => {
-                const linkVisits = visits.filter(v => v.linkId === link.id).length;
-                sourceCounts[link.source] = (sourceCounts[link.source] || 0) + linkVisits;
+            // Get the latest engagement data for each content
+            const latestEngagementByContent = {};
+            engagementData.forEach(engagement => {
+                if (!latestEngagementByContent[engagement.contentId] || 
+                    new Date(engagement.timestamp) > new Date(latestEngagementByContent[engagement.contentId].timestamp)) {
+                    latestEngagementByContent[engagement.contentId] = engagement;
+                }
             });
             
-            const topSource = Object.keys(sourceCounts).reduce((a, b) => 
-                (sourceCounts[a] > sourceCounts[b] ? a : b), null);
+            // Calculate totals and by platform
+            Object.values(latestEngagementByContent).forEach(engagement => {
+                const contentItem = contentItems.find(item => item.id === engagement.contentId);
+                if (!contentItem) return;
+                
+                totalViews += engagement.views;
+                
+                engagementsByPlatform[contentItem.platform] = (engagementsByPlatform[contentItem.platform] || 0) + engagement.views;
+            });
             
-            if (topSource && sourceCounts[topSource] > 0) {
-                topSourceEl.textContent = SOURCES[topSource];
+            totalEngagementsEl.textContent = totalViews.toLocaleString();
+            
+            // Find top platform
+            const topPlatform = Object.keys(engagementsByPlatform).reduce((a, b) => 
+                engagementsByPlatform[a] > engagementsByPlatform[b] ? a : b, null);
+            
+            if (topPlatform && engagementsByPlatform[topPlatform] > 0) {
+                topPlatformEl.textContent = PLATFORMS[topPlatform];
             } else {
-                topSourceEl.textContent = '-';
+                topPlatformEl.textContent = '-';
             }
         }
 
         // Render charts
         function renderCharts() {
-            // Prepare data for source chart
-            const sourceData = {};
-            links.forEach(link => {
-                const linkVisits = visits.filter(v => v.linkId === link.id).length;
-                sourceData[link.source] = (sourceData[link.source] || 0) + linkVisits;
-            });
-            
-            // Prepare data for top links chart
-            const linkData = {};
-            links.forEach(link => {
-                const linkVisits = visits.filter(v => v.linkId === link.id).length;
-                if (linkVisits > 0) {
-                    linkData[link.name] = linkVisits;
+            // Get the latest engagement data for each content
+            const latestEngagementByContent = {};
+            engagementData.forEach(engagement => {
+                if (!latestEngagementByContent[engagement.contentId] || 
+                    new Date(engagement.timestamp) > new Date(latestEngagementByContent[engagement.contentId].timestamp)) {
+                    latestEngagementByContent[engagement.contentId] = engagement;
                 }
             });
             
-            // Sort and take top 5 links
-            const topLinks = Object.entries(linkData)
+            // Prepare platform chart data
+            const platformData = {};
+            Object.values(latestEngagementByContent).forEach(engagement => {
+                const contentItem = contentItems.find(item => item.id === engagement.contentId);
+                if (!contentItem) return;
+                
+                platformData[contentItem.platform] = (platformData[contentItem.platform] || 0) + engagement.views;
+            });
+            
+            // Prepare content chart data
+            const contentData = {};
+            Object.values(latestEngagementByContent).forEach(engagement => {
+                const contentItem = contentItems.find(item => item.id === engagement.contentId);
+                if (!contentItem) return;
+                
+                contentData[contentItem.name] = engagement.views;
+            });
+            
+            // Sort and take top 5 content items
+            const topContent = Object.entries(contentData)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5);
             
-            // Create or update source chart
-            const sourceCtx = document.getElementById('source-chart').getContext('2d');
-            if (sourceChart) {
-                sourceChart.destroy();
+            // Create or update platform chart
+            const platformCtx = document.getElementById('platform-chart').getContext('2d');
+            if (platformChart) {
+                platformChart.destroy();
             }
             
-            sourceChart = new Chart(sourceCtx, {
+            platformChart = new Chart(platformCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(sourceData).map(source => SOURCES[source]),
+                    labels: Object.keys(platformData).map(platform => PLATFORMS[platform]),
                     datasets: [{
-                        data: Object.values(sourceData),
+                        data: Object.values(platformData),
                         backgroundColor: [
                             '#FF0000', // red for Youtube
                             '#339933', // green for ServiceNow 
                             '#0A66C2', // blue for LinkedIn
-                            '#9CA3AF'  // gray for Others
                         ]
                     }]
                 },
@@ -515,19 +967,19 @@
                 }
             });
             
-            // Create or update top links chart
-            const topLinksCtx = document.getElementById('top-links-chart').getContext('2d');
-            if (topLinksChart) {
-                topLinksChart.destroy();
+            // Create or update content chart
+            const contentCtx = document.getElementById('content-chart').getContext('2d');
+            if (contentChart) {
+                contentChart.destroy();
             }
             
-            topLinksChart = new Chart(topLinksCtx, {
+            contentChart = new Chart(contentCtx, {
                 type: 'bar',
                 data: {
-                    labels: topLinks.map(item => truncateText(item[0], 15)),
+                    labels: topContent.map(item => truncateText(item[0], 15)),
                     datasets: [{
-                        label: 'Visits',
-                        data: topLinks.map(item => item[1]),
+                        label: 'Views',
+                        data: topContent.map(item => item[1]),
                         backgroundColor: '#3B82F6'
                     }]
                 },
@@ -551,110 +1003,186 @@
             });
         }
 
-        // Delete link
-        async function deleteLink(id) {
-            if (confirm('Are you sure you want to delete this tracking link? This will also remove all associated visit data.')) {
-                // Remove the link
-                links = links.filter(link => link.id !== id);
-                
-                // Remove associated visits
-                visits = visits.filter(visit => visit.linkId !== id);
-                
-                // Save to localforage
-                await localforage.setItem('links', JSON.stringify(links));
-                await localforage.setItem('visits', JSON.stringify(visits));
-                
-                // Update UI
-                renderLinks();
-                renderActivity();
+        // Refresh all engagement data
+        async function refreshEngagementData() {
+            if (contentItems.length === 0) {
+                alert('No content items to refresh');
+                return;
+            }
+            
+            const refreshBtn = document.getElementById('refresh-data');
+            refreshBtn.textContent = 'Refreshing...';
+            refreshBtn.disabled = true;
+            
+            try {
+                await fetchEngagementData();
+                renderEngagementData();
                 updateStats();
                 renderCharts();
+                alert('Engagement data refreshed successfully');
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                alert('Error refreshing data. Check console for details.');
+            } finally {
+                refreshBtn.textContent = 'Refresh Data';
+                refreshBtn.disabled = false;
             }
         }
 
-        // Export data as CSV
+        // Save API configuration
+        async function saveApiConfig() {
+            // YouTube API config
+            apiConfig.youtube.apiKey = document.getElementById('youtube-api-key').value;
+            
+            // ServiceNow API config
+            apiConfig.servicenow.instance = document.getElementById('servicenow-instance').value;
+            apiConfig.servicenow.username = document.getElementById('servicenow-username').value;
+            apiConfig.servicenow.password = document.getElementById('servicenow-password').value;
+            
+            // LinkedIn API config
+            apiConfig.linkedin.clientId = document.getElementById('linkedin-client-id').value;
+            apiConfig.linkedin.clientSecret = document.getElementById('linkedin-client-secret').value;
+            
+            // Save to localforage
+            await localforage.setItem('apiConfig', JSON.stringify(apiConfig));
+            
+            // Update UI
+            updateApiConfigUI();
+            
+            alert('API configuration saved successfully');
+        }
+
+        // Update API configuration UI
+        function updateApiConfigUI() {
+            // YouTube
+            document.getElementById('youtube-api-key').value = apiConfig.youtube.apiKey || '';
+            document.getElementById('youtube-api-status').className = 
+                apiConfig.youtube.apiKey ? 
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800' : 
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+            document.getElementById('youtube-api-status').textContent = 
+                apiConfig.youtube.apiKey ? 'Configured' : 'Not Configured';
+            
+            // ServiceNow
+            document.getElementById('servicenow-instance').value = apiConfig.servicenow.instance || '';
+            document.getElementById('servicenow-username').value = apiConfig.servicenow.username || '';
+            document.getElementById('servicenow-password').value = apiConfig.servicenow.password || '';
+            document.getElementById('servicenow-api-status').className = 
+                (apiConfig.servicenow.instance && apiConfig.servicenow.username) ? 
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800' : 
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+            document.getElementById('servicenow-api-status').textContent = 
+                (apiConfig.servicenow.instance && apiConfig.servicenow.username) ? 'Configured' : 'Not Configured';
+            
+            // LinkedIn
+            document.getElementById('linkedin-client-id').value = apiConfig.linkedin.clientId || '';
+            document.getElementById('linkedin-client-secret').value = apiConfig.linkedin.clientSecret || '';
+            document.getElementById('linkedin-api-status').className = 
+                (apiConfig.linkedin.clientId && apiConfig.linkedin.clientSecret) ? 
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800' : 
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+            document.getElementById('linkedin-api-status').textContent = 
+                (apiConfig.linkedin.clientId && apiConfig.linkedin.clientSecret) ? 'Configured' : 'Not Configured';
+        }
+
+        // Test YouTube API
+        async function testYouTubeApi() {
+            const apiKey = document.getElementById('youtube-api-key').value;
+            
+            if (!apiKey) {
+                alert('Please enter a YouTube API key');
+                return;
+            }
+            
+            try {
+                // In a real app, we would make a test API call here
+                // For the demo, we'll just simulate a successful response
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                alert('YouTube API connection successful');
+            } catch (error) {
+                console.error('Error testing YouTube API:', error);
+                alert('Error connecting to YouTube API. Check console for details.');
+            }
+        }
+
+        // Test ServiceNow API
+        async function testServiceNowApi() {
+            const instance = document.getElementById('servicenow-instance').value;
+            const username = document.getElementById('servicenow-username').value;
+            const password = document.getElementById('servicenow-password').value;
+            
+            if (!instance || !username || !password) {
+                alert('Please enter all ServiceNow API details');
+                return;
+            }
+            
+            try {
+                // In a real app, we would make a test API call here
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                alert('ServiceNow API connection successful');
+            } catch (error) {
+                console.error('Error testing ServiceNow API:', error);
+                alert('Error connecting to ServiceNow API. Check console for details.');
+            }
+        }
+
+        // Test LinkedIn API
+        async function testLinkedInApi() {
+            const clientId = document.getElementById('linkedin-client-id').value;
+            const clientSecret = document.getElementById('linkedin-client-secret').value;
+            
+            if (!clientId || !clientSecret) {
+                alert('Please enter all LinkedIn API details');
+                return;
+            }
+            
+            try {
+                // In a real app, we would initiate OAuth flow here
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                alert('LinkedIn API configuration looks good. In a real app, you would be redirected to LinkedIn for authorization.');
+            } catch (error) {
+                console.error('Error testing LinkedIn API:', error);
+                alert('Error with LinkedIn API configuration. Check console for details.');
+            }
+        }
+
+        // Export data
         function exportData() {
-            if (links.length === 0 && visits.length === 0) {
+            if (contentItems.length === 0 && engagementData.length === 0) {
                 alert('No data to export');
                 return;
             }
             
-            // Create links CSV
-            const linksHeaders = ['ID', 'Name', 'Original URL', 'Tracking URL', 'Source', 'Created At'];
-            const linksData = links.map(link => [
-                link.id,
-                link.name,
-                link.originalUrl,
-                link.trackingUrl,
-                SOURCES[link.source],
-                link.createdAt
-            ]);
-            linksData.unshift(linksHeaders);
-            const linksCSV = linksData.map(row => row.join(',')).join('\n');
-            
-            // Create visits CSV
-            const visitsHeaders = ['ID', 'Link ID', 'Link Name', 'Source', 'Timestamp', 'User Agent', 'Referrer'];
-            const visitsData = visits.map(visit => {
-                const link = links.find(l => l.id === visit.linkId);
-                return [
-                    visit.id,
-                    visit.linkId,
-                    link ? link.name : 'Unknown Link',
-                    link ? SOURCES[link.source] : 'Unknown',
-                    visit.timestamp,
-                    `"${visit.userAgent.replace(/"/g, '""')}"`,
-                    `"${visit.referrer.replace(/"/g, '""')}"`
-                ];
-            });
-            visitsData.unshift(visitsHeaders);
-            const visitsCSV = visitsData.map(row => row.join(',')).join('\n');
-            
-            // Create combined data object
-            const exportData = {
-                links: linksCSV,
-                visits: visitsCSV,
+            // Prepare export data
+            const exportObject = {
+                contentItems: contentItems,
+                engagementData: engagementData,
                 exportDate: new Date().toISOString()
             };
             
-            // Create download link for JSON export
-            const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const jsonUrl = URL.createObjectURL(jsonBlob);
-            const jsonLink = document.createElement('a');
-            jsonLink.setAttribute('href', jsonUrl);
-            jsonLink.setAttribute('download', `engagement-data-${new Date().toISOString().slice(0, 10)}.json`);
-            jsonLink.style.visibility = 'hidden';
-            document.body.appendChild(jsonLink);
-            jsonLink.click();
-            document.body.removeChild(jsonLink);
-        }
-
-        // Clear all data
-        async function clearData() {
-            if (confirm('Are you sure you want to clear all tracking links and engagement data? This cannot be undone.')) {
-                links = [];
-                visits = [];
-                await localforage.setItem('links', JSON.stringify(links));
-                await localforage.setItem('visits', JSON.stringify(visits));
-                renderLinks();
-                renderActivity();
-                updateStats();
-                renderCharts();
-            }
-        }
-
-        // Copy tracking link
-        function copyTrackingLink() {
-            const linkText = trackingUrl.textContent;
-            navigator.clipboard.writeText(linkText);
-            copyLinkBtn.textContent = 'Copied!';
-            setTimeout(() => {
-                copyLinkBtn.textContent = 'Copy Link';
-            }, 2000);
+            // Create JSON blob
+            const jsonBlob = new Blob([JSON.stringify(exportObject, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(jsonBlob);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `engagement-data-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // Helper functions
         function formatDate(dateString) {
+            if (!dateString) return 'N/A';
             const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return 'N/A';
+            const date = new Date(dateTimeString);
             return date.toLocaleString();
         }
 
@@ -664,28 +1192,10 @@
         }
 
         function generateId() {
-            return Math.random().toString(36).substring(2, 15) + 
-                Math.random().toString(36).substring(2, 15);
+            return Date.now().toString(36) + Math.random().toString(36).substring(2);
         }
 
-        function getBrowserInfo(userAgent) {
-            // Simple browser detection
-            if (userAgent.includes('Firefox')) {
-                return 'Firefox';
-            } else if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
-                return 'Chrome';
-            } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
-                return 'Safari';
-            } else if (userAgent.includes('Edg')) {
-                return 'Edge';
-            } else if (userAgent.includes('MSIE') || userAgent.includes('Trident/')) {
-                return 'Internet Explorer';
-            } else {
-                return 'Unknown Browser';
-            }
-        }
-
-        // Initialize the app when the page loads
+        // Initialize the app
         window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>

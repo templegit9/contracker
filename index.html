@@ -2152,8 +2152,9 @@
                         duration = 4.4 / 60;
                     }
                     
-                    // Calculate total hours based on views and duration
-                    const totalHours = engagement.views * duration;
+                    // Calculate total hours based on views, duration, and average watch percentage (YouTube avg is ~50-60%)
+                    const avgWatchPercentage = 0.55; // Average user watches 55% of a video
+                    const totalHours = engagement.views * duration * avgWatchPercentage;
                     
                     // Format with appropriate decimal places based on size
                     let formattedHours;
@@ -2168,7 +2169,7 @@
                     totalHoursCell.textContent = formattedHours;
                     
                     // Add a tooltip for explanation
-                    totalHoursCell.title = `Estimated total hours watched (views × video duration)`;
+                    totalHoursCell.title = `Estimated total hours watched (views × video duration × average retention rate)`;
                 } else {
                     totalHoursCell.textContent = '-';
                     totalHoursCell.className += ' text-gray-400 dark:text-gray-500';
@@ -2309,8 +2310,9 @@
                                                         duration = 4.4 / 60;
                                                     }
                                                     
-                                                    // Calculate total hours based on views and duration
-                                                    const totalHours = contentEngagements[0].views * duration;
+                                                    // Calculate total hours based on views, duration, and average watch percentage
+                                                    const avgWatchPercentage = 0.55; // Average user watches 55% of a video
+                                                    const totalHours = contentEngagements[0].views * duration * avgWatchPercentage;
                                                     
                                                     // Format with appropriate decimal places based on size
                                                     if (totalHours < 10) {
@@ -2321,7 +2323,7 @@
                                                         return Math.round(totalHours).toLocaleString();
                                                     }
                                                 })()}</p>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on ${contentItem.duration || 'avg'} video length</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on ${contentItem.duration || 'avg'} video length and avg. retention</p>
                                             </div>
                                         </div>
                                         ` : ''}
@@ -2376,8 +2378,9 @@
                                                     duration = 4.4 / 60;
                                                 }
                                                 
-                                                // Calculate total hours based on views and duration
-                                                const totalHours = engagement.views * duration;
+                                                // Calculate total hours based on views, duration, and average watch percentage
+                                                const avgWatchPercentage = 0.55; // Average user watches 55% of a video
+                                                const totalHours = engagement.views * duration * avgWatchPercentage;
                                                 
                                                 // Format with appropriate decimal places based on size
                                                 let formattedHours;

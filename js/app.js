@@ -293,9 +293,10 @@ function setupMenuItems() {
     // Logout
     const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
+        logoutButton.addEventListener('click', async (e) => {
             e.preventDefault();
-            handleLogout();
+            console.log('Logout button clicked');
+            await handleLogout();
         });
     }
 }

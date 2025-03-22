@@ -2,7 +2,8 @@
  * Authentication UI component for Platform Engagement Tracker
  */
 
-import { handleLogin, handleRegister } from '../modules/auth.js';
+// Note: We're not importing directly from auth.js to avoid circular dependencies
+// The handlers will be imported dynamically in setupFormSubmissions()
 import { loadPreference, savePreference } from '../modules/storage.js';
 
 // DOM element references
@@ -15,6 +16,10 @@ let registerTab;
 let loginError;
 let registerError;
 let authDarkModeToggle;
+
+// Handler references (to be set later)
+let loginHandler;
+let registerHandler;
 
 /**
  * Initialize authentication UI
@@ -154,14 +159,43 @@ function setupTabSwitching() {
  */
 function setupFormSubmissions() {
     if (loginForm && registerForm) {
-        // Import the handlers on demand to ensure they're available
+        console.log('Setting up form submission handlers');
+        
+        // Import the handlers on demand to avoid circular dependencies
         import('../modules/auth.js').then(authModule => {
-            loginForm.addEventListener('submit', authModule.handleLogin);
-            registerForm.addEventListener('submit', authModule.handleRegister);
-            console.log('Form submission handlers attached');
+            // Store references to the handlers
+            loginHandler = authModule.handleLogin;
+            registerHandler = authModule.handleRegister;
+            
+            // Create wrapper functions to ensure 'this' context is preserved
+            const loginWrapper = (e) => {
+                console.log('Login form submitted via wrapper');
+                loginHandler(e);
+            };
+            
+            const registerWrapper = (e) => {
+                console.log('Register form submitted via wrapper');
+                registerHandler(e);
+            };
+            
+            // Remove any existing listeners (just in case)
+            loginForm.removeEventListener('submit', loginWrapper);
+            registerForm.removeEventListener('submit', registerWrapper);
+            
+            // Add the event listeners
+            loginForm.addEventListener('submit', loginWrapper);
+            registerForm.addEventListener('submit', registerWrapper);
+            
+            // Also add direct onsubmit attributes as a backup
+            loginForm.setAttribute('onsubmit', "event.preventDefault(); console.log('Login form onsubmit triggered'); return false;");
+            registerForm.setAttribute('onsubmit', "event.preventDefault(); console.log('Register form onsubmit triggered'); return false;");
+            
+            console.log('Form submission handlers successfully attached');
         }).catch(error => {
             console.error('Error importing auth module:', error);
         });
+    } else {
+        console.error('Cannot set up form submissions: forms not found in DOM');
     }
 }
 

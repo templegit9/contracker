@@ -4,7 +4,30 @@
 
 import { setCurrentUser, getCurrentUser, saveUsers, loadUsers, removeUserData } from './storage.js';
 import { loadDashboard } from '../components/dashboard.js';
-import { showAuth, hideAuth } from '../components/auth-ui.js';
+
+// Avoid circular dependency with auth-ui.js
+// We'll dynamically import showAuth and hideAuth when needed
+
+// Expose auth handlers globally for the direct form access
+if (typeof window !== 'undefined') {
+    window.handleLoginSubmit = (e) => {
+        console.log('Global login handler called');
+        import('./auth.js').then(authModule => {
+            authModule.handleLogin(e);
+        }).catch(error => {
+            console.error('Error in global login handler:', error);
+        });
+    };
+    
+    window.handleRegisterSubmit = (e) => {
+        console.log('Global register handler called');
+        import('./auth.js').then(authModule => {
+            authModule.handleRegister(e);
+        }).catch(error => {
+            console.error('Error in global register handler:', error);
+        });
+    };
+}
 
 // Reference to users array
 let users = [];
@@ -54,12 +77,34 @@ export async function initAuth() {
         
         // No logged in user, show auth screen
         console.log('No logged in user, showing auth screen');
-        showAuth();
+        
+        // Dynamically import auth-ui to avoid circular dependency
+        const authUI = await import('../components/auth-ui.js');
+        authUI.showAuth();
+        
         return false;
     } catch (error) {
         console.error('Error during auth initialization:', error);
+        
         // Still show auth screen in case of error
-        showAuth();
+        try {
+            const authUI = await import('../components/auth-ui.js');
+            authUI.showAuth();
+        } catch (importError) {
+            console.error('Failed to import auth-ui for showAuth:', importError);
+            // Fallback: try to show auth screen directly
+            try {
+                const authContent = document.getElementById('auth-content');
+                const mainContent = document.getElementById('main-content');
+                if (authContent && mainContent) {
+                    mainContent.style.display = 'none';
+                    authContent.style.display = 'block';
+                }
+            } catch (fallbackError) {
+                console.error('Even direct fallback failed:', fallbackError);
+            }
+        }
+        
         return false;
     }
 }
@@ -377,7 +422,25 @@ export async function loginUser(user) {
         }
         
         // Hide auth screen and show main content
-        hideAuth();
+        try {
+            // Dynamically import to avoid circular dependency
+            const authUI = await import('../components/auth-ui.js');
+            authUI.hideAuth();
+        } catch (importError) {
+            console.error('Failed to import auth-ui for hideAuth:', importError);
+            // Fallback: try to hide auth screen directly
+            try {
+                const authContent = document.getElementById('auth-content');
+                const mainContent = document.getElementById('main-content');
+                if (authContent && mainContent) {
+                    authContent.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    console.log('Used direct DOM manipulation to hide auth screen');
+                }
+            } catch (fallbackError) {
+                console.error('Even direct fallback for hideAuth failed:', fallbackError);
+            }
+        }
         
         // Load dashboard data
         console.log('Loading dashboard data...');
@@ -395,7 +458,7 @@ export async function loginUser(user) {
 /**
  * Handle logout
  */
-export function handleLogout() {
+export async function handleLogout() {
     // Clear current user
     setCurrentUser(null);
     
@@ -403,7 +466,26 @@ export function handleLogout() {
     localStorage.removeItem('loggedInUser');
     
     // Switch to auth screen
-    showAuth();
+    try {
+        // Dynamically import to avoid circular dependency
+        const authUI = await import('../components/auth-ui.js');
+        authUI.showAuth();
+        console.log('Logged out and showed auth screen');
+    } catch (importError) {
+        console.error('Failed to import auth-ui for showAuth during logout:', importError);
+        // Fallback: try to show auth screen directly
+        try {
+            const authContent = document.getElementById('auth-content');
+            const mainContent = document.getElementById('main-content');
+            if (authContent && mainContent) {
+                mainContent.style.display = 'none';
+                authContent.style.display = 'block';
+                console.log('Used direct DOM manipulation to show auth screen during logout');
+            }
+        } catch (fallbackError) {
+            console.error('Even direct fallback for logout failed:', fallbackError);
+        }
+    }
 }
 
 /**

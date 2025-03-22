@@ -242,6 +242,9 @@
                             <button id="export-data-dropdown" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span class="material-icons mr-1 align-text-bottom text-sm">download</span> Export Data
                             </button>
+                            <button id="import-data-dropdown" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <span class="material-icons mr-1 align-text-bottom text-sm">upload</span> Import Data
+                            </button>
                             <button id="logout-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span class="material-icons mr-1 align-text-bottom text-sm">logout</span> Sign out
                             </button>
@@ -586,6 +589,89 @@
         </div>
     </div>
     
+    <!-- Import Data Modal (hidden by default) -->
+    <div id="import-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center hidden z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium dark:text-white">Import Data</h3>
+                    <button id="close-import-modal" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-gray-700 dark:text-gray-300 mb-3">Select a Platform Engagement Tracker export file to import your data. This will merge the imported data with your existing data.</p>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-center w-full">
+                                <label for="import-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 hover:bg-gray-100 dark:border-gray-600">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <span class="material-icons text-gray-500 dark:text-gray-400 text-3xl mb-2">upload_file</span>
+                                        <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">JSON file only</p>
+                                    </div>
+                                    <input id="import-file" type="file" class="hidden" accept=".json" />
+                                </label>
+                            </div>
+                            <div id="file-info" class="hidden text-sm text-gray-500 dark:text-gray-400"></div>
+                            
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Import Options</h4>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input id="import-option-merge" type="radio" name="import-option" value="merge" checked class="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500" />
+                                        <label for="import-option-merge" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                            Merge with existing data (recommended)
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="import-option-replace" type="radio" name="import-option" value="replace" class="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500" />
+                                        <label for="import-option-replace" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                            Replace all existing data
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="import-preview" class="hidden">
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-2">Preview</h4>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-500 dark:text-gray-400">Content Items:</span>
+                                    <span id="preview-content-count" class="font-medium text-gray-900 dark:text-white ml-1">0</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500 dark:text-gray-400">Engagement Records:</span>
+                                    <span id="preview-engagement-count" class="font-medium text-gray-900 dark:text-white ml-1">0</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500 dark:text-gray-400">Export Date:</span>
+                                    <span id="preview-export-date" class="font-medium text-gray-900 dark:text-white ml-1">-</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500 dark:text-gray-400">User:</span>
+                                    <span id="preview-user" class="font-medium text-gray-900 dark:text-white ml-1">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button id="import-data-btn" class="btn btn-primary" disabled>
+                            <span class="material-icons mr-1">upload</span> Import Data
+                        </button>
+                    </div>
+                    <div id="import-message" class="text-green-500 dark:text-green-400 text-sm hidden"></div>
+                    <div id="import-error" class="text-red-500 dark:text-red-400 text-sm hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- User Profile Modal (hidden by default) -->
     <div id="profile-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center hidden z-50">
         <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
@@ -708,6 +794,7 @@
         const logoutButton = document.getElementById('logout-button');
         const userProfileLink = document.getElementById('user-profile-link');
         const exportDataBtn = document.getElementById('export-data-dropdown');
+        const importDataBtn = document.getElementById('import-data-dropdown');
         const refreshDataBtn = document.getElementById('refresh-data');
         const refreshAllDataBtn = document.getElementById('refresh-all-data');
         const showSettingsBtn = document.getElementById('show-settings-link');
@@ -979,6 +1066,7 @@
             
             // Data actions
             exportDataBtn.addEventListener('click', exportData);
+            importDataBtn.addEventListener('click', showImportModal);
             refreshDataBtn.addEventListener('click', refreshEngagementData);
             refreshAllDataBtn.addEventListener('click', refreshEngagementData);
             
@@ -2727,7 +2815,8 @@
                     email: currentUser.email,
                     createdAt: currentUser.createdAt
                 },
-                exportDate: new Date().toISOString()
+                exportDate: new Date().toISOString(),
+                version: '1.0' // Add version for future compatibility
             };
             
             // Create JSON blob
@@ -2752,6 +2841,320 @@
             setTimeout(() => {
                 notification.remove();
             }, 3000);
+        }
+        
+        // Show import modal
+        function showImportModal() {
+            // Close dropdown
+            userDropdown.classList.add('hidden');
+            
+            // Reset import modal
+            const fileInput = document.getElementById('import-file');
+            const fileInfo = document.getElementById('file-info');
+            const importPreview = document.getElementById('import-preview');
+            const importDataButton = document.getElementById('import-data-btn');
+            const importMessage = document.getElementById('import-message');
+            const importError = document.getElementById('import-error');
+            
+            fileInput.value = '';
+            fileInfo.classList.add('hidden');
+            importPreview.classList.add('hidden');
+            importDataButton.disabled = true;
+            importMessage.classList.add('hidden');
+            importError.classList.add('hidden');
+            
+            // Set up event listeners
+            const importModal = document.getElementById('import-modal');
+            const closeImportModalBtn = document.getElementById('close-import-modal');
+            
+            closeImportModalBtn.addEventListener('click', () => {
+                importModal.classList.add('hidden');
+            });
+            
+            fileInput.addEventListener('change', handleFileSelection);
+            importDataButton.addEventListener('click', importData);
+            
+            // Show the modal
+            importModal.classList.remove('hidden');
+        }
+        
+        // Handle file selection
+        function handleFileSelection(e) {
+            const fileInput = e.target;
+            const fileInfo = document.getElementById('file-info');
+            const importPreview = document.getElementById('import-preview');
+            const importDataButton = document.getElementById('import-data-btn');
+            const importError = document.getElementById('import-error');
+            
+            // Hide previous messages
+            importError.classList.add('hidden');
+            
+            if (fileInput.files.length === 0) {
+                fileInfo.classList.add('hidden');
+                importPreview.classList.add('hidden');
+                importDataButton.disabled = true;
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            
+            // Check file type
+            if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+                fileInfo.textContent = 'Error: Please select a JSON file';
+                fileInfo.classList.remove('hidden');
+                importPreview.classList.add('hidden');
+                importDataButton.disabled = true;
+                return;
+            }
+            
+            // Show file info
+            fileInfo.textContent = `Selected file: ${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.classList.remove('hidden');
+            
+            // Read file contents
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const importData = JSON.parse(event.target.result);
+                    previewImportData(importData);
+                    importDataButton.disabled = false;
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                    importError.textContent = 'Error: Invalid JSON file format';
+                    importError.classList.remove('hidden');
+                    importPreview.classList.add('hidden');
+                    importDataButton.disabled = true;
+                }
+            };
+            
+            reader.onerror = function() {
+                importError.textContent = 'Error: Failed to read the file';
+                importError.classList.remove('hidden');
+                importPreview.classList.add('hidden');
+                importDataButton.disabled = true;
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Preview import data
+        function previewImportData(importData) {
+            const importPreview = document.getElementById('import-preview');
+            const contentCount = document.getElementById('preview-content-count');
+            const engagementCount = document.getElementById('preview-engagement-count');
+            const exportDate = document.getElementById('preview-export-date');
+            const userInfo = document.getElementById('preview-user');
+            const importError = document.getElementById('import-error');
+            
+            // Validate import data
+            if (!importData.contentItems || !importData.engagementData || !importData.user) {
+                importError.textContent = 'Error: Invalid export file format';
+                importError.classList.remove('hidden');
+                importPreview.classList.add('hidden');
+                document.getElementById('import-data-btn').disabled = true;
+                return;
+            }
+            
+            // Show preview
+            contentCount.textContent = importData.contentItems.length.toLocaleString();
+            engagementCount.textContent = importData.engagementData.length.toLocaleString();
+            exportDate.textContent = formatDateTime(importData.exportDate);
+            userInfo.textContent = `${importData.user.name} (${importData.user.email})`;
+            
+            importPreview.classList.remove('hidden');
+        }
+        
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes < 1024) {
+                return bytes + ' bytes';
+            } else if (bytes < 1024 * 1024) {
+                return (bytes / 1024).toFixed(1) + ' KB';
+            } else {
+                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+        }
+        
+        // Import data
+        async function importData() {
+            const fileInput = document.getElementById('import-file');
+            const importOption = document.querySelector('input[name="import-option"]:checked').value;
+            const importMessage = document.getElementById('import-message');
+            const importError = document.getElementById('import-error');
+            const importDataButton = document.getElementById('import-data-btn');
+            
+            // Hide previous messages
+            importMessage.classList.add('hidden');
+            importError.classList.add('hidden');
+            
+            if (fileInput.files.length === 0) {
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            
+            // Show loading state
+            importDataButton.disabled = true;
+            importDataButton.innerHTML = '<span class="material-icons animate-spin">refresh</span> Importing...';
+            
+            try {
+                // Read file contents
+                const importText = await readFileAsText(file);
+                const importData = JSON.parse(importText);
+                
+                // Validate import data
+                if (!importData.contentItems || !importData.engagementData || !importData.user) {
+                    throw new Error('Invalid export file format');
+                }
+                
+                // Handle import based on selected option
+                if (importOption === 'replace') {
+                    // Replace all existing data
+                    contentItems = importData.contentItems;
+                    engagementData = importData.engagementData;
+                    urlToContentMap = importData.urlToContentMap || {};
+                    apiConfig = importData.apiConfig;
+                    
+                    // If URL map wasn't in the export (for older exports), rebuild it
+                    if (!importData.urlToContentMap) {
+                        rebuildUrlContentMap();
+                    }
+                } else {
+                    // Merge with existing data
+                    await mergeImportData(importData);
+                }
+                
+                // Save to storage
+                await saveUserData('contentItems', contentItems);
+                await saveUserData('engagementData', engagementData);
+                await saveUserData('apiConfig', apiConfig);
+                
+                // Update UI
+                renderContentItems();
+                renderEngagementData();
+                updateStats();
+                renderCharts();
+                
+                // Show success message
+                importMessage.textContent = 'Data imported successfully';
+                importMessage.classList.remove('hidden');
+                
+                // Reset file input
+                fileInput.value = '';
+                
+                // Hide preview
+                document.getElementById('import-preview').classList.add('hidden');
+                document.getElementById('file-info').classList.add('hidden');
+                
+                // Show success notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg';
+                notification.innerHTML = '<div class="flex items-center"><span class="material-icons mr-2">check_circle</span> Data imported successfully</div>';
+                document.body.appendChild(notification);
+                
+                // Remove notification after 3 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error importing data:', error);
+                importError.textContent = `Error: ${error.message}`;
+                importError.classList.remove('hidden');
+            } finally {
+                // Reset button state
+                importDataButton.disabled = false;
+                importDataButton.innerHTML = '<span class="material-icons mr-1">upload</span> Import Data';
+            }
+        }
+        
+        // Read file as text
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = event => resolve(event.target.result);
+                reader.onerror = error => reject(error);
+                reader.readAsText(file);
+            });
+        }
+        
+        // Merge import data with existing data
+        async function mergeImportData(importData) {
+            // Create maps of existing items by ID for fast lookup
+            const existingContentMap = {};
+            contentItems.forEach(item => {
+                existingContentMap[item.id] = item;
+            });
+            
+            const existingUrlMap = { ...urlToContentMap };
+            
+            // Process content items - add new ones and update existing ones if needed
+            importData.contentItems.forEach(importItem => {
+                // Check if item already exists
+                if (existingContentMap[importItem.id]) {
+                    // Item already exists - update only if imported is newer or has more fields
+                    const existingItem = existingContentMap[importItem.id];
+                    
+                    // Check if import item was updated more recently
+                    const importLastUpdated = importItem.lastUpdated ? new Date(importItem.lastUpdated) : null;
+                    const existingLastUpdated = existingItem.lastUpdated ? new Date(existingItem.lastUpdated) : null;
+                    
+                    if (importLastUpdated && (!existingLastUpdated || importLastUpdated > existingLastUpdated)) {
+                        // Update existing item with new values
+                        Object.assign(existingItem, importItem);
+                    }
+                } else {
+                    // Item doesn't exist - add it
+                    contentItems.push(importItem);
+                    existingContentMap[importItem.id] = importItem;
+                }
+                
+                // Make sure URL is in the map
+                const normalizedUrl = normalizeUrl(importItem.url);
+                if (!existingUrlMap[normalizedUrl]) {
+                    existingUrlMap[normalizedUrl] = importItem.id;
+                }
+            });
+            
+            // Update URL to content map
+            urlToContentMap = existingUrlMap;
+            
+            // Process engagement data - avoid duplicates
+            const engagementByContentAndTime = {};
+            
+            // Index existing engagement records by content URL and timestamp for deduplication
+            engagementData.forEach(engagement => {
+                const key = `${engagement.contentUrl}-${engagement.timestamp}`;
+                engagementByContentAndTime[key] = engagement;
+            });
+            
+            // Process import engagement data
+            importData.engagementData.forEach(importEngagement => {
+                const key = `${importEngagement.contentUrl}-${importEngagement.timestamp}`;
+                if (!engagementByContentAndTime[key]) {
+                    // New engagement record - add it
+                    engagementData.push(importEngagement);
+                    engagementByContentAndTime[key] = importEngagement;
+                }
+            });
+            
+            // Merge API config - keep current values if they exist, otherwise use imported values
+            if (importData.apiConfig) {
+                for (const platform in importData.apiConfig) {
+                    if (!apiConfig[platform]) {
+                        apiConfig[platform] = {};
+                    }
+                    
+                    for (const key in importData.apiConfig[platform]) {
+                        // Only use imported value if current one is empty
+                        if (!apiConfig[platform][key]) {
+                            apiConfig[platform][key] = importData.apiConfig[platform][key];
+                        }
+                    }
+                }
+            }
+            
+            return true;
         }
 
         // Helper functions

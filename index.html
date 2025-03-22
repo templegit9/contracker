@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
     <meta name="theme-color" content="#ffffff">
-    <title>Contracker - Content Engagement Tracker</title>
+    <title>Platform Engagement Tracker</title>
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Tailwind CSS -->
@@ -16,6 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -84,6 +85,18 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            transform: translateX(100%);
+            border-color: #00c487;
+        }
+        .toggle-label {
+            transition: background-color 0.2s ease;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #00c487;
+        }
+        
         /* Form elements styling */
         input[type="text"], 
         input[type="url"],
@@ -103,11 +116,11 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-200">
     <!-- Header -->
-    <header class="bg-white shadow">
+    <header class="bg-white dark:bg-gray-800 shadow">
         <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-900">Contracker</h1>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Platform Engagement Tracker</h1>
             <div>
                 <button id="show-settings" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
                     <span class="material-icons mr-1">settings</span> Settings
@@ -123,17 +136,17 @@
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <!-- Stats cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                            <span class="material-icons text-blue-600">collections</span>
+                        <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900 rounded-md p-3">
+                            <span class="material-icons text-blue-600 dark:text-blue-300">collections</span>
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Content</dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Content</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900" id="total-content">0</div>
+                                    <div class="text-2xl font-semibold text-gray-900 dark:text-white" id="total-content">0</div>
                                 </dd>
                             </dl>
                         </div>
@@ -141,17 +154,17 @@
                 </div>
             </div>
 
-            <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-                            <span class="material-icons text-green-600">visibility</span>
+                        <div class="flex-shrink-0 bg-green-100 dark:bg-green-900 rounded-md p-3">
+                            <span class="material-icons text-green-600 dark:text-green-300">visibility</span>
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Engagements</dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Engagements</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900" id="total-engagements">0</div>
+                                    <div class="text-2xl font-semibold text-gray-900 dark:text-white" id="total-engagements">0</div>
                                 </dd>
                             </dl>
                         </div>
@@ -159,17 +172,17 @@
                 </div>
             </div>
 
-            <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
-                            <span class="material-icons text-purple-600">trending_up</span>
+                        <div class="flex-shrink-0 bg-purple-100 dark:bg-purple-900 rounded-md p-3">
+                            <span class="material-icons text-purple-600 dark:text-purple-300">trending_up</span>
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Top Platform</dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Top Platform</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900" id="top-platform">-</div>
+                                    <div class="text-2xl font-semibold text-gray-900 dark:text-white" id="top-platform">-</div>
                                 </dd>
                             </dl>
                         </div>
@@ -180,14 +193,14 @@
 
         <!-- Charts -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="bg-white shadow rounded-lg p-4">
-                <h3 class="text-lg font-medium mb-4">Engagement by Platform</h3>
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+                <h3 class="text-lg font-medium mb-4 dark:text-white">Engagement by Platform</h3>
                 <div>
                     <canvas id="platform-chart" height="200"></canvas>
                 </div>
             </div>
-            <div class="bg-white shadow rounded-lg p-4">
-                <h3 class="text-lg font-medium mb-4">Top Content by Views</h3>
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+                <h3 class="text-lg font-medium mb-4 dark:text-white">Top Content by Views</h3>
                 <div>
                     <canvas id="content-chart" height="200"></canvas>
                 </div>
@@ -195,20 +208,20 @@
         </div>
 
         <!-- Add content section -->
-        <div class="bg-white shadow rounded-lg mb-6">
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg font-medium mb-4">Add New Content</h3>
+                <h3 class="text-lg font-medium mb-4 dark:text-white">Add New Content</h3>
                 <form id="content-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
-                        <label for="content-url" class="block text-sm font-medium text-gray-700 mb-1">URL <span class="text-red-500">*</span></label>
+                        <label for="content-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL <span class="text-red-500 dark:text-red-400">*</span></label>
                         <input type="url" id="content-url" name="content-url" required
-                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
-                        <p id="duplicate-warning" class="text-red-500 text-xs mt-1 hidden">Warning: URL already exists</p>
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                        <p id="duplicate-warning" class="text-red-500 dark:text-red-400 text-xs mt-1 hidden">Warning: URL already exists</p>
                     </div>
                     <div>
-                        <label for="content-source" class="block text-sm font-medium text-gray-700 mb-1">Platform <span class="text-red-500">*</span></label>
+                        <label for="content-source" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform <span class="text-red-500 dark:text-red-400">*</span></label>
                         <select id="content-source" name="content-source" required
-                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
                             <option value="youtube">YouTube</option>
                             <option value="servicenow">ServiceNow Community</option>
                             <option value="linkedin">LinkedIn</option>
@@ -217,26 +230,37 @@
                     <div>
                         <label for="fetch-content-info" class="block text-sm font-medium text-transparent mb-1">Get Info</label>
                         <button type="button" id="fetch-content-info" 
-                            class="btn bg-blue-100 hover:bg-blue-200 text-blue-700 w-full">
+                            class="btn bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-800 dark:hover:bg-blue-700 dark:text-blue-200 w-full">
                             <span class="material-icons mr-1">cloud_download</span> Get Info
                         </button>
                     </div>
                     <div class="md:col-span-2">
-                        <label for="content-name" class="block text-sm font-medium text-gray-700 mb-1">Title <span class="text-gray-400 text-xs">(auto-detected, can edit)</span></label>
+                        <label for="content-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title <span class="text-gray-400 dark:text-gray-500 text-xs">(auto-detected, can edit)</span></label>
                         <input type="text" id="content-name" name="content-name" required
-                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2"
                             placeholder="Will be extracted from URL">
                     </div>
                     <div class="md:col-span-2">
-                        <label for="content-description" class="block text-sm font-medium text-gray-700 mb-1">Description <span class="text-gray-400 text-xs">(optional)</span></label>
+                        <label for="content-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description <span class="text-gray-400 dark:text-gray-500 text-xs">(optional)</span></label>
                         <input type="text" id="content-description" name="content-description"
-                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2"
                             placeholder="Your notes about this content">
                     </div>
+                    <div id="duration-container" class="hidden">
+                        <label for="content-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration <span class="text-gray-400 dark:text-gray-500 text-xs">(auto-detected for videos)</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="material-icons text-gray-400 dark:text-gray-500 text-sm">timer</span>
+                            </span>
+                            <input type="text" id="content-duration" name="content-duration"
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full pl-10 sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2"
+                                placeholder="0:00" readonly>
+                        </div>
+                    </div>
                     <div class="md:col-span-2">
-                        <label for="content-published" class="block text-sm font-medium text-gray-700 mb-1">Published Date <span class="text-gray-400 text-xs">(auto-detected when possible)</span></label>
+                        <label for="content-published" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Published Date <span class="text-gray-400 dark:text-gray-500 text-xs">(auto-detected when possible)</span></label>
                         <input type="date" id="content-published" name="content-published" required
-                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
                     </div>
                     <div class="md:col-span-4">
                         <div class="flex justify-end">
@@ -251,27 +275,27 @@
         </div>
 
         <!-- Content list -->
-        <div class="bg-white shadow rounded-lg mb-6">
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium">Content Library</h3>
+                    <h3 class="text-lg font-medium dark:text-white">Content Library</h3>
                     <button id="refresh-data" class="btn btn-primary">
                         <span class="material-icons mr-1">refresh</span> Refresh Data
                     </button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Description</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added On</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Title/Description</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Published</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added On</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">URL</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="content-list" class="bg-white divide-y divide-gray-200">
+                        <tbody id="content-list" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <!-- Content items will be rendered here -->
                         </tbody>
                     </table>
@@ -280,27 +304,27 @@
         </div>
 
         <!-- Engagement data -->
-        <div class="bg-white shadow rounded-lg mb-6">
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium">Latest Engagement Data</h3>
+                    <h3 class="text-lg font-medium dark:text-white">Latest Engagement Data</h3>
                     <button id="refresh-all-data" class="btn btn-primary">
                         <span class="material-icons mr-1">refresh</span> Refresh All
                     </button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Content</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Views</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Likes</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Comments</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Updated</th>
                             </tr>
                         </thead>
-                        <tbody id="engagement-list" class="bg-white divide-y divide-gray-200">
+                        <tbody id="engagement-list" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <!-- Engagement data will be rendered here -->
                         </tbody>
                     </table>
@@ -310,35 +334,49 @@
     </main>
 
     <!-- API Settings Modal (hidden by default) -->
-    <div id="api-settings" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <div id="api-settings" class="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center hidden z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium">API Settings</h3>
-                    <button id="hide-settings" class="text-gray-500 hover:text-gray-800">
+                    <h3 class="text-lg font-medium dark:text-white">Settings</h3>
+                    <button id="hide-settings" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
                         <span class="material-icons">close</span>
                     </button>
+                </div>
+                
+                <!-- App Settings -->
+                <div class="mb-6">
+                    <h4 class="text-md font-medium mb-2 dark:text-white">General Settings</h4>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <label for="dark-mode-toggle" class="text-sm font-medium text-gray-700 dark:text-gray-300">Dark Mode</label>
+                            <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                                <input type="checkbox" id="dark-mode-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in" />
+                                <label for="dark-mode-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- YouTube API Settings -->
                 <div class="mb-6">
-                    <h4 class="text-md font-medium mb-2 flex items-center">
+                    <h4 class="text-md font-medium mb-2 flex items-center dark:text-white">
                         YouTube API 
-                        <span id="youtube-api-status" class="badge bg-red-100 text-red-800 ml-2">Not Configured</span>
+                        <span id="youtube-api-status" class="badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 ml-2">Not Configured</span>
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="youtube-api-key" class="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                            <label for="youtube-api-key" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
                             <input type="text" id="youtube-api-key" name="youtube-api-key"
-                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
-                            <p class="text-xs text-gray-500 mt-1">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 To get an API key: 
-                                <a href="https://console.developers.google.com/" target="_blank" class="text-blue-500 hover:underline">Go to Google Cloud Console</a>, 
+                                <a href="https://console.developers.google.com/" target="_blank" class="text-blue-500 dark:text-blue-400 hover:underline">Go to Google Cloud Console</a>, 
                                 create a project, enable YouTube Data API v3, and create an API key.
                             </p>
                         </div>
                         <div class="flex items-end">
-                            <button id="test-youtube-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
+                            <button id="test-youtube-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200">
                                 <span class="material-icons mr-1">check_circle</span> Test Connection
                             </button>
                         </div>
@@ -347,29 +385,29 @@
 
                 <!-- ServiceNow API Settings -->
                 <div class="mb-6">
-                    <h4 class="text-md font-medium mb-2 flex items-center">
+                    <h4 class="text-md font-medium mb-2 flex items-center dark:text-white">
                         ServiceNow API 
-                        <span id="servicenow-api-status" class="badge bg-red-100 text-red-800 ml-2">Not Configured</span>
+                        <span id="servicenow-api-status" class="badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 ml-2">Not Configured</span>
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label for="servicenow-instance" class="block text-sm font-medium text-gray-700 mb-1">Instance URL</label>
+                            <label for="servicenow-instance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instance URL</label>
                             <input type="text" id="servicenow-instance" name="servicenow-instance"
-                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2"
                                 placeholder="https://instance.service-now.com">
                         </div>
                         <div>
-                            <label for="servicenow-username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <label for="servicenow-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
                             <input type="text" id="servicenow-username" name="servicenow-username"
-                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
                         </div>
                         <div>
-                            <label for="servicenow-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <label for="servicenow-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                             <input type="password" id="servicenow-password" name="servicenow-password"
-                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
                         </div>
                         <div class="md:col-span-3">
-                            <button id="test-servicenow-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
+                            <button id="test-servicenow-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200">
                                 <span class="material-icons mr-1">check_circle</span> Test Connection
                             </button>
                         </div>
@@ -378,23 +416,23 @@
 
                 <!-- LinkedIn API Settings -->
                 <div class="mb-6">
-                    <h4 class="text-md font-medium mb-2 flex items-center">
+                    <h4 class="text-md font-medium mb-2 flex items-center dark:text-white">
                         LinkedIn API 
-                        <span id="linkedin-api-status" class="badge bg-red-100 text-red-800 ml-2">Not Configured</span>
+                        <span id="linkedin-api-status" class="badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 ml-2">Not Configured</span>
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="linkedin-client-id" class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                            <label for="linkedin-client-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client ID</label>
                             <input type="text" id="linkedin-client-id" name="linkedin-client-id"
-                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
                         </div>
                         <div>
-                            <label for="linkedin-client-secret" class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                            <label for="linkedin-client-secret" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Secret</label>
                             <input type="password" id="linkedin-client-secret" name="linkedin-client-secret"
-                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
                         </div>
                         <div class="md:col-span-2">
-                            <button id="test-linkedin-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
+                            <button id="test-linkedin-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200">
                                 <span class="material-icons mr-1">check_circle</span> Test Configuration
                             </button>
                         </div>
@@ -412,12 +450,12 @@
     </div>
 
     <!-- Content Details Modal (hidden by default) -->
-    <div id="content-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <div id="content-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center hidden z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 id="modal-title" class="text-lg font-medium">Content Details</h3>
-                    <button id="close-modal" class="text-gray-500 hover:text-gray-800">
+                    <h3 id="modal-title" class="text-lg font-medium dark:text-white">Content Details</h3>
+                    <button id="close-modal" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
                         <span class="material-icons">close</span>
                     </button>
                 </div>
@@ -497,6 +535,16 @@
             // Set default date to today
             document.getElementById('content-published').valueAsDate = new Date();
             
+            // Check for dark mode preference
+            const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+            
+            // Set initial dark mode based on saved preference or system preference
+            if (savedDarkMode || (localStorage.getItem('darkMode') === null && prefersDarkMode)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('dark-mode-toggle').checked = true;
+            }
+            
             // Render data
             renderContentItems();
             renderEngagementData();
@@ -524,9 +572,53 @@
                 apiSettingsSection.classList.add('hidden');
             });
             
+            // Set up dark mode toggle
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            darkModeToggle.addEventListener('change', () => {
+                if (darkModeToggle.checked) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('darkMode', 'true');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('darkMode', 'false');
+                }
+                // Update charts for better visibility in dark mode
+                updateChartsForColorMode();
+            });
+            
             // Add listener for platform selection to update URL field placeholder
-            document.getElementById('content-source').addEventListener('change', updateUrlPlaceholder);
+            document.getElementById('content-source').addEventListener('change', function() {
+                updateUrlPlaceholder();
+                
+                // Show/hide duration field based on platform
+                const platform = document.getElementById('content-source').value;
+                const durationContainer = document.getElementById('duration-container');
+                if (platform === 'youtube') {
+                    durationContainer.classList.remove('hidden');
+                } else {
+                    durationContainer.classList.add('hidden');
+                }
+            });
             updateUrlPlaceholder();
+        }
+        
+        // Update charts for dark/light mode
+        function updateChartsForColorMode() {
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            const textColor = isDarkMode ? '#ffffff' : '#333333';
+            
+            // Update platform chart
+            if (platformChart) {
+                platformChart.options.plugins.legend.labels.color = textColor;
+                platformChart.update();
+            }
+            
+            // Update content chart
+            if (contentChart) {
+                contentChart.options.scales.x.ticks.color = textColor;
+                contentChart.options.scales.y.ticks.color = textColor;
+                contentChart.update();
+            }
         }
 
         // Rebuild URL to content map
@@ -650,6 +742,21 @@
                     if (contentInfo.publishedDate) {
                         document.getElementById('content-published').valueAsDate = new Date(contentInfo.publishedDate);
                     }
+                    
+                    // Set duration if available (for YouTube)
+                    if (contentInfo.duration && platform === 'youtube') {
+                        document.getElementById('content-duration').value = contentInfo.duration;
+                    } else {
+                        document.getElementById('content-duration').value = '';
+                    }
+                    
+                    // Show/hide duration field based on platform
+                    const durationContainer = document.getElementById('duration-container');
+                    if (platform === 'youtube') {
+                        durationContainer.classList.remove('hidden');
+                    } else {
+                        durationContainer.classList.add('hidden');
+                    }
                 }
                 
                 // Show success notification
@@ -682,15 +789,15 @@
             }
         }
         
-        // Fetch YouTube video information (title, published date)
+        // Fetch YouTube video information (title, published date, duration)
         async function fetchYouTubeContentInfo(videoId) {
             if (!apiConfig.youtube.apiKey) {
                 throw new Error('YouTube API key is not configured. Please add an API key in Settings.');
             }
             
-            // Make API call to YouTube Data API
+            // Make API call to YouTube Data API - include contentDetails for duration
             const apiKey = apiConfig.youtube.apiKey;
-            const videoInfoUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`;
+            const videoInfoUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${apiKey}`;
             
             const response = await fetch(videoInfoUrl);
             
@@ -705,11 +812,41 @@
             }
             
             const snippet = data.items[0].snippet;
+            const contentDetails = data.items[0].contentDetails;
+            
+            // Parse ISO 8601 duration format
+            let duration = '';
+            if (contentDetails && contentDetails.duration) {
+                duration = formatYouTubeDuration(contentDetails.duration);
+            }
             
             return {
                 title: snippet.title,
-                publishedDate: new Date(snippet.publishedAt)
+                publishedDate: new Date(snippet.publishedAt),
+                duration: duration
             };
+        }
+        
+        // Format YouTube ISO 8601 duration to readable format (HH:MM:SS)
+        function formatYouTubeDuration(isoDuration) {
+            const match = isoDuration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+            
+            const hours = (match[1] && match[1].replace('H', '')) || 0;
+            const minutes = (match[2] && match[2].replace('M', '')) || 0;
+            const seconds = (match[3] && match[3].replace('S', '')) || 0;
+            
+            let formatted = '';
+            
+            if (hours > 0) {
+                formatted += `${hours}:`;
+                formatted += `${minutes.toString().padStart(2, '0')}:`;
+            } else {
+                formatted += `${minutes}:`;
+            }
+            
+            formatted += seconds.toString().padStart(2, '0');
+            
+            return formatted;
         }
         
         // Fetch ServiceNow content information (title, published date)
@@ -769,6 +906,11 @@
                     existingContent.description = contentDescription;
                     existingContent.publishedDate = publishedDate;
                     
+                    // Update duration for YouTube videos
+                    if (platform === 'youtube') {
+                        existingContent.duration = document.getElementById('content-duration').value;
+                    }
+                    
                     // Save to localforage
                     await localforage.setItem('contentItems', JSON.stringify(contentItems));
                     
@@ -790,6 +932,9 @@
             // Extract content ID from URL
             const contentId = extractContentId(contentUrl, platform);
             
+            // Get duration for YouTube videos
+            const duration = platform === 'youtube' ? document.getElementById('content-duration').value : null;
+            
             // Create new content item
             const newContentItem = {
                 id: generateId(),
@@ -799,6 +944,7 @@
                 url: contentUrl,
                 contentId: contentId,
                 publishedDate: publishedDate,
+                duration: duration, // Only for YouTube videos
                 createdAt: new Date().toISOString(),
                 lastUpdated: null
             };
@@ -1111,7 +1257,7 @@
             contentList.innerHTML = '';
             
             if (contentItems.length === 0) {
-                contentList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No content items added yet</td></tr>';
+                contentList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No content items added yet</td></tr>';
                 return;
             }
             
@@ -1123,14 +1269,14 @@
                 
                 // Create a div for title and description
                 const titleDiv = document.createElement('div');
-                titleDiv.className = 'font-medium text-gray-900';
+                titleDiv.className = 'font-medium text-gray-900 dark:text-white';
                 titleDiv.textContent = item.name;
                 nameCell.appendChild(titleDiv);
                 
                 // Only show description if present
                 if (item.description) {
                     const descriptionDiv = document.createElement('div');
-                    descriptionDiv.className = 'text-sm text-gray-500 mt-1';
+                    descriptionDiv.className = 'text-sm text-gray-500 dark:text-gray-400 mt-1';
                     descriptionDiv.textContent = item.description;
                     nameCell.appendChild(descriptionDiv);
                 }
@@ -1143,6 +1289,14 @@
                 // Add color based on platform
                 if (item.platform === 'youtube') {
                     platformSpan.className = 'badge youtube';
+                    
+                    // Add duration badge for YouTube videos if available
+                    if (item.duration) {
+                        const durationSpan = document.createElement('span');
+                        durationSpan.className = 'badge bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ml-2 flex items-center';
+                        durationSpan.innerHTML = `<span class="material-icons text-xs mr-1">timer</span> ${item.duration}`;
+                        platformCell.appendChild(durationSpan);
+                    }
                 } else if (item.platform === 'servicenow') {
                     platformSpan.className = 'badge servicenow';
                 } else if (item.platform === 'linkedin') {
@@ -1154,11 +1308,11 @@
                 platformCell.appendChild(platformSpan);
                 
                 const publishedCell = document.createElement('td');
-                publishedCell.className = 'px-6 py-4 whitespace-nowrap';
+                publishedCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
                 publishedCell.textContent = formatDate(item.publishedDate);
                 
                 const addedCell = document.createElement('td');
-                addedCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+                addedCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400';
                 addedCell.textContent = formatDate(item.createdAt);
                 
                 const urlCell = document.createElement('td');
@@ -1168,7 +1322,7 @@
                 const urlLink = document.createElement('a');
                 urlLink.href = item.url;
                 urlLink.target = '_blank';
-                urlLink.className = 'text-blue-500 hover:underline text-sm';
+                urlLink.className = 'text-blue-500 dark:text-blue-400 hover:underline text-sm';
                 urlLink.title = item.url;
                 urlLink.textContent = truncateText(item.url, 30);
                 
@@ -1178,7 +1332,7 @@
                 actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm';
                 
                 const viewBtn = document.createElement('button');
-                viewBtn.className = 'btn bg-gray-100 hover:bg-gray-200 text-gray-700 mr-2 text-sm';
+                viewBtn.className = 'btn bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 mr-2 text-sm';
                 viewBtn.innerHTML = '<span class="material-icons text-sm">visibility</span>';
                 viewBtn.title = 'View Details';
                 viewBtn.addEventListener('click', () => showContentDetails(item));
@@ -1219,7 +1373,7 @@
             engagementList.innerHTML = '';
             
             if (engagementData.length === 0) {
-                engagementList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No engagement data available</td></tr>';
+                engagementList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No engagement data available</td></tr>';
                 return;
             }
             
@@ -1242,7 +1396,7 @@
                 const row = document.createElement('tr');
                 
                 const nameCell = document.createElement('td');
-                nameCell.className = 'px-6 py-4 whitespace-nowrap';
+                nameCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white';
                 nameCell.textContent = contentItem.name;
                 
                 const platformCell = document.createElement('td');
@@ -1264,19 +1418,19 @@
                 platformCell.appendChild(platformSpan);
                 
                 const viewsCell = document.createElement('td');
-                viewsCell.className = 'px-6 py-4 whitespace-nowrap font-medium';
+                viewsCell.className = 'px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white';
                 viewsCell.textContent = engagement.views.toLocaleString();
                 
                 const likesCell = document.createElement('td');
-                likesCell.className = 'px-6 py-4 whitespace-nowrap';
+                likesCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
                 likesCell.textContent = engagement.likes.toLocaleString();
                 
                 const commentsCell = document.createElement('td');
-                commentsCell.className = 'px-6 py-4 whitespace-nowrap';
+                commentsCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
                 commentsCell.textContent = engagement.comments.toLocaleString();
                 
                 const updatedCell = document.createElement('td');
-                updatedCell.className = 'px-6 py-4 whitespace-nowrap text-gray-500 text-sm';
+                updatedCell.className = 'px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400 text-sm';
                 updatedCell.textContent = formatDateTime(engagement.timestamp);
                 
                 row.appendChild(nameCell);
@@ -1307,101 +1461,106 @@
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <h4 class="text-lg font-medium mb-2">Content Information</h4>
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-medium mb-2 dark:text-white">Content Information</h4>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                 ${contentItem.description ? `
-                                <div class="mb-3 pb-3 border-b border-gray-200">
-                                    <span class="text-gray-500">Description:</span>
-                                    <p class="mt-1 text-gray-700">${contentItem.description}</p>
+                                <div class="mb-3 pb-3 border-b border-gray-200 dark:border-gray-600">
+                                    <span class="text-gray-500 dark:text-gray-400">Description:</span>
+                                    <p class="mt-1 text-gray-700 dark:text-gray-300">${contentItem.description}</p>
                                 </div>
                                 ` : ''}
                                 <div class="mb-2">
-                                    <span class="text-gray-500">Platform:</span>
-                                    <span class="font-medium">${PLATFORMS[contentItem.platform]}</span>
+                                    <span class="text-gray-500 dark:text-gray-400">Platform:</span>
+                                    <span class="font-medium dark:text-white">${PLATFORMS[contentItem.platform]}</span>
+                                    ${contentItem.platform === 'youtube' && contentItem.duration ? `
+                                    <span class="badge bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 ml-2 flex items-center inline-flex">
+                                        <span class="material-icons text-xs mr-1">timer</span> ${contentItem.duration}
+                                    </span>
+                                    ` : ''}
                                 </div>
                                 <div class="mb-2">
-                                    <span class="text-gray-500">Published Date:</span>
-                                    <span class="font-medium">${formatDate(contentItem.publishedDate)}</span>
+                                    <span class="text-gray-500 dark:text-gray-400">Published Date:</span>
+                                    <span class="font-medium dark:text-white">${formatDate(contentItem.publishedDate)}</span>
                                 </div>
                                 <div class="mb-2">
-                                    <span class="text-gray-500">URL:</span>
-                                    <a href="${contentItem.url}" target="_blank" class="text-blue-500 hover:underline break-all">${contentItem.url}</a>
+                                    <span class="text-gray-500 dark:text-gray-400">URL:</span>
+                                    <a href="${contentItem.url}" target="_blank" class="text-blue-500 dark:text-blue-400 hover:underline break-all">${contentItem.url}</a>
                                 </div>
                                 <div class="mb-2">
-                                    <span class="text-gray-500">Added to Contracker:</span>
-                                    <span class="font-medium">${formatDateTime(contentItem.createdAt)}</span>
+                                    <span class="text-gray-500 dark:text-gray-400">Added to Platform Engagement Tracker:</span>
+                                    <span class="font-medium dark:text-white">${formatDateTime(contentItem.createdAt)}</span>
                                 </div>
                                 <div>
-                                    <span class="text-gray-500">Last Data Update:</span>
-                                    <span class="font-medium">${contentItem.lastUpdated ? formatDateTime(contentItem.lastUpdated) : 'Never'}</span>
+                                    <span class="text-gray-500 dark:text-gray-400">Last Data Update:</span>
+                                    <span class="font-medium dark:text-white">${contentItem.lastUpdated ? formatDateTime(contentItem.lastUpdated) : 'Never'}</span>
                                 </div>
                             </div>
                         </div>
                         
                         <div>
-                            <h4 class="text-lg font-medium mb-2">Latest Engagement</h4>
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-medium mb-2 dark:text-white">Latest Engagement</h4>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                 ${contentEngagements.length > 0 ? `
                                     <div class="grid grid-cols-2 gap-4">
                                         <div class="text-center">
-                                            <div class="bg-blue-100 p-3 rounded-lg flex flex-col items-center">
-                                                <span class="material-icons text-blue-500">visibility</span>
-                                                <p class="text-gray-500 text-sm">Views</p>
-                                                <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].views.toLocaleString()}</p>
+                                            <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg flex flex-col items-center">
+                                                <span class="material-icons text-blue-500 dark:text-blue-300">visibility</span>
+                                                <p class="text-gray-500 dark:text-gray-400 text-sm">Views</p>
+                                                <p class="text-2xl font-bold text-gray-900 dark:text-white">${contentEngagements[0].views.toLocaleString()}</p>
                                             </div>
                                         </div>
                                         <div class="text-center">
-                                            <div class="bg-red-100 p-3 rounded-lg flex flex-col items-center">
-                                                <span class="material-icons text-red-500">thumb_up</span>
-                                                <p class="text-gray-500 text-sm">Likes</p>
-                                                <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].likes.toLocaleString()}</p>
+                                            <div class="bg-red-100 dark:bg-red-900 p-3 rounded-lg flex flex-col items-center">
+                                                <span class="material-icons text-red-500 dark:text-red-300">thumb_up</span>
+                                                <p class="text-gray-500 dark:text-gray-400 text-sm">Likes</p>
+                                                <p class="text-2xl font-bold text-gray-900 dark:text-white">${contentEngagements[0].likes.toLocaleString()}</p>
                                             </div>
                                         </div>
                                         <div class="text-center">
-                                            <div class="bg-green-100 p-3 rounded-lg flex flex-col items-center">
-                                                <span class="material-icons text-green-500">comment</span>
-                                                <p class="text-gray-500 text-sm">Comments</p>
-                                                <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].comments.toLocaleString()}</p>
+                                            <div class="bg-green-100 dark:bg-green-900 p-3 rounded-lg flex flex-col items-center">
+                                                <span class="material-icons text-green-500 dark:text-green-300">comment</span>
+                                                <p class="text-gray-500 dark:text-gray-400 text-sm">Comments</p>
+                                                <p class="text-2xl font-bold text-gray-900 dark:text-white">${contentEngagements[0].comments.toLocaleString()}</p>
                                             </div>
                                         </div>
                                         <div class="text-center">
-                                            <div class="bg-purple-100 p-3 rounded-lg flex flex-col items-center">
-                                                <span class="material-icons text-purple-500">share</span>
-                                                <p class="text-gray-500 text-sm">Shares</p>
-                                                <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].shares.toLocaleString()}</p>
+                                            <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-lg flex flex-col items-center">
+                                                <span class="material-icons text-purple-500 dark:text-purple-300">share</span>
+                                                <p class="text-gray-500 dark:text-gray-400 text-sm">Shares</p>
+                                                <p class="text-2xl font-bold text-gray-900 dark:text-white">${contentEngagements[0].shares.toLocaleString()}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="mt-2 text-xs text-right text-gray-500">
+                                    <div class="mt-2 text-xs text-right text-gray-500 dark:text-gray-400">
                                         As of ${formatDateTime(contentEngagements[0].timestamp)}
                                     </div>
-                                ` : '<p class="text-gray-500">No engagement data available</p>'}
+                                ` : '<p class="text-gray-500 dark:text-gray-400">No engagement data available</p>'}
                             </div>
                         </div>
                     </div>
                     
                     ${contentEngagements.length > 1 ? `
                         <div>
-                            <h4 class="text-lg font-medium mb-2">Engagement History</h4>
+                            <h4 class="text-lg font-medium mb-2 dark:text-white">Engagement History</h4>
                             <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
+                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead class="bg-gray-50 dark:bg-gray-700">
                                         <tr>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shares</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Views</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Likes</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Comments</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Shares</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                         ${contentEngagements.map(engagement => `
                                             <tr>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatDateTime(engagement.timestamp)}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.views.toLocaleString()}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.likes.toLocaleString()}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.comments.toLocaleString()}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.shares.toLocaleString()}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${formatDateTime(engagement.timestamp)}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${engagement.views.toLocaleString()}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${engagement.likes.toLocaleString()}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${engagement.comments.toLocaleString()}</td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${engagement.shares.toLocaleString()}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>

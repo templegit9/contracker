@@ -127,15 +127,12 @@
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
                     </div>
                     <div>
-                        <label for="content-id" class="block text-sm font-medium text-gray-700">Content ID (Optional)</label>
-                        <input type="text" id="content-id" name="content-id" placeholder="e.g., YouTube video ID"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
-                        <p class="mt-1 text-xs text-gray-500">Leave empty to extract from URL</p>
-                    </div>
-                    <div>
                         <label for="content-published" class="block text-sm font-medium text-gray-700">Published Date</label>
                         <input type="date" id="content-published" name="content-published" required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div id="duplicate-warning" class="hidden p-3 bg-yellow-100 rounded-md text-yellow-800 text-sm">
+                        Warning: This URL has already been added to your tracking list.
                     </div>
                     <button type="submit"
                         class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
@@ -263,6 +260,7 @@
         };
         let contentItems = [];
         let engagementData = [];
+        let urlToContentMap = {}; // Map to track URLs to content IDs
 
         // Chart instances
         let platformChart;
@@ -270,6 +268,8 @@
 
         // DOM elements
         const contentForm = document.getElementById('content-form');
+        const contentUrlField = document.getElementById('content-url');
+        const duplicateWarning = document.getElementById('duplicate-warning');
         const contentList = document.getElementById('content-list');
         const engagementList = document.getElementById('engagement-list');
         const exportDataBtn = document.getElementById('export-data');
@@ -296,6 +296,8 @@
             const savedContentItems = await localforage.getItem('contentItems');
             if (savedContentItems) {
                 contentItems = JSON.parse(savedContentItems);
+                // Rebuild URL to content map
+                rebuildUrlContentMap();
             }
             
             const savedEngagementData = await localforage.getItem('engagementData');
@@ -314,6 +316,7 @@
             
             // Add event listeners
             contentForm.addEventListener('submit', handleContentFormSubmit);
+            contentUrlField.addEventListener('blur', checkForDuplicateUrl);
             exportDataBtn.addEventListener('click', exportData);
             refreshDataBtn.addEventListener('click', refreshEngagementData);
             saveApiConfigBtn.addEventListener('click', saveApiConfig);
@@ -327,6 +330,55 @@
             // Add listener for platform selection to update URL field placeholder
             document.getElementById('content-source').addEventListener('change', updateUrlPlaceholder);
             updateUrlPlaceholder();
+        }
+
+        // Rebuild URL to content map
+        function rebuildUrlContentMap() {
+            urlToContentMap = {};
+            contentItems.forEach(item => {
+                const normalizedUrl = normalizeUrl(item.url);
+                urlToContentMap[normalizedUrl] = item.id;
+            });
+        }
+
+        // Normalize URL (remove tracking parameters, fragments, etc.)
+        function normalizeUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                // Remove common tracking parameters
+                urlObj.searchParams.delete('utm_source');
+                urlObj.searchParams.delete('utm_medium');
+                urlObj.searchParams.delete('utm_campaign');
+                // Remove hash
+                urlObj.hash = '';
+                return urlObj.toString();
+            } catch (e) {
+                // If URL parsing fails, return original
+                return url;
+            }
+        }
+
+        // Check for duplicate URL
+        function checkForDuplicateUrl() {
+            const url = contentUrlField.value;
+            if (!url) return;
+            
+            const normalizedUrl = normalizeUrl(url);
+            const existingContentId = urlToContentMap[normalizedUrl];
+            
+            if (existingContentId) {
+                // Show warning
+                duplicateWarning.classList.remove('hidden');
+                
+                // Find the existing content item
+                const existingContent = contentItems.find(item => item.id === existingContentId);
+                if (existingContent) {
+                    duplicateWarning.textContent = `Warning: This URL has already been added as "${existingContent.name}".`;
+                }
+            } else {
+                // Hide warning
+                duplicateWarning.classList.add('hidden');
+            }
         }
 
         // Update URL placeholder based on selected platform
@@ -356,13 +408,42 @@
             const contentName = document.getElementById('content-name').value;
             const platform = document.getElementById('content-source').value;
             const contentUrl = document.getElementById('content-url').value;
-            let contentId = document.getElementById('content-id').value;
             const publishedDate = document.getElementById('content-published').value;
             
-            // Extract content ID if not provided
-            if (!contentId) {
-                contentId = extractContentId(contentUrl, platform);
+            // Normalize the URL
+            const normalizedUrl = normalizeUrl(contentUrl);
+            
+            // Check if URL already exists
+            const existingContentId = urlToContentMap[normalizedUrl];
+            if (existingContentId) {
+                // Find the existing content item
+                const existingContent = contentItems.find(item => item.id === existingContentId);
+                
+                if (confirm(`This URL has already been added as "${existingContent.name}". Do you want to update its information?`)) {
+                    // Update existing content item
+                    existingContent.name = contentName;
+                    existingContent.publishedDate = publishedDate;
+                    
+                    // Save to localforage
+                    await localforage.setItem('contentItems', JSON.stringify(contentItems));
+                    
+                    // Update UI
+                    renderContentItems();
+                    renderEngagementData();
+                    updateStats();
+                    renderCharts();
+                }
+                
+                // Reset form
+                contentForm.reset();
+                document.getElementById('content-published').valueAsDate = new Date();
+                duplicateWarning.classList.add('hidden');
+                
+                return;
             }
+            
+            // Extract content ID from URL
+            const contentId = extractContentId(contentUrl, platform);
             
             // Create new content item
             const newContentItem = {
@@ -379,6 +460,9 @@
             // Add to data structure
             contentItems.push(newContentItem);
             
+            // Update URL map
+            urlToContentMap[normalizedUrl] = newContentItem.id;
+            
             // Save to localforage
             await localforage.setItem('contentItems', JSON.stringify(contentItems));
             
@@ -394,6 +478,7 @@
             // Reset form
             contentForm.reset();
             document.getElementById('content-published').valueAsDate = new Date();
+            duplicateWarning.classList.add('hidden');
         }
 
         // Extract content ID from URL based on platform
@@ -409,10 +494,13 @@
                     
                     case 'servicenow':
                         // Extract ServiceNow blog ID
-                        return url.split('/').pop().split('-')[0];
+                        return urlObj.searchParams.get('sys_id') || url.split('/').pop();
                     
                     case 'linkedin':
                         // Extract LinkedIn post ID
+                        if (url.includes('/posts/')) {
+                            return url.split('/posts/')[1];
+                        }
                         return url.split('/').pop();
                     
                     default:
@@ -438,18 +526,27 @@
                     case 'youtube':
                         if (apiConfig.youtube.apiKey) {
                             engagementMetrics = await fetchYouTubeEngagement(item.contentId);
+                        } else {
+                            // Use cache or simulate
+                            engagementMetrics = await simulateEngagement(item);
                         }
                         break;
                     
                     case 'servicenow':
                         if (apiConfig.servicenow.instance && apiConfig.servicenow.username) {
                             engagementMetrics = await fetchServiceNowEngagement(item.contentId);
+                        } else {
+                            // Use cache or simulate
+                            engagementMetrics = await simulateEngagement(item);
                         }
                         break;
                     
                     case 'linkedin':
                         if (apiConfig.linkedin.accessToken) {
                             engagementMetrics = await fetchLinkedInEngagement(item.contentId);
+                        } else {
+                            // Use cache or simulate
+                            engagementMetrics = await simulateEngagement(item);
                         }
                         break;
                 }
@@ -457,12 +554,14 @@
                 if (engagementMetrics) {
                     fetchedAnyData = true;
                     
-                    // Find existing engagement record or create new one
-                    const existingIndex = engagementData.findIndex(e => e.contentId === item.id);
+                    // Store engagement data keyed by content URL (not ID)
+                    // This ensures same URL = same engagement data
+                    const normalizedUrl = normalizeUrl(item.url);
                     
                     const newEngagementRecord = {
                         id: generateId(),
                         contentId: item.id,
+                        contentUrl: normalizedUrl, // Store normalized URL
                         timestamp: timestamp,
                         views: engagementMetrics.views || 0,
                         likes: engagementMetrics.likes || 0,
@@ -471,18 +570,29 @@
                         otherMetrics: engagementMetrics.otherMetrics || {}
                     };
                     
-                    if (existingIndex >= 0) {
-                        // Update existing record
-                        engagementData[existingIndex] = newEngagementRecord;
+                    // Find existing engagement records for this URL
+                    const existingEngagements = engagementData.filter(e => e.contentUrl === normalizedUrl);
+                    
+                    if (existingEngagements.length > 0) {
+                        // Replace all engagement records for this URL with the new one
+                        engagementData = engagementData.filter(e => e.contentUrl !== normalizedUrl);
+                        engagementData.push(newEngagementRecord);
+                        
+                        // Update all content items with this URL to have the same lastUpdated
+                        contentItems.forEach((content, index) => {
+                            if (normalizeUrl(content.url) === normalizedUrl) {
+                                contentItems[index].lastUpdated = timestamp;
+                            }
+                        });
                     } else {
                         // Add new record
                         engagementData.push(newEngagementRecord);
-                    }
-                    
-                    // Update content item's lastUpdated timestamp
-                    const contentIndex = contentItems.findIndex(c => c.id === item.id);
-                    if (contentIndex >= 0) {
-                        contentItems[contentIndex].lastUpdated = timestamp;
+                        
+                        // Update content item's lastUpdated timestamp
+                        const contentIndex = contentItems.findIndex(c => c.id === item.id);
+                        if (contentIndex >= 0) {
+                            contentItems[contentIndex].lastUpdated = timestamp;
+                        }
                     }
                 }
             }
@@ -494,709 +604,67 @@
             }
         }
 
-        // Fetch YouTube video engagement
-        async function fetchYouTubeEngagement(videoId) {
-            if (!apiConfig.youtube.apiKey) {
-                console.error('YouTube API key not configured');
-                return null;
-            }
+        // Simulate engagement metrics (for when API keys aren't available)
+        async function simulateEngagement(item) {
+            // First check if we already have data for this URL
+            const normalizedUrl = normalizeUrl(item.url);
+            const existingEngagements = engagementData.filter(e => e.contentUrl === normalizedUrl);
             
-            try {
-                // This would be a real API call in production
-                // For now, we'll simulate the API response
-                console.log(`Fetching YouTube data for video ID: ${videoId}`);
+            if (existingEngagements.length > 0) {
+                // Use the most recent engagement data
+                const mostRecent = existingEngagements.sort((a, b) => 
+                    new Date(b.timestamp) - new Date(a.timestamp))[0];
                 
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Simulate response data
-                // In a real implementation, this would be:
-                // const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiConfig.youtube.apiKey}`);
-                // const data = await response.json();
-                
-                // Simulated response
                 return {
-                    views: Math.floor(Math.random() * 10000),
-                    likes: Math.floor(Math.random() * 500),
-                    comments: Math.floor(Math.random() * 100),
-                    shares: 0, // YouTube API doesn't provide share count
-                    otherMetrics: {
-                        dislikes: Math.floor(Math.random() * 50),
-                        favorites: Math.floor(Math.random() * 20)
-                    }
+                    views: mostRecent.views,
+                    likes: mostRecent.likes,
+                    comments: mostRecent.comments,
+                    shares: mostRecent.shares,
+                    otherMetrics: mostRecent.otherMetrics
                 };
-            } catch (error) {
-                console.error('Error fetching YouTube data:', error);
-                return null;
-            }
-        }
-
-        // Fetch ServiceNow blog engagement
-        async function fetchServiceNowEngagement(blogId) {
-            if (!apiConfig.servicenow.instance || !apiConfig.servicenow.username) {
-                console.error('ServiceNow API not configured');
-                return null;
             }
             
-            try {
-                // This would be a real API call in production
-                console.log(`Fetching ServiceNow data for blog ID: ${blogId}`);
-                
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Simulate response data
-                return {
-                    views: Math.floor(Math.random() * 5000),
-                    likes: Math.floor(Math.random() * 200),
-                    comments: Math.floor(Math.random() * 50),
-                    shares: Math.floor(Math.random() * 30),
-                    otherMetrics: {
-                        bookmarks: Math.floor(Math.random() * 40)
-                    }
-                };
-            } catch (error) {
-                console.error('Error fetching ServiceNow data:', error);
-                return null;
-            }
-        }
-
-        // Fetch LinkedIn post engagement
-        async function fetchLinkedInEngagement(postId) {
-            if (!apiConfig.linkedin.accessToken) {
-                console.error('LinkedIn API not configured');
-                return null;
-            }
+            // If no existing data, generate consistent simulated data
+            // Use the contentId as seed to ensure same URL = same data
+            const seed = hashCode(normalizedUrl);
+            const rng = seededRandom(seed);
             
-            try {
-                // This would be a real API call in production
-                console.log(`Fetching LinkedIn data for post ID: ${postId}`);
-                
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Simulate response data
-                return {
-                    views: Math.floor(Math.random() * 3000),
-                    likes: Math.floor(Math.random() * 150),
-                    comments: Math.floor(Math.random() * 30),
-                    shares: Math.floor(Math.random() * 20),
-                    otherMetrics: {
-                        impressions: Math.floor(Math.random() * 5000),
-                        clicks: Math.floor(Math.random() * 200)
-                    }
-                };
-            } catch (error) {
-                console.error('Error fetching LinkedIn data:', error);
-                return null;
-            }
-        }
-
-        // Render content items
-        function renderContentItems() {
-            contentList.innerHTML = '';
+            // Base metrics vary by platform
+            let baseViews, baseLikes, baseComments, baseShares;
             
-            if (contentItems.length === 0) {
-                contentList.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No content items added yet</td></tr>';
-                return;
-            }
-            
-            contentItems.forEach(item => {
-                const row = document.createElement('tr');
-                
-                const nameCell = document.createElement('td');
-                nameCell.className = 'px-6 py-4 whitespace-nowrap';
-                nameCell.textContent = item.name;
-                
-                const platformCell = document.createElement('td');
-                platformCell.className = 'px-6 py-4 whitespace-nowrap';
-                const platformSpan = document.createElement('span');
-                platformSpan.textContent = PLATFORMS[item.platform];
-                
-                // Add color based on platform
-                if (item.platform === 'youtube') {
-                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
-                } else if (item.platform === 'servicenow') {
-                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
-                } else if (item.platform === 'linkedin') {
-                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
-                }
-                
-                platformCell.appendChild(platformSpan);
-                
-                const publishedCell = document.createElement('td');
-                publishedCell.className = 'px-6 py-4 whitespace-nowrap';
-                publishedCell.textContent = formatDate(item.publishedDate);
-                
-                const actionsCell = document.createElement('td');
-                actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm';
-                
-                const viewBtn = document.createElement('button');
-                viewBtn.className = 'text-blue-600 hover:text-blue-900 mr-3';
-                viewBtn.textContent = 'View Details';
-                viewBtn.addEventListener('click', () => showContentDetails(item));
-                
-                const updateBtn = document.createElement('button');
-                updateBtn.className = 'text-green-600 hover:text-green-900 mr-3';
-                updateBtn.textContent = 'Update Data';
-                updateBtn.addEventListener('click', () => fetchEngagementData([item]).then(() => {
-                    renderEngagementData();
-                    updateStats();
-                    renderCharts();
-                }));
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'text-red-600 hover:text-red-900';
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.addEventListener('click', () => deleteContent(item.id));
-                
-                actionsCell.appendChild(viewBtn);
-                actionsCell.appendChild(updateBtn);
-                actionsCell.appendChild(deleteBtn);
-                
-                row.appendChild(nameCell);
-                row.appendChild(platformCell);
-                row.appendChild(publishedCell);
-                row.appendChild(actionsCell);
-                
-                contentList.appendChild(row);
-            });
-        }
-
-        // Render engagement data
-        function renderEngagementData() {
-            engagementList.innerHTML = '';
-            
-            if (engagementData.length === 0) {
-                engagementList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No engagement data available</td></tr>';
-                return;
-            }
-            
-            // Group engagement data by content ID and get the latest record for each
-            const latestEngagementByContent = {};
-            engagementData.forEach(engagement => {
-                if (!latestEngagementByContent[engagement.contentId] || 
-                    new Date(engagement.timestamp) > new Date(latestEngagementByContent[engagement.contentId].timestamp)) {
-                    latestEngagementByContent[engagement.contentId] = engagement;
-                }
-            });
-            
-            Object.values(latestEngagementByContent).forEach(engagement => {
-                const contentItem = contentItems.find(item => item.id === engagement.contentId);
-                if (!contentItem) return; // Skip if content was deleted
-                
-                const row = document.createElement('tr');
-                
-                const nameCell = document.createElement('td');
-                nameCell.className = 'px-6 py-4 whitespace-nowrap';
-                nameCell.textContent = contentItem.name;
-                
-                const platformCell = document.createElement('td');
-                platformCell.className = 'px-6 py-4 whitespace-nowrap';
-                const platformSpan = document.createElement('span');
-                platformSpan.textContent = PLATFORMS[contentItem.platform];
-                
-                // Add color based on platform
-                if (contentItem.platform === 'youtube') {
-                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
-                } else if (contentItem.platform === 'servicenow') {
-                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
-                } else if (contentItem.platform === 'linkedin') {
-                    platformSpan.className = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
-                }
-                
-                platformCell.appendChild(platformSpan);
-                
-                const viewsCell = document.createElement('td');
-                viewsCell.className = 'px-6 py-4 whitespace-nowrap text-center';
-                viewsCell.textContent = engagement.views.toLocaleString();
-                
-                const likesCell = document.createElement('td');
-                likesCell.className = 'px-6 py-4 whitespace-nowrap text-center';
-                likesCell.textContent = engagement.likes.toLocaleString();
-                
-                const commentsCell = document.createElement('td');
-                commentsCell.className = 'px-6 py-4 whitespace-nowrap text-center';
-                commentsCell.textContent = engagement.comments.toLocaleString();
-                
-                const updatedCell = document.createElement('td');
-                updatedCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
-                updatedCell.textContent = formatDateTime(engagement.timestamp);
-                
-                row.appendChild(nameCell);
-                row.appendChild(platformCell);
-                row.appendChild(viewsCell);
-                row.appendChild(likesCell);
-                row.appendChild(commentsCell);
-                row.appendChild(updatedCell);
-                
-                engagementList.appendChild(row);
-            });
-        }
-
-        // Show content details in modal
-        function showContentDetails(contentItem) {
-            const modalTitle = document.getElementById('modal-title');
-            const modalContent = document.getElementById('modal-content');
-            
-            modalTitle.textContent = contentItem.name;
-            
-            // Find all engagement records for this content
-            const contentEngagements = engagementData
-                .filter(e => e.contentId === contentItem.id)
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            let html = `
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h4 class="text-lg font-medium">Content Details</h4>
-                            <div class="bg-gray-50 p-4 rounded-lg mt-2">
-                                <div class="grid grid-cols-1 gap-2">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Platform</p>
-                                        <p class="text-gray-900">${PLATFORMS[contentItem.platform]}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">URL</p>
-                                        <a href="${contentItem.url}" target="_blank" class="text-blue-600 hover:text-blue-800 break-all">${contentItem.url}</a>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Content ID</p>
-                                        <p class="text-gray-900 font-mono text-xs">${contentItem.contentId}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Published</p>
-                                        <p class="text-gray-900">${formatDate(contentItem.publishedDate)}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Last Updated</p>
-                                        <p class="text-gray-900">${contentItem.lastUpdated ? formatDateTime(contentItem.lastUpdated) : 'Never'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-medium">Latest Engagement</h4>
-                            <div class="bg-gray-50 p-4 rounded-lg mt-2">
-                                ${contentEngagements.length > 0 ? `
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="text-center">
-                                            <p class="text-gray-500 text-sm">Views</p>
-                                            <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].views.toLocaleString()}</p>
-                                        </div>
-                                        <div class="text-center">
-                                            <p class="text-gray-500 text-sm">Likes</p>
-                                            <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].likes.toLocaleString()}</p>
-                                        </div>
-                                        <div class="text-center">
-                                            <p class="text-gray-500 text-sm">Comments</p>
-                                            <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].comments.toLocaleString()}</p>
-                                        </div>
-                                        <div class="text-center">
-                                            <p class="text-gray-500 text-sm">Shares</p>
-                                            <p class="text-2xl font-bold text-gray-900">${contentEngagements[0].shares.toLocaleString()}</p>
-                                        </div>
-                                    </div>
-                                    <div class="mt-2 text-xs text-right text-gray-500">
-                                        As of ${formatDateTime(contentEngagements[0].timestamp)}
-                                    </div>
-                                ` : '<p class="text-gray-500">No engagement data available</p>'}
-                            </div>
-                        </div>
-                    </div>
+            switch(item.platform) {
+                case 'youtube':
+                    baseViews = Math.floor(rng() * 8000) + 2000;
+                    baseLikes = Math.floor(baseViews * (0.03 + rng() * 0.07));
+                    baseComments = Math.floor(baseViews * (0.005 + rng() * 0.015));
+                    baseShares = 0; // YouTube API doesn't provide share count
+                    break;
                     
-                    ${contentEngagements.length > 1 ? `
-                        <div>
-                            <h4 class="text-lg font-medium">Engagement History</h4>
-                            <div class="overflow-x-auto mt-2">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
-                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shares</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        ${contentEngagements.map(engagement => `
-                                            <tr>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatDateTime(engagement.timestamp)}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.views.toLocaleString()}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.likes.toLocaleString()}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.comments.toLocaleString()}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm">${engagement.shares.toLocaleString()}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-            
-            modalContent.innerHTML = html;
-            contentModal.classList.remove('hidden');
-        }
-
-        // Delete content
-        async function deleteContent(id) {
-            if (confirm('Are you sure you want to delete this content? This will also delete all associated engagement data.')) {
-                // Remove content item
-                contentItems = contentItems.filter(item => item.id !== id);
-                
-                // Remove engagement data for this content
-                engagementData = engagementData.filter(engagement => engagement.contentId !== id);
-                
-                // Save to localforage
-                await localforage.setItem('contentItems', JSON.stringify(contentItems));
-                await localforage.setItem('engagementData', JSON.stringify(engagementData));
-                
-                // Update UI
-                renderContentItems();
-                renderEngagementData();
-                updateStats();
-                renderCharts();
-            }
-        }
-
-        // Update statistics
-        function updateStats() {
-            // Total content items
-            totalContentEl.textContent = contentItems.length;
-            
-            // Calculate total engagements (latest for each content)
-            let totalViews = 0;
-            let engagementsByPlatform = {};
-            
-            // Get the latest engagement data for each content
-            const latestEngagementByContent = {};
-            engagementData.forEach(engagement => {
-                if (!latestEngagementByContent[engagement.contentId] || 
-                    new Date(engagement.timestamp) > new Date(latestEngagementByContent[engagement.contentId].timestamp)) {
-                    latestEngagementByContent[engagement.contentId] = engagement;
-                }
-            });
-            
-            // Calculate totals and by platform
-            Object.values(latestEngagementByContent).forEach(engagement => {
-                const contentItem = contentItems.find(item => item.id === engagement.contentId);
-                if (!contentItem) return;
-                
-                totalViews += engagement.views;
-                
-                engagementsByPlatform[contentItem.platform] = (engagementsByPlatform[contentItem.platform] || 0) + engagement.views;
-            });
-            
-            totalEngagementsEl.textContent = totalViews.toLocaleString();
-            
-            // Find top platform
-            const topPlatform = Object.keys(engagementsByPlatform).reduce((a, b) => 
-                engagementsByPlatform[a] > engagementsByPlatform[b] ? a : b, null);
-            
-            if (topPlatform && engagementsByPlatform[topPlatform] > 0) {
-                topPlatformEl.textContent = PLATFORMS[topPlatform];
-            } else {
-                topPlatformEl.textContent = '-';
-            }
-        }
-
-        // Render charts
-        function renderCharts() {
-            // Get the latest engagement data for each content
-            const latestEngagementByContent = {};
-            engagementData.forEach(engagement => {
-                if (!latestEngagementByContent[engagement.contentId] || 
-                    new Date(engagement.timestamp) > new Date(latestEngagementByContent[engagement.contentId].timestamp)) {
-                    latestEngagementByContent[engagement.contentId] = engagement;
-                }
-            });
-            
-            // Prepare platform chart data
-            const platformData = {};
-            Object.values(latestEngagementByContent).forEach(engagement => {
-                const contentItem = contentItems.find(item => item.id === engagement.contentId);
-                if (!contentItem) return;
-                
-                platformData[contentItem.platform] = (platformData[contentItem.platform] || 0) + engagement.views;
-            });
-            
-            // Prepare content chart data
-            const contentData = {};
-            Object.values(latestEngagementByContent).forEach(engagement => {
-                const contentItem = contentItems.find(item => item.id === engagement.contentId);
-                if (!contentItem) return;
-                
-                contentData[contentItem.name] = engagement.views;
-            });
-            
-            // Sort and take top 5 content items
-            const topContent = Object.entries(contentData)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5);
-            
-            // Create or update platform chart
-            const platformCtx = document.getElementById('platform-chart').getContext('2d');
-            if (platformChart) {
-                platformChart.destroy();
+                case 'servicenow':
+                    baseViews = Math.floor(rng() * 3000) + 1000;
+                    baseLikes = Math.floor(baseViews * (0.02 + rng() * 0.05));
+                    baseComments = Math.floor(baseViews * (0.003 + rng() * 0.01));
+                    baseShares = Math.floor(baseViews * (0.001 + rng() * 0.005));
+                    break;
+                    
+                case 'linkedin':
+                    baseViews = Math.floor(rng() * 2000) + 500;
+                    baseLikes = Math.floor(baseViews * (0.04 + rng() * 0.08));
+                    baseComments = Math.floor(baseViews * (0.01 + rng() * 0.02));
+                    baseShares = Math.floor(baseViews * (0.005 + rng() * 0.01));
+                    break;
+                    
+                default:
+                    baseViews = Math.floor(rng() * 1000) + 200;
+                    baseLikes = Math.floor(baseViews * (0.02 + rng() * 0.05));
+                    baseComments = Math.floor(baseViews * (0.005 + rng() * 0.01));
+                    baseShares = Math.floor(baseViews * (0.002 + rng() * 0.005));
             }
             
-            platformChart = new Chart(platformCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(platformData).map(platform => PLATFORMS[platform]),
-                    datasets: [{
-                        data: Object.values(platformData),
-                        backgroundColor: [
-                            '#FF0000', // red for Youtube
-                            '#339933', // green for ServiceNow 
-                            '#0A66C2', // blue for LinkedIn
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-            
-            // Create or update content chart
-            const contentCtx = document.getElementById('content-chart').getContext('2d');
-            if (contentChart) {
-                contentChart.destroy();
-            }
-            
-            contentChart = new Chart(contentCtx, {
-                type: 'bar',
-                data: {
-                    labels: topContent.map(item => truncateText(item[0], 15)),
-                    datasets: [{
-                        label: 'Views',
-                        data: topContent.map(item => item[1]),
-                        backgroundColor: '#3B82F6'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-
-        // Refresh all engagement data
-        async function refreshEngagementData() {
-            if (contentItems.length === 0) {
-                alert('No content items to refresh');
-                return;
-            }
-            
-            const refreshBtn = document.getElementById('refresh-data');
-            refreshBtn.textContent = 'Refreshing...';
-            refreshBtn.disabled = true;
-            
-            try {
-                await fetchEngagementData();
-                renderEngagementData();
-                updateStats();
-                renderCharts();
-                alert('Engagement data refreshed successfully');
-            } catch (error) {
-                console.error('Error refreshing data:', error);
-                alert('Error refreshing data. Check console for details.');
-            } finally {
-                refreshBtn.textContent = 'Refresh Data';
-                refreshBtn.disabled = false;
-            }
-        }
-
-        // Save API configuration
-        async function saveApiConfig() {
-            // YouTube API config
-            apiConfig.youtube.apiKey = document.getElementById('youtube-api-key').value;
-            
-            // ServiceNow API config
-            apiConfig.servicenow.instance = document.getElementById('servicenow-instance').value;
-            apiConfig.servicenow.username = document.getElementById('servicenow-username').value;
-            apiConfig.servicenow.password = document.getElementById('servicenow-password').value;
-            
-            // LinkedIn API config
-            apiConfig.linkedin.clientId = document.getElementById('linkedin-client-id').value;
-            apiConfig.linkedin.clientSecret = document.getElementById('linkedin-client-secret').value;
-            
-            // Save to localforage
-            await localforage.setItem('apiConfig', JSON.stringify(apiConfig));
-            
-            // Update UI
-            updateApiConfigUI();
-            
-            alert('API configuration saved successfully');
-        }
-
-        // Update API configuration UI
-        function updateApiConfigUI() {
-            // YouTube
-            document.getElementById('youtube-api-key').value = apiConfig.youtube.apiKey || '';
-            document.getElementById('youtube-api-status').className = 
-                apiConfig.youtube.apiKey ? 
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800' : 
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
-            document.getElementById('youtube-api-status').textContent = 
-                apiConfig.youtube.apiKey ? 'Configured' : 'Not Configured';
-            
-            // ServiceNow
-            document.getElementById('servicenow-instance').value = apiConfig.servicenow.instance || '';
-            document.getElementById('servicenow-username').value = apiConfig.servicenow.username || '';
-            document.getElementById('servicenow-password').value = apiConfig.servicenow.password || '';
-            document.getElementById('servicenow-api-status').className = 
-                (apiConfig.servicenow.instance && apiConfig.servicenow.username) ? 
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800' : 
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
-            document.getElementById('servicenow-api-status').textContent = 
-                (apiConfig.servicenow.instance && apiConfig.servicenow.username) ? 'Configured' : 'Not Configured';
-            
-            // LinkedIn
-            document.getElementById('linkedin-client-id').value = apiConfig.linkedin.clientId || '';
-            document.getElementById('linkedin-client-secret').value = apiConfig.linkedin.clientSecret || '';
-            document.getElementById('linkedin-api-status').className = 
-                (apiConfig.linkedin.clientId && apiConfig.linkedin.clientSecret) ? 
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800' : 
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
-            document.getElementById('linkedin-api-status').textContent = 
-                (apiConfig.linkedin.clientId && apiConfig.linkedin.clientSecret) ? 'Configured' : 'Not Configured';
-        }
-
-        // Test YouTube API
-        async function testYouTubeApi() {
-            const apiKey = document.getElementById('youtube-api-key').value;
-            
-            if (!apiKey) {
-                alert('Please enter a YouTube API key');
-                return;
-            }
-            
-            try {
-                // In a real app, we would make a test API call here
-                // For the demo, we'll just simulate a successful response
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                alert('YouTube API connection successful');
-            } catch (error) {
-                console.error('Error testing YouTube API:', error);
-                alert('Error connecting to YouTube API. Check console for details.');
-            }
-        }
-
-        // Test ServiceNow API
-        async function testServiceNowApi() {
-            const instance = document.getElementById('servicenow-instance').value;
-            const username = document.getElementById('servicenow-username').value;
-            const password = document.getElementById('servicenow-password').value;
-            
-            if (!instance || !username || !password) {
-                alert('Please enter all ServiceNow API details');
-                return;
-            }
-            
-            try {
-                // In a real app, we would make a test API call here
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                alert('ServiceNow API connection successful');
-            } catch (error) {
-                console.error('Error testing ServiceNow API:', error);
-                alert('Error connecting to ServiceNow API. Check console for details.');
-            }
-        }
-
-        // Test LinkedIn API
-        async function testLinkedInApi() {
-            const clientId = document.getElementById('linkedin-client-id').value;
-            const clientSecret = document.getElementById('linkedin-client-secret').value;
-            
-            if (!clientId || !clientSecret) {
-                alert('Please enter all LinkedIn API details');
-                return;
-            }
-            
-            try {
-                // In a real app, we would initiate OAuth flow here
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                alert('LinkedIn API configuration looks good. In a real app, you would be redirected to LinkedIn for authorization.');
-            } catch (error) {
-                console.error('Error testing LinkedIn API:', error);
-                alert('Error with LinkedIn API configuration. Check console for details.');
-            }
-        }
-
-        // Export data
-        function exportData() {
-            if (contentItems.length === 0 && engagementData.length === 0) {
-                alert('No data to export');
-                return;
-            }
-            
-            // Prepare export data
-            const exportObject = {
-                contentItems: contentItems,
-                engagementData: engagementData,
-                exportDate: new Date().toISOString()
+            return {
+                views: baseViews,
+                likes: baseLikes,
+                comments: baseComments,
+                shares: baseShares,
+                otherMetrics: {}
             };
-            
-            // Create JSON blob
-            const jsonBlob = new Blob([JSON.stringify(exportObject, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(jsonBlob);
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `engagement-data-${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // Helper functions
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleDateString();
-        }
-
-        function formatDateTime(dateTimeString) {
-            if (!dateTimeString) return 'N/A';
-            const date = new Date(dateTimeString);
-            return date.toLocaleString();
-        }
-
-        function truncateText(text, maxLength) {
-            if (text.length <= maxLength) return text;
-            return text.substring(0, maxLength) + '...';
-        }
-
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substring(2);
-        }
-
-        // Initialize the app
-        window.addEventListener('DOMContentLoaded', initApp);
-    </script>
-</body>
-</html>

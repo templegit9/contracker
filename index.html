@@ -3,16 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#ffffff">
     <title>Contracker - Content Engagement Tracker</title>
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Tailwind CSS -->
-    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Localforage for local storage -->
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        youtubeRed: '#FF0000',
+                        serviceNowGreen: '#00c487',
+                        linkedinBlue: '#0A66C2',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
+        /* Reset some default styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
         /* Custom badge styling */
         .badge {
             padding: 0.25rem 0.5rem;
@@ -60,6 +82,24 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* Form elements styling */
+        input[type="text"], 
+        input[type="url"],
+        input[type="date"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        
+        input:focus, select:focus {
+            outline: 2px solid #00c487;
+            border-color: #00c487;
         }
     </style>
 </head>
@@ -162,13 +202,13 @@
                     <div>
                         <label for="content-name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
                         <input type="text" id="content-name" name="content-name" required
-                            class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
                             placeholder="My YouTube Video">
                     </div>
                     <div>
                         <label for="content-source" class="block text-sm font-medium text-gray-700 mb-1">Platform</label>
                         <select id="content-source" name="content-source" required
-                            class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
                             <option value="youtube">YouTube</option>
                             <option value="servicenow">ServiceNow Community</option>
                             <option value="linkedin">LinkedIn</option>
@@ -177,13 +217,13 @@
                     <div>
                         <label for="content-url" class="block text-sm font-medium text-gray-700 mb-1">URL</label>
                         <input type="url" id="content-url" name="content-url" required
-                            class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
                         <p id="duplicate-warning" class="text-red-500 text-xs mt-1 hidden">Warning: URL already exists</p>
                     </div>
                     <div>
                         <label for="content-published" class="block text-sm font-medium text-gray-700 mb-1">Published Date</label>
                         <input type="date" id="content-published" name="content-published" required
-                            class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
                     </div>
                     <div class="md:col-span-4">
                         <button type="submit" 
@@ -254,7 +294,7 @@
     </main>
 
     <!-- API Settings Modal (hidden by default) -->
-    <div id="api-settings" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden">
+    <div id="api-settings" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex justify-between items-center mb-4">
@@ -274,7 +314,7 @@
                         <div>
                             <label for="youtube-api-key" class="block text-sm font-medium text-gray-700 mb-1">API Key</label>
                             <input type="text" id="youtube-api-key" name="youtube-api-key"
-                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
                         </div>
                         <div class="flex items-end">
                             <button id="test-youtube-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
@@ -294,18 +334,18 @@
                         <div>
                             <label for="servicenow-instance" class="block text-sm font-medium text-gray-700 mb-1">Instance URL</label>
                             <input type="text" id="servicenow-instance" name="servicenow-instance"
-                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
                                 placeholder="https://instance.service-now.com">
                         </div>
                         <div>
                             <label for="servicenow-username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                             <input type="text" id="servicenow-username" name="servicenow-username"
-                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
                         </div>
                         <div>
                             <label for="servicenow-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                             <input type="password" id="servicenow-password" name="servicenow-password"
-                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
                         </div>
                         <div class="md:col-span-3">
                             <button id="test-servicenow-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
@@ -325,12 +365,12 @@
                         <div>
                             <label for="linkedin-client-id" class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
                             <input type="text" id="linkedin-client-id" name="linkedin-client-id"
-                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
                         </div>
                         <div>
                             <label for="linkedin-client-secret" class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
                             <input type="password" id="linkedin-client-secret" name="linkedin-client-secret"
-                                class="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2">
                         </div>
                         <div class="md:col-span-2">
                             <button id="test-linkedin-api" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
@@ -351,7 +391,7 @@
     </div>
 
     <!-- Content Details Modal (hidden by default) -->
-    <div id="content-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden">
+    <div id="content-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex justify-between items-center mb-4">

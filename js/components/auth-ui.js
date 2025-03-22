@@ -20,6 +20,8 @@ let authDarkModeToggle;
  * Initialize authentication UI
  */
 export function initAuthUI() {
+    console.log('Initializing Auth UI - DOM readyState:', document.readyState);
+    
     // Initialize DOM element references
     authContent = document.getElementById('auth-content');
     mainContent = document.getElementById('main-content');
@@ -31,39 +33,136 @@ export function initAuthUI() {
     registerError = document.getElementById('register-error');
     authDarkModeToggle = document.getElementById('auth-dark-mode-toggle');
     
+    // Log DOM element statuses
+    console.log('DOM Elements:', {
+        authContent: !!authContent,
+        mainContent: !!mainContent,
+        loginForm: !!loginForm,
+        registerForm: !!registerForm,
+        loginTab: !!loginTab,
+        registerTab: !!registerTab,
+    });
+    
     // Check if elements exist
     if (!loginForm || !registerForm || !loginTab || !registerTab) {
         console.error('Could not initialize auth UI: Missing required DOM elements');
+        
+        // Add fallback initialization after a delay
+        setTimeout(() => {
+            console.log('Trying fallback initialization of auth UI');
+            const retryInit = () => {
+                authContent = document.getElementById('auth-content');
+                mainContent = document.getElementById('main-content');
+                loginForm = document.getElementById('login-form');
+                registerForm = document.getElementById('register-form');
+                loginTab = document.getElementById('login-tab');
+                registerTab = document.getElementById('register-tab');
+                loginError = document.getElementById('login-error');
+                registerError = document.getElementById('register-error');
+                authDarkModeToggle = document.getElementById('auth-dark-mode-toggle');
+                
+                if (loginForm && registerForm && loginTab && registerTab) {
+                    console.log('Fallback initialization succeeded');
+                    setupTabSwitching();
+                    setupFormSubmissions();
+                    initDarkMode();
+                }
+            };
+            
+            retryInit();
+        }, 500);
+        
         return;
     }
     
-    // Set up tab switching
-    loginTab.addEventListener('click', () => {
+    setupTabSwitching();
+    setupFormSubmissions();
+    initDarkMode();
+    
+    console.log('Auth UI initialized successfully');
+}
+
+/**
+ * Set up tab switching
+ */
+function setupTabSwitching() {
+    console.log('Setting up auth tab event listeners');
+    
+    // Remove any existing event listeners (just in case of duplicate initialization)
+    const newLoginTab = loginTab.cloneNode(true);
+    const newRegisterTab = registerTab.cloneNode(true);
+    
+    if (loginTab.parentNode) {
+        loginTab.parentNode.replaceChild(newLoginTab, loginTab);
+    }
+    
+    if (registerTab.parentNode) {
+        registerTab.parentNode.replaceChild(newRegisterTab, registerTab);
+    }
+    
+    // Update references
+    loginTab = newLoginTab;
+    registerTab = newRegisterTab;
+    
+    // Create specific handler functions for better debugging
+    const handleLoginTabClick = (e) => {
+        console.log('Login tab clicked');
+        e.preventDefault();
+        
+        // Switch active tab styling
         loginTab.classList.add('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
         loginTab.classList.remove('text-gray-500', 'dark:text-gray-400');
         registerTab.classList.remove('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
         registerTab.classList.add('text-gray-500', 'dark:text-gray-400');
+        
+        // Toggle form visibility
+        console.log('Showing login form, hiding register form');
         loginForm.classList.remove('hidden');
         registerForm.classList.add('hidden');
-    });
+    };
     
-    registerTab.addEventListener('click', () => {
+    const handleRegisterTabClick = (e) => {
+        console.log('Register tab clicked');
+        e.preventDefault();
+        
+        // Switch active tab styling
         registerTab.classList.add('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
         registerTab.classList.remove('text-gray-500', 'dark:text-gray-400');
         loginTab.classList.remove('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
         loginTab.classList.add('text-gray-500', 'dark:text-gray-400');
+        
+        // Toggle form visibility
+        console.log('Showing register form, hiding login form');
         registerForm.classList.remove('hidden');
         loginForm.classList.add('hidden');
-    });
+    };
     
-    // Set up form submissions
-    loginForm.addEventListener('submit', handleLogin);
-    registerForm.addEventListener('submit', handleRegister);
+    // Add the event listeners with debugging
+    console.log('Adding login tab click listener');
+    loginTab.addEventListener('click', handleLoginTabClick);
     
-    // Set up dark mode toggle
-    initDarkMode();
+    console.log('Adding register tab click listener');
+    registerTab.addEventListener('click', handleRegisterTabClick);
     
-    console.log('Auth UI initialized successfully');
+    // Add direct onclick attributes as backup
+    loginTab.setAttribute('onclick', "document.getElementById('login-form').classList.remove('hidden'); document.getElementById('register-form').classList.add('hidden');");
+    registerTab.setAttribute('onclick', "document.getElementById('register-form').classList.remove('hidden'); document.getElementById('login-form').classList.add('hidden');");
+}
+
+/**
+ * Set up form submissions
+ */
+function setupFormSubmissions() {
+    if (loginForm && registerForm) {
+        // Import the handlers on demand to ensure they're available
+        import('../modules/auth.js').then(authModule => {
+            loginForm.addEventListener('submit', authModule.handleLogin);
+            registerForm.addEventListener('submit', authModule.handleRegister);
+            console.log('Form submission handlers attached');
+        }).catch(error => {
+            console.error('Error importing auth module:', error);
+        });
+    }
 }
 
 /**

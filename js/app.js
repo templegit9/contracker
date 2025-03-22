@@ -12,24 +12,143 @@ import { loadDashboard } from './components/dashboard.js';
  * Initialize application
  */
 async function initApp() {
-    // Set up user dropdown menu
-    setupUserMenu();
+    console.log('App initialization started');
     
-    // Initialize authentication UI
-    initAuthUI();
+    try {
+        // Add version tracking for debugging
+        const appVersion = '1.0.1';
+        console.log(`Platform Engagement Tracker v${appVersion}`);
+        console.log('Browser:', navigator.userAgent);
+        console.log('DOM readyState:', document.readyState);
+        
+        // Check that dependencies are fully loaded
+        checkDependencies();
+        
+        // Step 1: Set up UI elements that don't depend on authentication
+        setupUserMenu();
+        
+        // Step 2: Initialize authentication UI - critical for login/register
+        console.log('Setting up authentication UI');
+        await new Promise(resolve => {
+            // Ensure DOM is ready before initializing UI components
+            const initAuth = () => {
+                console.log('DOM ready state before auth init:', document.readyState);
+                
+                // First ensure all dependencies are loaded
+                if (window.appLoader && Object.values(window.appLoader.dependenciesReady).some(v => !v)) {
+                    console.log('Waiting for dependencies to load...');
+                    setTimeout(() => {
+                        console.log('Retrying auth UI initialization after dependency wait');
+                        initAuth();
+                    }, 100);
+                    return;
+                }
+                
+                // Ensure DOM is ready
+                if (document.readyState !== 'complete') {
+                    console.log('DOM not ready, waiting...');
+                    setTimeout(() => {
+                        console.log('Retrying auth UI initialization after DOM wait');
+                        initAuth();
+                    }, 100);
+                    return;
+                }
+                
+                console.log('DOM and dependencies ready, initializing auth UI');
+                initAuthUI();
+                resolve();
+            };
+            
+            initAuth();
+        });
+        
+        // Step 3: Initialize authentication system
+        console.log('Initializing authentication system');
+        await initAuth();
+        
+        // Step 4: Set up rest of UI components
+        initDarkModeToggle();
+        setupMenuItems();
+        setupModalControls();
+        
+        // Hide loading indicator (in case it's still shown)
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.transition = 'opacity 0.5s ease-out';
+            loadingIndicator.style.opacity = '0';
+            setTimeout(() => {
+                loadingIndicator.style.display = 'none';
+            }, 500);
+        }
+        
+        console.log('App initialization complete');
+    } catch (error) {
+        console.error('Error during app initialization:', error);
+        
+        // Show error to user
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'p-4 bg-red-100 border-l-4 border-red-500 text-red-700 fixed inset-x-0 bottom-0';
+        errorContainer.innerHTML = `
+            <p class="font-bold">Application Error</p>
+            <p>There was an error initializing the application: ${error.message}</p>
+        `;
+        document.body.appendChild(errorContainer);
+        
+        // Hide the loading indicator
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Check that all dependencies are properly loaded
+ */
+function checkDependencies() {
+    const dependencies = {
+        tailwind: typeof window.tailwind !== 'undefined',
+        chartjs: typeof window.Chart !== 'undefined',
+        localforage: typeof window.localforage !== 'undefined',
+        cryptojs: typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined'
+    };
     
-    // Initialize authentication system
-    // If user is logged in, this will automatically load the dashboard
-    await initAuth();
+    console.log('Dependencies status:', dependencies);
     
-    // Initialize dark mode toggle in main UI (auth UI initializes its own toggle)
-    initDarkModeToggle();
+    // Check if any dependency is missing
+    const missingDeps = Object.entries(dependencies)
+        .filter(([, loaded]) => !loaded)
+        .map(([name]) => name);
     
-    // Initialize menu items
-    setupMenuItems();
-    
-    // Initialize modal controls
-    setupModalControls();
+    if (missingDeps.length > 0) {
+        console.warn(`Missing dependencies: ${missingDeps.join(', ')}`);
+        
+        // Attempt to reload them
+        if (window.appLoader) {
+            console.log('Attempting to reload missing dependencies');
+            
+            // Map dependency names to loader functions
+            const depLoaders = {
+                tailwind: () => window.appLoader.loadDependency('Tailwind', 'https://cdn.tailwindcss.com', 
+                    () => typeof window.tailwind !== 'undefined'),
+                chartjs: () => window.appLoader.loadDependency('Chart.js', 'https://cdn.jsdelivr.net/npm/chart.js', 
+                    () => typeof window.Chart !== 'undefined'),
+                localforage: () => window.appLoader.loadDependency('LocalForage', 'https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js', 
+                    () => typeof window.localforage !== 'undefined'),
+                cryptojs: () => window.appLoader.loadDependency('CryptoJS', 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js', 
+                    () => typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined')
+            };
+            
+            // Try to load each missing dependency
+            for (const dep of missingDeps) {
+                if (depLoaders[dep]) {
+                    depLoaders[dep]().catch(err => {
+                        console.error(`Error reloading ${dep}:`, err);
+                    });
+                }
+            }
+        }
+    }
 }
 
 /**

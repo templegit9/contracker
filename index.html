@@ -14,6 +14,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Localforage for local storage -->
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <!-- Crypto.js for password hashing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -102,6 +104,7 @@
         input[type="url"],
         input[type="date"],
         input[type="password"],
+        input[type="email"],
         select {
             width: 100%;
             padding: 0.5rem;
@@ -114,23 +117,139 @@
             outline: 2px solid #00c487;
             border-color: #00c487;
         }
+        
+        /* Hide main content initially until authentication is checked */
+        #main-content {
+            display: none;
+        }
+        
+        /* Show auth content initially */
+        #auth-content {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-200">
-    <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Platform Engagement Tracker</h1>
-            <div>
-                <button id="show-settings" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700">
-                    <span class="material-icons mr-1">settings</span> Settings
-                </button>
-                <button id="export-data" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700 ml-2">
-                    <span class="material-icons mr-1">download</span> Export
-                </button>
+    <!-- Authentication content (shown before login) -->
+    <div id="auth-content" class="min-h-screen flex flex-col justify-center">
+        <div class="max-w-md mx-auto p-6">
+            <div class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Platform Engagement Tracker</h1>
+                <p class="text-gray-600 dark:text-gray-400">Track and manage your content performance across platforms</p>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+                <!-- Login/Register tabs -->
+                <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+                    <button id="login-tab" class="px-4 py-2 border-b-2 border-green-500 text-green-600 dark:text-green-400 font-medium">Login</button>
+                    <button id="register-tab" class="px-4 py-2 text-gray-500 dark:text-gray-400 font-medium">Register</button>
+                </div>
+                
+                <!-- Login form -->
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input type="email" id="login-email" name="login-email" required
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                        <input type="password" id="login-password" name="login-password" required
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                    </div>
+                    <div class="flex items-center">
+                        <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded">
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Remember me</label>
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full btn btn-primary">
+                            <span class="material-icons mr-1">login</span> Sign in
+                        </button>
+                    </div>
+                    <div id="login-error" class="text-red-500 text-sm hidden"></div>
+                </form>
+                
+                <!-- Register form (hidden initially) -->
+                <form id="register-form" class="space-y-4 hidden">
+                    <div>
+                        <label for="register-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+                        <input type="text" id="register-name" name="register-name" required
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                    </div>
+                    <div>
+                        <label for="register-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input type="email" id="register-email" name="register-email" required
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                    </div>
+                    <div>
+                        <label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                        <input type="password" id="register-password" name="register-password" required
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                    </div>
+                    <div>
+                        <label for="register-confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                        <input type="password" id="register-confirm-password" name="register-confirm-password" required
+                            class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full btn btn-primary">
+                            <span class="material-icons mr-1">person_add</span> Create Account
+                        </button>
+                    </div>
+                    <div id="register-error" class="text-red-500 text-sm hidden"></div>
+                </form>
+                
+                <!-- Dark mode toggle in auth screen -->
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Dark Mode</span>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                            <input type="checkbox" id="auth-dark-mode-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in" />
+                            <label for="auth-dark-mode-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                <p>Demo account: demo@example.com / password</p>
             </div>
         </div>
-    </header>
+    </div>
+
+    <!-- Main application content (hidden until authenticated) -->
+    <div id="main-content">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Platform Engagement Tracker</h1>
+                <div class="flex items-center">
+                    <!-- User profile dropdown -->
+                    <div class="relative ml-3">
+                        <div>
+                            <button id="user-menu-button" type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <span id="current-user-name">User</span>
+                                <span class="material-icons ml-1">arrow_drop_down</span>
+                            </button>
+                        </div>
+                        <div id="user-dropdown" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                            <a href="#" id="user-profile-link" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <span class="material-icons mr-1 align-text-bottom text-sm">person</span> Your Profile
+                            </a>
+                            <a href="#" id="show-settings-link" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <span class="material-icons mr-1 align-text-bottom text-sm">settings</span> Settings
+                            </a>
+                            <button id="export-data-dropdown" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <span class="material-icons mr-1 align-text-bottom text-sm">download</span> Export Data
+                            </button>
+                            <button id="logout-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <span class="material-icons mr-1 align-text-bottom text-sm">logout</span> Sign out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
     <!-- Main content -->
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -466,6 +585,80 @@
             </div>
         </div>
     </div>
+    
+    <!-- User Profile Modal (hidden by default) -->
+    <div id="profile-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center hidden z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium dark:text-white">Your Profile</h3>
+                    <button id="close-profile-modal" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mb-3">
+                            <span class="material-icons text-4xl text-green-500 dark:text-green-300">person</span>
+                        </div>
+                        <h2 id="profile-name" class="text-xl font-semibold text-gray-900 dark:text-white">User Name</h2>
+                        <p id="profile-email" class="text-gray-500 dark:text-gray-400">user@example.com</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-4">
+                        <h4 class="font-medium text-gray-900 dark:text-white">Account Information</h4>
+                        <div>
+                            <label for="profile-display-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Display Name</label>
+                            <input type="text" id="profile-display-name" name="profile-display-name"
+                                class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="profile-current-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
+                                <input type="password" id="profile-current-password" name="profile-current-password"
+                                    class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2"
+                                    placeholder="Enter to change password">
+                            </div>
+                            <div>
+                                <label for="profile-new-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                                <input type="password" id="profile-new-password" name="profile-new-password"
+                                    class="shadow-sm focus:ring focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2"
+                                    placeholder="New password">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-2">Account Statistics</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div class="p-3">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Content Items</p>
+                                <p id="profile-content-count" class="text-xl font-semibold text-gray-900 dark:text-white">0</p>
+                            </div>
+                            <div class="p-3">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
+                                <p id="profile-views-count" class="text-xl font-semibold text-gray-900 dark:text-white">0</p>
+                            </div>
+                            <div class="p-3">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Member Since</p>
+                                <p id="profile-member-since" class="text-xl font-semibold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button id="save-profile" class="btn btn-primary">
+                            <span class="material-icons mr-1">save</span> Save Changes
+                        </button>
+                        <button id="delete-account" class="btn bg-red-500 hover:bg-red-600 text-white">
+                            <span class="material-icons mr-1">delete</span> Delete Account
+                        </button>
+                    </div>
+                    <div id="profile-message" class="text-green-500 dark:text-green-400 text-sm hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript -->
     <script>
@@ -482,6 +675,8 @@
             servicenow: { instance: null, username: null, password: null },
             linkedin: { clientId: null, clientSecret: null, accessToken: null }
         };
+        let users = [];
+        let currentUser = null;
         let contentItems = [];
         let engagementData = [];
         let urlToContentMap = {}; // Map to track URLs to content IDs
@@ -490,51 +685,78 @@
         let platformChart;
         let contentChart;
 
-        // DOM elements
+        // DOM elements for authentication
+        const authContent = document.getElementById('auth-content');
+        const mainContent = document.getElementById('main-content');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const loginError = document.getElementById('login-error');
+        const registerError = document.getElementById('register-error');
+        const authDarkModeToggle = document.getElementById('auth-dark-mode-toggle');
+        
+        // DOM elements for main content
         const contentForm = document.getElementById('content-form');
         const contentUrlField = document.getElementById('content-url');
         const duplicateWarning = document.getElementById('duplicate-warning');
         const contentList = document.getElementById('content-list');
         const engagementList = document.getElementById('engagement-list');
-        const exportDataBtn = document.getElementById('export-data');
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        const currentUserName = document.getElementById('current-user-name');
+        const logoutButton = document.getElementById('logout-button');
+        const userProfileLink = document.getElementById('user-profile-link');
+        const exportDataBtn = document.getElementById('export-data-dropdown');
         const refreshDataBtn = document.getElementById('refresh-data');
         const refreshAllDataBtn = document.getElementById('refresh-all-data');
+        const showSettingsBtn = document.getElementById('show-settings-link');
+        const hideSettingsBtn = document.getElementById('hide-settings');
+        const apiSettingsSection = document.getElementById('api-settings');
         const saveApiConfigBtn = document.getElementById('save-api-config');
         const testYouTubeApiBtn = document.getElementById('test-youtube-api');
         const testServiceNowApiBtn = document.getElementById('test-servicenow-api');
         const testLinkedInApiBtn = document.getElementById('test-linkedin-api');
         const contentModal = document.getElementById('content-modal');
         const closeModalBtn = document.getElementById('close-modal');
+        const profileModal = document.getElementById('profile-modal');
+        const closeProfileModalBtn = document.getElementById('close-profile-modal');
+        const profileName = document.getElementById('profile-name');
+        const profileEmail = document.getElementById('profile-email');
+        const profileDisplayName = document.getElementById('profile-display-name');
+        const profileContentCount = document.getElementById('profile-content-count');
+        const profileViewsCount = document.getElementById('profile-views-count');
+        const profileMemberSince = document.getElementById('profile-member-since');
+        const saveProfileBtn = document.getElementById('save-profile');
+        const deleteAccountBtn = document.getElementById('delete-account');
+        const profileMessage = document.getElementById('profile-message');
         const totalContentEl = document.getElementById('total-content');
         const totalEngagementsEl = document.getElementById('total-engagements');
         const topPlatformEl = document.getElementById('top-platform');
-        const showSettingsBtn = document.getElementById('show-settings');
-        const hideSettingsBtn = document.getElementById('hide-settings');
-        const apiSettingsSection = document.getElementById('api-settings');
 
         // Initialize the app
         async function initApp() {
-            // Load saved data
-            const savedApiConfig = await localforage.getItem('apiConfig');
-            if (savedApiConfig) {
-                apiConfig = JSON.parse(savedApiConfig);
-                updateApiConfigUI();
-            }
+            // Set up auth event listeners
+            loginTab.addEventListener('click', () => {
+                loginTab.classList.add('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
+                loginTab.classList.remove('text-gray-500', 'dark:text-gray-400');
+                registerTab.classList.remove('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
+                registerTab.classList.add('text-gray-500', 'dark:text-gray-400');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            });
             
-            const savedContentItems = await localforage.getItem('contentItems');
-            if (savedContentItems) {
-                contentItems = JSON.parse(savedContentItems);
-                // Rebuild URL to content map
-                rebuildUrlContentMap();
-            }
+            registerTab.addEventListener('click', () => {
+                registerTab.classList.add('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
+                registerTab.classList.remove('text-gray-500', 'dark:text-gray-400');
+                loginTab.classList.remove('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
+                loginTab.classList.add('text-gray-500', 'dark:text-gray-400');
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            });
             
-            const savedEngagementData = await localforage.getItem('engagementData');
-            if (savedEngagementData) {
-                engagementData = JSON.parse(savedEngagementData);
-            }
-            
-            // Set default date to today
-            document.getElementById('content-published').valueAsDate = new Date();
+            loginForm.addEventListener('submit', handleLogin);
+            registerForm.addEventListener('submit', handleRegister);
             
             // Check for dark mode preference
             const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -543,22 +765,224 @@
             // Set initial dark mode based on saved preference or system preference
             if (savedDarkMode || (localStorage.getItem('darkMode') === null && prefersDarkMode)) {
                 document.documentElement.classList.add('dark');
-                document.getElementById('dark-mode-toggle').checked = true;
+                authDarkModeToggle.checked = true;
             }
+            
+            // Set up dark mode toggles (both in auth screen and main app)
+            authDarkModeToggle.addEventListener('change', toggleDarkMode);
+            
+            // Initialize users array from storage
+            const savedUsers = await localforage.getItem('users');
+            if (savedUsers) {
+                users = JSON.parse(savedUsers);
+            } else {
+                // Create demo account if no users exist
+                const demoUser = {
+                    id: generateId(),
+                    name: 'Demo User',
+                    email: 'demo@example.com',
+                    password: hashPassword('password'),
+                    createdAt: new Date().toISOString()
+                };
+                users.push(demoUser);
+                await localforage.setItem('users', JSON.stringify(users));
+            }
+            
+            // Check for logged in user
+            const loggedInUserId = localStorage.getItem('loggedInUser');
+            if (loggedInUserId) {
+                const user = users.find(u => u.id === loggedInUserId);
+                if (user) {
+                    // User is logged in
+                    await loginUser(user);
+                    return;
+                }
+            }
+            
+            // No logged in user, show auth screen
+            authContent.style.display = 'block';
+            mainContent.style.display = 'none';
+        }
+        
+        // Hash password using SHA-256
+        function hashPassword(password) {
+            return CryptoJS.SHA256(password).toString();
+        }
+        
+        // Handle login form submission
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password');
+            const rememberMe = document.getElementById('remember-me').checked;
+            
+            // Find user by email
+            const user = users.find(u => u.email === email);
+            
+            if (!user || user.password !== hashPassword(password.value)) {
+                loginError.textContent = 'Invalid email or password';
+                loginError.classList.remove('hidden');
+                return;
+            }
+            
+            // Clear form and error
+            loginForm.reset();
+            loginError.classList.add('hidden');
+            
+            // Save in localStorage if remember me is checked
+            if (rememberMe) {
+                localStorage.setItem('loggedInUser', user.id);
+            } else {
+                localStorage.removeItem('loggedInUser');
+            }
+            
+            // Log in the user
+            await loginUser(user);
+        }
+        
+        // Handle register form submission
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            // Check if passwords match
+            if (password !== confirmPassword) {
+                registerError.textContent = 'Passwords do not match';
+                registerError.classList.remove('hidden');
+                return;
+            }
+            
+            // Check if email already exists
+            if (users.some(u => u.email === email)) {
+                registerError.textContent = 'Email is already registered';
+                registerError.classList.remove('hidden');
+                return;
+            }
+            
+            // Create new user
+            const newUser = {
+                id: generateId(),
+                name: name,
+                email: email,
+                password: hashPassword(password),
+                createdAt: new Date().toISOString()
+            };
+            
+            // Add user to users array and save to storage
+            users.push(newUser);
+            await localforage.setItem('users', JSON.stringify(users));
+            
+            // Clear form and error
+            registerForm.reset();
+            registerError.classList.add('hidden');
+            
+            // Display success message and switch to login tab
+            registerError.textContent = 'Account created successfully! Please log in.';
+            registerError.classList.remove('hidden');
+            registerError.classList.add('text-green-500');
+            
+            // Switch to login tab
+            loginTab.click();
+        }
+        
+        // Login user and load their data
+        async function loginUser(user) {
+            currentUser = user;
+            
+            // Update UI
+            currentUserName.textContent = user.name;
+            authContent.style.display = 'none';
+            mainContent.style.display = 'block';
+            
+            // Load user data
+            await loadUserData();
+            
+            // Set up main app event listeners
+            setupMainAppEventListeners();
+        }
+        
+        // Load user data from storage
+        async function loadUserData() {
+            // Try to load user-specific data
+            const userPrefix = `user_${currentUser.id}_`;
+            
+            // Load API config
+            const savedApiConfig = await localforage.getItem(userPrefix + 'apiConfig');
+            if (savedApiConfig) {
+                apiConfig = JSON.parse(savedApiConfig);
+                updateApiConfigUI();
+            }
+            
+            // Load content items
+            const savedContentItems = await localforage.getItem(userPrefix + 'contentItems');
+            if (savedContentItems) {
+                contentItems = JSON.parse(savedContentItems);
+                // Rebuild URL to content map
+                rebuildUrlContentMap();
+            } else {
+                contentItems = [];
+                rebuildUrlContentMap();
+            }
+            
+            // Load engagement data
+            const savedEngagementData = await localforage.getItem(userPrefix + 'engagementData');
+            if (savedEngagementData) {
+                engagementData = JSON.parse(savedEngagementData);
+            } else {
+                engagementData = [];
+            }
+            
+            // Set default date to today for content form
+            document.getElementById('content-published').valueAsDate = new Date();
             
             // Render data
             renderContentItems();
             renderEngagementData();
             updateStats();
             renderCharts();
+        }
+        
+        // Set up event listeners for the main application
+        function setupMainAppEventListeners() {
+            // User menu dropdown
+            userMenuButton.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+            });
             
-            // Add event listeners
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!userMenuButton.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Logout button
+            logoutButton.addEventListener('click', handleLogout);
+            
+            // User profile
+            userProfileLink.addEventListener('click', showUserProfile);
+            closeProfileModalBtn.addEventListener('click', () => {
+                profileModal.classList.add('hidden');
+            });
+            saveProfileBtn.addEventListener('click', saveUserProfile);
+            deleteAccountBtn.addEventListener('click', confirmDeleteAccount);
+            
+            // Content form
             contentForm.addEventListener('submit', handleContentFormSubmit);
             contentUrlField.addEventListener('blur', checkForDuplicateUrl);
             document.getElementById('fetch-content-info').addEventListener('click', fetchContentInfo);
+            
+            // Data actions
             exportDataBtn.addEventListener('click', exportData);
             refreshDataBtn.addEventListener('click', refreshEngagementData);
             refreshAllDataBtn.addEventListener('click', refreshEngagementData);
+            
+            // Settings and modals
             saveApiConfigBtn.addEventListener('click', saveApiConfig);
             testYouTubeApiBtn.addEventListener('click', testYouTubeApi);
             testServiceNowApiBtn.addEventListener('click', testServiceNowApi);
@@ -568,6 +992,7 @@
             });
             showSettingsBtn.addEventListener('click', () => {
                 apiSettingsSection.classList.remove('hidden');
+                userDropdown.classList.add('hidden');
             });
             hideSettingsBtn.addEventListener('click', () => {
                 apiSettingsSection.classList.add('hidden');
@@ -575,17 +1000,12 @@
             
             // Set up dark mode toggle
             const darkModeToggle = document.getElementById('dark-mode-toggle');
-            darkModeToggle.addEventListener('change', () => {
-                if (darkModeToggle.checked) {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('darkMode', 'true');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('darkMode', 'false');
-                }
-                // Update charts for better visibility in dark mode
-                updateChartsForColorMode();
-            });
+            darkModeToggle.addEventListener('change', toggleDarkMode);
+            
+            // Check dark mode state and update toggle
+            if (document.documentElement.classList.contains('dark')) {
+                darkModeToggle.checked = true;
+            }
             
             // Add listener for platform selection to update URL field placeholder
             document.getElementById('content-source').addEventListener('change', function() {
@@ -601,6 +1021,184 @@
                 }
             });
             updateUrlPlaceholder();
+        }
+        
+        // Toggle dark mode
+        function toggleDarkMode(e) {
+            const isDarkMode = e.target.checked;
+            
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('darkMode', 'false');
+            }
+            
+            // Keep both toggles in sync
+            const otherToggle = e.target.id === 'dark-mode-toggle' ? 
+                document.getElementById('auth-dark-mode-toggle') : 
+                document.getElementById('dark-mode-toggle');
+                
+            if (otherToggle) {
+                otherToggle.checked = isDarkMode;
+            }
+            
+            // Update charts for better visibility in dark mode
+            updateChartsForColorMode();
+        }
+        
+        // Show user profile
+        function showUserProfile() {
+            // Close the dropdown
+            userDropdown.classList.add('hidden');
+            
+            // Update profile info
+            profileName.textContent = currentUser.name;
+            profileEmail.textContent = currentUser.email;
+            profileDisplayName.value = currentUser.name;
+            
+            // Update profile statistics
+            profileContentCount.textContent = contentItems.length;
+            
+            // Calculate total views
+            let totalViews = 0;
+            const latestEngagementByUrl = {};
+            
+            engagementData.forEach(engagement => {
+                if (!latestEngagementByUrl[engagement.contentUrl] || 
+                    new Date(engagement.timestamp) > new Date(latestEngagementByUrl[engagement.contentUrl].timestamp)) {
+                    latestEngagementByUrl[engagement.contentUrl] = engagement;
+                }
+            });
+            
+            Object.values(latestEngagementByUrl).forEach(engagement => {
+                totalViews += engagement.views;
+            });
+            
+            profileViewsCount.textContent = totalViews.toLocaleString();
+            
+            // Format date for member since
+            const memberSince = new Date(currentUser.createdAt);
+            profileMemberSince.textContent = memberSince.toLocaleDateString();
+            
+            // Clear fields and messages
+            document.getElementById('profile-current-password').value = '';
+            document.getElementById('profile-new-password').value = '';
+            profileMessage.classList.add('hidden');
+            
+            // Show the profile modal
+            profileModal.classList.remove('hidden');
+        }
+        
+        // Save user profile
+        async function saveUserProfile() {
+            const newDisplayName = profileDisplayName.value.trim();
+            const currentPassword = document.getElementById('profile-current-password').value;
+            const newPassword = document.getElementById('profile-new-password').value;
+            
+            // Update name if changed
+            if (newDisplayName && newDisplayName !== currentUser.name) {
+                currentUser.name = newDisplayName;
+                currentUserName.textContent = newDisplayName;
+                profileName.textContent = newDisplayName;
+            }
+            
+            // Update password if provided
+            if (currentPassword && newPassword) {
+                const hashedCurrentPassword = hashPassword(currentPassword);
+                
+                // Verify current password
+                if (hashedCurrentPassword !== currentUser.password) {
+                    profileMessage.textContent = 'Current password is incorrect';
+                    profileMessage.classList.remove('text-green-500', 'dark:text-green-400');
+                    profileMessage.classList.add('text-red-500', 'dark:text-red-400');
+                    profileMessage.classList.remove('hidden');
+                    return;
+                }
+                
+                // Update password
+                currentUser.password = hashPassword(newPassword);
+                
+                // Clear password fields
+                document.getElementById('profile-current-password').value = '';
+                document.getElementById('profile-new-password').value = '';
+            }
+            
+            // Save updated user
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                users[userIndex] = currentUser;
+                await localforage.setItem('users', JSON.stringify(users));
+                
+                // Show success message
+                profileMessage.textContent = 'Profile updated successfully';
+                profileMessage.classList.add('text-green-500', 'dark:text-green-400');
+                profileMessage.classList.remove('text-red-500', 'dark:text-red-400');
+                profileMessage.classList.remove('hidden');
+                
+                // Hide message after 3 seconds
+                setTimeout(() => {
+                    profileMessage.classList.add('hidden');
+                }, 3000);
+            }
+        }
+        
+        // Confirm account deletion
+        function confirmDeleteAccount() {
+            if (confirm('Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.')) {
+                deleteAccount();
+            }
+        }
+        
+        // Delete user account
+        async function deleteAccount() {
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            
+            if (userIndex !== -1) {
+                // Remove user from users array
+                users.splice(userIndex, 1);
+                await localforage.setItem('users', JSON.stringify(users));
+                
+                // Remove user data
+                const userPrefix = `user_${currentUser.id}_`;
+                await localforage.removeItem(userPrefix + 'apiConfig');
+                await localforage.removeItem(userPrefix + 'contentItems');
+                await localforage.removeItem(userPrefix + 'engagementData');
+                
+                // Logout
+                handleLogout();
+            }
+        }
+        
+        // Handle logout
+        function handleLogout() {
+            // Clear current user
+            currentUser = null;
+            
+            // Remove from localStorage
+            localStorage.removeItem('loggedInUser');
+            
+            // Reset data
+            contentItems = [];
+            engagementData = [];
+            urlToContentMap = {};
+            
+            // Switch to auth screen
+            authContent.style.display = 'block';
+            mainContent.style.display = 'none';
+            
+            // Reset UI
+            contentList.innerHTML = '';
+            engagementList.innerHTML = '';
+        }
+        
+        // Save data with user prefix
+        async function saveUserData(key, data) {
+            if (!currentUser) return;
+            
+            const userPrefix = `user_${currentUser.id}_`;
+            await localforage.setItem(userPrefix + key, JSON.stringify(data));
         }
         
         // Update charts for dark/light mode
@@ -956,8 +1554,8 @@
             // Update URL map
             urlToContentMap[normalizedUrl] = newContentItem.id;
             
-            // Save to localforage
-            await localforage.setItem('contentItems', JSON.stringify(contentItems));
+            // Save to user-specific storage
+            await saveUserData('contentItems', contentItems);
             
             // Fetch initial engagement data
             await fetchEngagementData([newContentItem]);
@@ -1090,9 +1688,9 @@
                 item.lastUpdated = timestamp;
             }
             
-            // Save to localforage
-            await localforage.setItem('engagementData', JSON.stringify(engagementData));
-            await localforage.setItem('contentItems', JSON.stringify(contentItems));
+            // Save to user-specific storage
+            await saveUserData('engagementData', engagementData);
+            await saveUserData('contentItems', contentItems);
         }
 
         // Fetch YouTube video engagement
@@ -1732,9 +2330,9 @@
                     delete urlToContentMap[normalizedUrl];
                 }
                 
-                // Save to localforage
-                await localforage.setItem('contentItems', JSON.stringify(contentItems));
-                await localforage.setItem('engagementData', JSON.stringify(engagementData));
+                // Save to user-specific storage
+                await saveUserData('contentItems', contentItems);
+                await saveUserData('engagementData', engagementData);
                 
                 // Update UI
                 renderContentItems();
@@ -1941,8 +2539,8 @@
             apiConfig.linkedin.clientId = document.getElementById('linkedin-client-id').value;
             apiConfig.linkedin.clientSecret = document.getElementById('linkedin-client-secret').value;
             
-            // Save to localforage
-            await localforage.setItem('apiConfig', JSON.stringify(apiConfig));
+            // Save to user-specific storage
+            await saveUserData('apiConfig', apiConfig);
             
             // Update UI
             updateApiConfigUI();
@@ -2123,6 +2721,12 @@
                 contentItems: contentItems,
                 engagementData: engagementData,
                 urlToContentMap: urlToContentMap,
+                apiConfig: apiConfig,
+                user: {
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    createdAt: currentUser.createdAt
+                },
                 exportDate: new Date().toISOString()
             };
             

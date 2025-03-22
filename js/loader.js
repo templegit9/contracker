@@ -41,30 +41,84 @@ function loadDependency(name, url, checkFn) {
 // Load app script after dependencies
 function loadApp() {
     return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.src = './js/app.js';
-        script.onload = () => {
-            console.log('App script loaded successfully');
+        // Ensure CryptoJS is actually available in the global scope
+        if (typeof window.CryptoJS === 'undefined' || !window.CryptoJS.SHA256) {
+            console.warn('CryptoJS not available before loading app, retrying load...');
             
-            // Hide loading indicator with fade-out effect
-            const loadingIndicator = document.getElementById('loading-indicator');
-            if (loadingIndicator) {
-                loadingIndicator.style.transition = 'opacity 0.5s ease-out';
-                loadingIndicator.style.opacity = '0';
-                setTimeout(() => {
-                    loadingIndicator.style.display = 'none';
-                }, 500);
-            }
-            
-            resolve();
-        };
-        script.onerror = (error) => {
-            console.error('Error loading app script:', error);
-            reject(new Error('Failed to load app script'));
-        };
-        document.body.appendChild(script);
+            // Try to load CryptoJS again
+            const cryptoScript = document.createElement('script');
+            cryptoScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
+            cryptoScript.onload = () => {
+                console.log('CryptoJS reloaded successfully');
+                dependenciesReady.cryptojs = true;
+                
+                // Now load the app script
+                loadAppScript(resolve, reject);
+            };
+            cryptoScript.onerror = (error) => {
+                console.error('Error reloading CryptoJS:', error);
+                // Try to load app script anyway
+                loadAppScript(resolve, reject);
+            };
+            document.head.appendChild(cryptoScript);
+            return;
+        }
+        
+        // Load app script normally
+        loadAppScript(resolve, reject);
     });
+}
+
+// Helper function to load the app script
+function loadAppScript(resolve, reject) {
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = './js/app.js';
+    script.onload = () => {
+        console.log('App script loaded successfully');
+        
+        // Hide loading indicator with fade-out effect
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.transition = 'opacity 0.5s ease-out';
+            loadingIndicator.style.opacity = '0';
+            setTimeout(() => {
+                loadingIndicator.style.display = 'none';
+            }, 500);
+        }
+        
+        // Create direct access to auth debugging
+        if (!window.authDebug) {
+            window.authDebug = {
+                loaderInitialized: true,
+                timestamp: new Date().toISOString()
+            };
+        }
+        
+        // Create debugging console
+        if (!window.debugConsole) {
+            window.debugConsole = function() {
+                console.log('%c===== APP DEBUG CONSOLE =====', 'color: purple; font-weight: bold;');
+                console.log('App loaded at:', new Date().toISOString());
+                console.log('Dependencies:', dependenciesReady);
+                console.log('CryptoJS available:', typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined');
+                console.log('LocalForage available:', typeof window.localforage !== 'undefined');
+                console.log('Auth module loaded:', !!window.authDebug);
+                console.log('LocalStorage keys:', Object.keys(localStorage));
+                console.log('%c===== END DEBUG CONSOLE =====', 'color: purple; font-weight: bold;');
+            };
+            
+            // Auto-run debugging console after a delay
+            setTimeout(window.debugConsole, 2000);
+        }
+        
+        resolve();
+    };
+    script.onerror = (error) => {
+        console.error('Error loading app script:', error);
+        reject(new Error('Failed to load app script'));
+    };
+    document.body.appendChild(script);
 }
 
 // Load all dependencies and start the app

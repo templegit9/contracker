@@ -24,40 +24,77 @@ let topPlatformEl;
  * Load dashboard data and initialize components
  */
 export async function loadDashboard() {
-    // Initialize UI references
-    setupDOMReferences();
+    console.log('Loading dashboard...');
     
-    // Load user data
-    const userData = await loadAllUserData();
-    contentItems = userData.contentItems;
-    engagementData = userData.engagementData;
-    
-    // Rebuild URL to content map
-    rebuildUrlContentMap();
-    
-    // Set default date to today for content form
-    document.getElementById('content-published').valueAsDate = new Date();
-    
-    // Render data
-    renderContentItems();
-    renderEngagementData();
-    updateStats();
-    renderCharts(contentItems, engagementData);
-    
-    // Set up event listeners
-    setupEventListeners();
-    setupCollapsibleSections();
+    try {
+        // Initialize UI references
+        setupDOMReferences();
+        
+        // Load user data
+        console.log('Loading user data...');
+        const userData = await loadAllUserData();
+        contentItems = Array.isArray(userData.contentItems) ? userData.contentItems : [];
+        engagementData = Array.isArray(userData.engagementData) ? userData.engagementData : [];
+        
+        console.log(`Loaded ${contentItems.length} content items and ${engagementData.length} engagement records`);
+        
+        // Rebuild URL to content map
+        rebuildUrlContentMap();
+        
+        // Set default date to today for content form
+        const publishedDateInput = document.getElementById('content-published');
+        if (publishedDateInput) {
+            publishedDateInput.valueAsDate = new Date();
+        } else {
+            console.error('Could not find content-published input');
+        }
+        
+        // Render data
+        console.log('Rendering dashboard data...');
+        renderContentItems();
+        renderEngagementData();
+        updateStats();
+        
+        // Render charts if all required elements exist
+        try {
+            renderCharts(contentItems, engagementData);
+            console.log('Charts rendered successfully');
+        } catch (error) {
+            console.error('Error rendering charts:', error);
+        }
+        
+        // Set up event listeners
+        setupEventListeners();
+        setupCollapsibleSections();
+        
+        console.log('Dashboard loaded successfully');
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
 }
 
 /**
  * Setup DOM element references
  */
 function setupDOMReferences() {
-    contentList = document.getElementById('content-list');
-    engagementList = document.getElementById('engagement-list');
-    totalContentEl = document.getElementById('total-content');
-    totalEngagementsEl = document.getElementById('total-engagements');
-    topPlatformEl = document.getElementById('top-platform');
+    try {
+        contentList = document.getElementById('content-list');
+        engagementList = document.getElementById('engagement-list');
+        totalContentEl = document.getElementById('total-content');
+        totalEngagementsEl = document.getElementById('total-engagements');
+        topPlatformEl = document.getElementById('top-platform');
+        
+        // Validate required elements
+        if (!contentList) console.error('Could not find content-list element');
+        if (!engagementList) console.error('Could not find engagement-list element');
+        if (!totalContentEl) console.error('Could not find total-content element');
+        if (!totalEngagementsEl) console.error('Could not find total-engagements element');
+        if (!topPlatformEl) console.error('Could not find top-platform element');
+        
+        console.log('Dashboard DOM references initialized');
+    } catch (error) {
+        console.error('Error setting up dashboard DOM references:', error);
+    }
 }
 
 /**
@@ -158,13 +195,21 @@ function setupCollapsibleSections() {
  * Render content items
  */
 function renderContentItems() {
-    contentList.innerHTML = '';
-    
-    if (contentItems.length === 0) {
-        contentList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No content items added yet</td></tr>';
+    if (!contentList) {
+        console.error('Cannot render content items: contentList is not defined');
         return;
     }
     
+    try {
+        contentList.innerHTML = '';
+        
+        if (!contentItems || contentItems.length === 0) {
+            contentList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No content items added yet</td></tr>';
+            return;
+        }
+        
+        console.log(`Rendering ${contentItems.length} content items`);
+        
     contentItems.forEach(item => {
         const row = document.createElement('tr');
         
@@ -271,18 +316,31 @@ function renderContentItems() {
         
         contentList.appendChild(row);
     });
+    
+    } catch (error) {
+        console.error('Error rendering content items:', error);
+        contentList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error rendering content items</td></tr>';
+    }
 }
 
 /**
  * Render engagement data
  */
 function renderEngagementData() {
-    engagementList.innerHTML = '';
-    
-    if (engagementData.length === 0) {
-        engagementList.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No engagement data available</td></tr>';
+    if (!engagementList) {
+        console.error('Cannot render engagement data: engagementList is not defined');
         return;
     }
+    
+    try {
+        engagementList.innerHTML = '';
+        
+        if (!engagementData || engagementData.length === 0) {
+            engagementList.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No engagement data available</td></tr>';
+            return;
+        }
+        
+        console.log(`Rendering ${engagementData.length} engagement records`);
     
     // Group engagement data by content URL (not ID) and get the latest record for each
     // This ensures duplicate URLs show the same engagement data
@@ -372,18 +430,29 @@ function renderEngagementData() {
         
         engagementList.appendChild(row);
     });
+    
+    } catch (error) {
+        console.error('Error rendering engagement data:', error);
+        engagementList.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Error rendering engagement data</td></tr>';
+    }
 }
 
 /**
  * Update dashboard statistics
  */
 function updateStats() {
-    // Total content items
-    totalContentEl.textContent = contentItems.length;
-    
-    // Calculate total engagements (views from latest record for each URL)
-    let totalViews = 0;
-    let engagementsByPlatform = {};
+    try {
+        if (!totalContentEl || !totalEngagementsEl || !topPlatformEl) {
+            console.error('Cannot update stats: Missing DOM elements');
+            return;
+        }
+        
+        // Total content items
+        totalContentEl.textContent = contentItems ? contentItems.length : 0;
+        
+        // Calculate total engagements (views from latest record for each URL)
+        let totalViews = 0;
+        let engagementsByPlatform = {};
     
     // Get the latest engagement data for each content URL
     const latestEngagementByUrl = {};
@@ -414,6 +483,10 @@ function updateStats() {
         topPlatformEl.textContent = PLATFORMS[topPlatform];
     } else {
         topPlatformEl.textContent = '-';
+    }
+    
+    } catch (error) {
+        console.error('Error updating dashboard statistics:', error);
     }
 }
 

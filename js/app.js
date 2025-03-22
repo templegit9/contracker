@@ -5,7 +5,7 @@
 import { initAuth, handleLogout, deleteUserAccount, updateUserProfile, hashPassword, getCurrentUser } from './modules/auth.js';
 import { initAuthUI } from './components/auth-ui.js';
 import { loadPreference, savePreference, saveUserData, loadAllUserData, loadUserData } from './modules/storage.js';
-import { showNotification } from './modules/utils.js';
+import { showNotification, normalizeUrl } from './modules/utils.js';
 import { loadDashboard } from './components/dashboard.js';
 
 /**

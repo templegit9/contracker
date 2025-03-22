@@ -5,21 +5,38 @@
 import { handleLogin, handleRegister } from '../modules/auth.js';
 import { loadPreference, savePreference } from '../modules/storage.js';
 
-// DOM elements
-const authContent = document.getElementById('auth-content');
-const mainContent = document.getElementById('main-content');
-const loginForm = document.getElementById('login-form');
-const registerForm = document.getElementById('register-form');
-const loginTab = document.getElementById('login-tab');
-const registerTab = document.getElementById('register-tab');
-const loginError = document.getElementById('login-error');
-const registerError = document.getElementById('register-error');
-const authDarkModeToggle = document.getElementById('auth-dark-mode-toggle');
+// DOM element references
+let authContent;
+let mainContent;
+let loginForm;
+let registerForm;
+let loginTab;
+let registerTab;
+let loginError;
+let registerError;
+let authDarkModeToggle;
 
 /**
  * Initialize authentication UI
  */
 export function initAuthUI() {
+    // Initialize DOM element references
+    authContent = document.getElementById('auth-content');
+    mainContent = document.getElementById('main-content');
+    loginForm = document.getElementById('login-form');
+    registerForm = document.getElementById('register-form');
+    loginTab = document.getElementById('login-tab');
+    registerTab = document.getElementById('register-tab');
+    loginError = document.getElementById('login-error');
+    registerError = document.getElementById('register-error');
+    authDarkModeToggle = document.getElementById('auth-dark-mode-toggle');
+    
+    // Check if elements exist
+    if (!loginForm || !registerForm || !loginTab || !registerTab) {
+        console.error('Could not initialize auth UI: Missing required DOM elements');
+        return;
+    }
+    
     // Set up tab switching
     loginTab.addEventListener('click', () => {
         loginTab.classList.add('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400');
@@ -45,12 +62,19 @@ export function initAuthUI() {
     
     // Set up dark mode toggle
     initDarkMode();
+    
+    console.log('Auth UI initialized successfully');
 }
 
 /**
  * Initialize dark mode functionality
  */
 function initDarkMode() {
+    if (!authDarkModeToggle) {
+        console.error('Could not initialize dark mode: Missing toggle element');
+        return;
+    }
+    
     // Check for dark mode preference
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedDarkMode = loadPreference('darkMode', null);
@@ -100,14 +124,26 @@ export function toggleDarkMode(e) {
  * Show authentication screen
  */
 export function showAuth() {
+    if (!authContent || !mainContent) {
+        console.error('Cannot show auth screen: Missing DOM elements');
+        return;
+    }
+    
     mainContent.style.display = 'none';
     authContent.style.display = 'block';
+    console.log('Showing auth screen');
 }
 
 /**
  * Hide authentication screen
  */
 export function hideAuth() {
+    if (!authContent || !mainContent) {
+        console.error('Cannot hide auth screen: Missing DOM elements');
+        return;
+    }
+    
     authContent.style.display = 'none';
     mainContent.style.display = 'block';
+    console.log('Hiding auth screen');
 }

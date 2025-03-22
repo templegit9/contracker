@@ -319,6 +319,7 @@
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Content</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Views</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Hours</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Likes</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Comments</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Updated</th>
@@ -1421,6 +1422,52 @@
                 viewsCell.className = 'px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white';
                 viewsCell.textContent = engagement.views.toLocaleString();
                 
+                // Add total hours of views (only for YouTube)
+                const totalHoursCell = document.createElement('td');
+                totalHoursCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
+                
+                if (contentItem.platform === 'youtube') {
+                    // Calculate total watch time in hours based on views and video duration
+                    let duration = 0;
+                    
+                    if (contentItem.duration) {
+                        // Parse duration string (e.g., "5:30" or "1:20:15")
+                        const durationParts = contentItem.duration.split(':').map(part => parseInt(part, 10));
+                        
+                        if (durationParts.length === 2) {
+                            // Minutes:Seconds format
+                            duration = (durationParts[0] * 60 + durationParts[1]) / 3600; // Convert to hours
+                        } else if (durationParts.length === 3) {
+                            // Hours:Minutes:Seconds format
+                            duration = durationParts[0] + (durationParts[1] * 60 + durationParts[2]) / 3600;
+                        }
+                    } else {
+                        // If no duration available, assume average YouTube video length (4.4 minutes)
+                        duration = 4.4 / 60;
+                    }
+                    
+                    // Calculate total hours based on views and duration
+                    const totalHours = engagement.views * duration;
+                    
+                    // Format with appropriate decimal places based on size
+                    let formattedHours;
+                    if (totalHours < 10) {
+                        formattedHours = totalHours.toFixed(2);
+                    } else if (totalHours < 1000) {
+                        formattedHours = totalHours.toFixed(1);
+                    } else {
+                        formattedHours = Math.round(totalHours).toLocaleString();
+                    }
+                    
+                    totalHoursCell.textContent = formattedHours;
+                    
+                    // Add a tooltip for explanation
+                    totalHoursCell.title = `Estimated total hours watched (views × video duration)`;
+                } else {
+                    totalHoursCell.textContent = '-';
+                    totalHoursCell.className += ' text-gray-400 dark:text-gray-500';
+                }
+                
                 const likesCell = document.createElement('td');
                 likesCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
                 likesCell.textContent = engagement.likes.toLocaleString();
@@ -1436,6 +1483,7 @@
                 row.appendChild(nameCell);
                 row.appendChild(platformCell);
                 row.appendChild(viewsCell);
+                row.appendChild(totalHoursCell);
                 row.appendChild(likesCell);
                 row.appendChild(commentsCell);
                 row.appendChild(updatedCell);
@@ -1530,6 +1578,47 @@
                                                 <p class="text-2xl font-bold text-gray-900 dark:text-white">${contentEngagements[0].shares.toLocaleString()}</p>
                                             </div>
                                         </div>
+                                        ${contentItem.platform === 'youtube' ? `
+                                        <div class="text-center col-span-2">
+                                            <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-lg flex flex-col items-center">
+                                                <span class="material-icons text-yellow-500 dark:text-yellow-300">access_time</span>
+                                                <p class="text-gray-500 dark:text-gray-400 text-sm">Total Watch Hours</p>
+                                                <p class="text-2xl font-bold text-gray-900 dark:text-white">${(() => {
+                                                    // Calculate total watch hours
+                                                    let duration = 0;
+                                                    
+                                                    if (contentItem.duration) {
+                                                        // Parse duration string
+                                                        const durationParts = contentItem.duration.split(':').map(part => parseInt(part, 10));
+                                                        
+                                                        if (durationParts.length === 2) {
+                                                            // Minutes:Seconds format
+                                                            duration = (durationParts[0] * 60 + durationParts[1]) / 3600; // Convert to hours
+                                                        } else if (durationParts.length === 3) {
+                                                            // Hours:Minutes:Seconds format
+                                                            duration = durationParts[0] + (durationParts[1] * 60 + durationParts[2]) / 3600;
+                                                        }
+                                                    } else {
+                                                        // If no duration available, assume average YouTube video length (4.4 minutes)
+                                                        duration = 4.4 / 60;
+                                                    }
+                                                    
+                                                    // Calculate total hours based on views and duration
+                                                    const totalHours = contentEngagements[0].views * duration;
+                                                    
+                                                    // Format with appropriate decimal places based on size
+                                                    if (totalHours < 10) {
+                                                        return totalHours.toFixed(2);
+                                                    } else if (totalHours < 1000) {
+                                                        return totalHours.toFixed(1);
+                                                    } else {
+                                                        return Math.round(totalHours).toLocaleString();
+                                                    }
+                                                })()}</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on ${contentItem.duration || 'avg'} video length</p>
+                                            </div>
+                                        </div>
+                                        ` : ''}
                                     </div>
                                     <div class="mt-2 text-xs text-right text-gray-500 dark:text-gray-400">
                                         As of ${formatDateTime(contentEngagements[0].timestamp)}
@@ -1548,21 +1637,66 @@
                                         <tr>
                                             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
                                             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Views</th>
+                                            ${contentItem.platform === 'youtube' ? `
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Hours</th>
+                                            ` : ''}
                                             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Likes</th>
                                             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Comments</th>
                                             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Shares</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                        ${contentEngagements.map(engagement => `
+                                        ${contentEngagements.map(engagement => {
+                                            // Calculate total hours for YouTube
+                                            let totalHoursHtml = '';
+                                            
+                                            if (contentItem.platform === 'youtube') {
+                                                // Calculate watch time 
+                                                let duration = 0;
+                                                
+                                                if (contentItem.duration) {
+                                                    // Parse duration string
+                                                    const durationParts = contentItem.duration.split(':').map(part => parseInt(part, 10));
+                                                    
+                                                    if (durationParts.length === 2) {
+                                                        // Minutes:Seconds format
+                                                        duration = (durationParts[0] * 60 + durationParts[1]) / 3600; // Convert to hours
+                                                    } else if (durationParts.length === 3) {
+                                                        // Hours:Minutes:Seconds format
+                                                        duration = durationParts[0] + (durationParts[1] * 60 + durationParts[2]) / 3600;
+                                                    }
+                                                } else {
+                                                    // If no duration available, assume average YouTube video length (4.4 minutes)
+                                                    duration = 4.4 / 60;
+                                                }
+                                                
+                                                // Calculate total hours based on views and duration
+                                                const totalHours = engagement.views * duration;
+                                                
+                                                // Format with appropriate decimal places based on size
+                                                let formattedHours;
+                                                if (totalHours < 10) {
+                                                    formattedHours = totalHours.toFixed(2);
+                                                } else if (totalHours < 1000) {
+                                                    formattedHours = totalHours.toFixed(1);
+                                                } else {
+                                                    formattedHours = Math.round(totalHours).toLocaleString();
+                                                }
+                                                
+                                                totalHoursHtml = `<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${formattedHours}</td>`;
+                                            }
+                                            
+                                            return `
                                             <tr>
                                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${formatDateTime(engagement.timestamp)}</td>
                                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${engagement.views.toLocaleString()}</td>
+                                                ${contentItem.platform === 'youtube' ? totalHoursHtml : ''}
                                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${engagement.likes.toLocaleString()}</td>
                                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${engagement.comments.toLocaleString()}</td>
                                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">${engagement.shares.toLocaleString()}</td>
                                             </tr>
-                                        `).join('')}
+                                            `;
+                                        }).join('')}
                                     </tbody>
                                 </table>
                             </div>

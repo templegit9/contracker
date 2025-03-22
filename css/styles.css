@@ -1,0 +1,161 @@
+/* Main Styles for Platform Engagement Tracker */
+
+/* Reset some default styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Custom badge styling */
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.badge.youtube {
+    background-color: #FFEEEE;
+    color: #FF0000;
+}
+.badge.servicenow {
+    background-color: #E6F7F1;
+    color: #00c487;
+}
+.badge.linkedin {
+    background-color: #E6F0FA;
+    color: #0A66C2;
+}
+.badge.other {
+    background-color: #F3F4F6;
+    color: #6B7280;
+}
+
+/* Button styling */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+.btn-primary {
+    background-color: #00c487;
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #00A070;
+}
+
+/* Animation */
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Rotation for collapse icons */
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+/* Toggle Switch */
+.toggle-checkbox:checked {
+    transform: translateX(100%);
+    border-color: #00c487;
+}
+.toggle-label {
+    transition: background-color 0.2s ease;
+}
+.toggle-checkbox:checked + .toggle-label {
+    background-color: #00c487;
+}
+
+/* Form elements styling */
+input[type="text"], 
+input[type="url"],
+input[type="date"],
+input[type="password"],
+input[type="email"],
+select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+input:focus, select:focus {
+    outline: 2px solid #00c487;
+    border-color: #00c487;
+}
+
+/* Hide main content initially until authentication is checked */
+#main-content {
+    display: none;
+}
+
+/* Show auth content initially */
+#auth-content {
+    display: block;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 50;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 0.5rem;
+    max-width: 90%;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode specific styles */
+.dark .modal-content {
+    background-color: #1F2937;
+}
+
+/* Transitions */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+}
+
+/* Notifications */
+.notification {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+}
+
+.notification-success {
+    background-color: #10B981;
+    color: white;
+}
+
+.notification-error {
+    background-color: #EF4444;
+    color: white;
+}

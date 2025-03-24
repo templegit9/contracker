@@ -143,7 +143,7 @@ export async function initAuth() {
 }
 
 /**
- * Handle login form submission with improved error handling
+ * Handle login form submission with improved validation
  * @param {Event} e - Form submit event
  * @returns {Promise} Promise resolving when login is processed
  */
@@ -170,8 +170,27 @@ export async function handleLogin(e) {
         const rememberMe = rememberMeCheckbox ? rememberMeCheckbox.checked : false;
         
         window.authLog(`Login attempt for ${email} via handleLogin function`);
-        window.authDebug.loginCount++;
-        window.authDebug.lastLoginAttempt = { email, time: new Date().toISOString() };
+        
+        // Validate email format
+        if (!email) {
+            loginErrorElement.textContent = 'Please enter your email address';
+            loginErrorElement.classList.remove('hidden');
+            return;
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            loginErrorElement.textContent = 'Please enter a valid email address';
+            loginErrorElement.classList.remove('hidden');
+            return;
+        }
+        
+        // Validate password
+        if (!password) {
+            loginErrorElement.textContent = 'Please enter your password';
+            loginErrorElement.classList.remove('hidden');
+            return;
+        }
         
         // Special case for demo account
         if (email === 'demo@example.com' && password === 'password') {
@@ -212,64 +231,26 @@ export async function handleLogin(e) {
             return;
         }
         
-        // Handle empty credentials
-        if (!email || !password) {
-            loginErrorElement.textContent = 'Please enter email and password';
-            loginErrorElement.classList.remove('hidden');
-            window.authLog('Login failed: Empty credentials', 'error');
-            return;
-        }
-        
-        // Try to find user by email
+        // Find user by email
         const user = users.find(u => u.email === email);
         window.authLog('User found:', user ? 'Yes' : 'No');
         
         if (!user) {
-            loginErrorElement.textContent = 'Invalid email or password';
+            loginErrorElement.textContent = 'No account found with this email address';
             loginErrorElement.classList.remove('hidden');
             window.authLog('Login failed: User not found', 'error');
             return;
         }
         
-        // Special case for CryptoJS not being available
+        // Check if CryptoJS is available
         if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') {
-            // Try emergency login for demo account
-            if (email === 'demo@example.com' && password === 'password') {
-                window.authLog('Using emergency demo login path due to missing CryptoJS', 'warn');
-                
-                loginFormElement.reset();
-                loginErrorElement.classList.add('hidden');
-                
-                if (rememberMe) {
-                    localStorage.setItem('loggedInUser', user.id);
-                }
-                
-                await loginUser(user);
-                return;
-            } else {
-                loginErrorElement.textContent = 'Authentication service unavailable. Please try again later.';
-                loginErrorElement.classList.remove('hidden');
-                window.authLog('Login failed: CryptoJS not available', 'error');
-                return;
-            }
-        }
-        
-        // Special case for the demo account
-        if (email === 'demo@example.com' && password === 'password') {
-            window.authLog('Demo account login detected, bypassing password check', 'success');
-            
-            loginFormElement.reset();
-            loginErrorElement.classList.add('hidden');
-            
-            if (rememberMe) {
-                localStorage.setItem('loggedInUser', user.id);
-            }
-            
-            await loginUser(user);
+            loginErrorElement.textContent = 'Authentication service unavailable. Please try again later.';
+            loginErrorElement.classList.remove('hidden');
+            window.authLog('Login failed: CryptoJS not available', 'error');
             return;
         }
         
-        // Normal password hashing and checking
+        // Hash password for comparison
         const hashedPassword = hashPassword(password);
         
         if (hashedPassword === null) {
@@ -280,7 +261,7 @@ export async function handleLogin(e) {
         }
         
         if (user.password !== hashedPassword) {
-            loginErrorElement.textContent = 'Invalid email or password';
+            loginErrorElement.textContent = 'Incorrect password. Please try again.';
             loginErrorElement.classList.remove('hidden');
             window.authLog('Login failed: Invalid credentials', 'error');
             return;
@@ -298,46 +279,13 @@ export async function handleLogin(e) {
         }
         
         window.authLog(`Login successful for user: ${user.email}`, 'success');
-        
         await loginUser(user);
         
     } catch (error) {
         window.authLog(`Error during login: ${error.message}`, 'error');
         console.error('Full error:', error);
         
-        // Try emergency login for demo account
-        const email = document.getElementById('login-email')?.value;
-        const password = document.getElementById('login-password')?.value;
-        
-        if (email === 'demo@example.com' && password === 'password') {
-            window.authLog('Attempting emergency fallback for demo account', 'warn');
-            
-            // Create a minimal demo user
-            const demoUser = {
-                id: 'demo-' + Date.now(),
-                name: 'Demo User',
-                email: 'demo@example.com'
-            };
-            
-            try {
-                // Try to show main content
-                document.getElementById('auth-content').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                
-                // Set user name
-                const userNameEl = document.getElementById('current-user-name');
-                if (userNameEl) {
-                    userNameEl.textContent = 'Demo User';
-                }
-                
-                window.authLog('Emergency demo login successful', 'success');
-                return;
-            } catch (emergencyError) {
-                window.authLog(`Even emergency login failed: ${emergencyError.message}`, 'error');
-            }
-        }
-        
-        // Show error to user if all else fails
+        // Show error to user
         const loginErrorElement = document.getElementById('login-error');
         if (loginErrorElement) {
             loginErrorElement.textContent = 'An unexpected error occurred. Please try again.';
@@ -347,7 +295,7 @@ export async function handleLogin(e) {
 }
 
 /**
- * Handle register form submission
+ * Handle register form submission with improved validation
  * @param {Event} e - Form submit event
  * @returns {Promise} Promise resolving when registration is processed
  */
@@ -365,12 +313,11 @@ export async function handleRegister(e) {
         const registerFormElement = document.getElementById('register-form');
         const loginTabElement = document.getElementById('login-tab');
         
-        window.authLog('Form elements found:', nameInput && emailInput ? 'Yes' : 'No');
-        
+        // Check if elements exist
         if (!nameInput || !emailInput || !passwordInput || !confirmPasswordInput || 
             !registerErrorElement || !registerFormElement || !loginTabElement) {
-            window.authLog('Missing form elements for registration', 'error');
-            return;
+            console.error('Missing form elements for registration');
+            throw new Error('Registration form elements missing');
         }
         
         const name = nameInput.value;
@@ -379,25 +326,87 @@ export async function handleRegister(e) {
         const confirmPassword = confirmPasswordInput.value;
         
         window.authLog(`Register attempt for ${email}`);
-        window.authDebug.registerCount++;
-        window.authDebug.lastRegisterAttempt = { name, email, time: new Date().toISOString() };
         
         // Clear any previous styling
         registerErrorElement.classList.remove('text-green-500');
+        
+        // Validate name
+        if (!name) {
+            registerErrorElement.textContent = 'Please enter your name';
+            registerErrorElement.classList.remove('hidden');
+            return;
+        }
+        
+        if (name.length < 2) {
+            registerErrorElement.textContent = 'Name must be at least 2 characters long';
+            registerErrorElement.classList.remove('hidden');
+            return;
+        }
+        
+        // Validate email
+        if (!email) {
+            registerErrorElement.textContent = 'Please enter your email address';
+            registerErrorElement.classList.remove('hidden');
+            return;
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            registerErrorElement.textContent = 'Please enter a valid email address';
+            registerErrorElement.classList.remove('hidden');
+            return;
+        }
+        
+        // Validate password
+        if (!password) {
+            registerErrorElement.textContent = 'Please enter a password';
+            registerErrorElement.classList.remove('hidden');
+            return;
+        }
+        
+        if (password.length < 6) {
+            registerErrorElement.textContent = 'Password must be at least 6 characters long';
+            registerErrorElement.classList.remove('hidden');
+            return;
+        }
+        
+        // Check for password strength
+        const hasLetter = /[a-zA-Z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        
+        if (!hasLetter || !hasNumber) {
+            registerErrorElement.textContent = 'Password must contain both letters and numbers';
+            registerErrorElement.classList.remove('hidden');
+            return;
+        }
         
         // Check if passwords match
         if (password !== confirmPassword) {
             registerErrorElement.textContent = 'Passwords do not match';
             registerErrorElement.classList.remove('hidden');
-            window.authLog('Registration failed: Passwords do not match', 'error');
             return;
         }
         
         // Check if email already exists
         if (users.some(u => u.email === email)) {
-            registerErrorElement.textContent = 'Email is already registered';
+            registerErrorElement.textContent = 'Email is already registered. Please log in or use a different email.';
             registerErrorElement.classList.remove('hidden');
-            window.authLog('Registration failed: Email already exists', 'error');
+            return;
+        }
+        
+        // Check if CryptoJS is available for password hashing
+        if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') {
+            registerErrorElement.textContent = 'Registration service unavailable. Please try again later.';
+            registerErrorElement.classList.remove('hidden');
+            window.authLog('Registration failed: CryptoJS not available', 'error');
+            return;
+        }
+        
+        // Hash password
+        const hashedPassword = hashPassword(password);
+        if (hashedPassword === null) {
+            registerErrorElement.textContent = 'Error creating account. Please try again.';
+            registerErrorElement.classList.remove('hidden');
             return;
         }
         
@@ -407,7 +416,7 @@ export async function handleRegister(e) {
             id: userId,
             name: name,
             email: email,
-            password: hashPassword(password),
+            password: hashedPassword,
             createdAt: new Date().toISOString()
         };
         
@@ -419,7 +428,7 @@ export async function handleRegister(e) {
         
         window.authLog(`User saved to storage, users array now has ${users.length} users`, 'success');
         
-        // Clear form and error
+        // Clear form
         registerFormElement.reset();
         
         // Display success message and switch to login tab
@@ -441,6 +450,13 @@ export async function handleRegister(e) {
     } catch (error) {
         window.authLog(`Error during registration: ${error.message}`, 'error');
         console.error('Full error:', error);
+        
+        // Show error to user
+        const registerErrorElement = document.getElementById('register-error');
+        if (registerErrorElement) {
+            registerErrorElement.textContent = 'An unexpected error occurred. Please try again.';
+            registerErrorElement.classList.remove('hidden');
+        }
     }
 }
 

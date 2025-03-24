@@ -39,24 +39,28 @@ export async function saveUserData(key, data) {
         const userPrefix = `user_${currentUser.id}_`;
         const dataStr = JSON.stringify(data);
         
-        // Check if localforage is available
+        // Try to use localforage first (preferred)
         if (typeof window !== 'undefined' && window.localforage) {
-            await window.localforage.setItem(userPrefix + key, dataStr);
-            console.log(`Data saved for key: ${key} (${dataStr.length} chars)`);
-        } else {
-            // Fallback to localStorage
-            console.warn('localforage not available, using localStorage fallback');
+            try {
+                await window.localforage.setItem(userPrefix + key, dataStr);
+                console.log(`Data saved with localforage for key: ${key} (${dataStr.length} chars)`);
+                return;
+            } catch (localforageError) {
+                console.warn(`Error saving with localforage, will try localStorage: ${localforageError.message}`);
+                // Continue to localStorage fallback
+            }
+        }
+        
+        // Fallback to localStorage
+        try {
             localStorage.setItem(userPrefix + key, dataStr);
+            console.log(`Data saved with localStorage for key: ${key} (${dataStr.length} chars)`);
+        } catch (localStorageError) {
+            throw new Error(`Failed to save data: ${localStorageError.message}`);
         }
     } catch (error) {
         console.error(`Error saving user data for key ${key}:`, error);
-        // Last resort fallback - try localStorage directly
-        try {
-            const userPrefix = `user_${currentUser.id}_`;
-            localStorage.setItem(userPrefix + key, JSON.stringify(data));
-        } catch (innerError) {
-            console.error('Even localStorage fallback failed:', innerError);
-        }
+        throw error; // Re-throw to allow caller to handle
     }
 }
 
@@ -76,30 +80,33 @@ export async function loadUserData(key, defaultValue = null) {
         const userPrefix = `user_${currentUser.id}_`;
         let data = null;
         
-        // Try localforage first
+        // Try localforage first (preferred)
         if (typeof window !== 'undefined' && window.localforage) {
-            data = await window.localforage.getItem(userPrefix + key);
-            console.log(`Data loaded from localforage for key: ${key}`);
-        } 
-        
-        // If localforage failed or didn't find the data, try localStorage
-        if (data === null) {
-            const localData = localStorage.getItem(userPrefix + key);
-            if (localData) {
-                data = localData;
-                console.log(`Data loaded from localStorage for key: ${key}`);
-            }
-        }
-        
-        if (data) {
             try {
-                return JSON.parse(data);
-            } catch (parseError) {
-                console.error(`Error parsing JSON for key ${key}:`, parseError);
-                return defaultValue;
+                data = await window.localforage.getItem(userPrefix + key);
+                if (data !== null) {
+                    console.log(`Data loaded from localforage for key: ${key}`);
+                    return JSON.parse(data);
+                }
+            } catch (localforageError) {
+                console.warn(`Error loading from localforage, will try localStorage: ${localforageError.message}`);
+                // Continue to localStorage fallback
             }
         }
         
+        // Try localStorage as fallback
+        try {
+            data = localStorage.getItem(userPrefix + key);
+            if (data !== null) {
+                console.log(`Data loaded from localStorage for key: ${key}`);
+                return JSON.parse(data);
+            }
+        } catch (localStorageError) {
+            console.warn(`Error loading from localStorage: ${localStorageError.message}`);
+            // Continue to return default value
+        }
+        
+        // No data found in either storage, return default
         return defaultValue;
     } catch (error) {
         console.error(`Error loading user data for key ${key}:`, error);

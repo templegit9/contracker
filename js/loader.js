@@ -122,24 +122,76 @@ function loadAppScript(resolve, reject) {
 }
 
 // Load all dependencies and start the app
+/**
+ * Load all dependencies and start the app
+ */
 async function initializeApp() {
     try {
-        // Load dependencies in parallel
-        await Promise.all([
-            loadDependency('Tailwind', 'https://cdn.tailwindcss.com', 
-                () => typeof window.tailwind !== 'undefined'),
+        console.log('Initializing application and loading dependencies...');
+        
+        // Check if dependencies are already loaded
+        let missingDeps = [];
+        
+        if (typeof window.tailwind === 'undefined') missingDeps.push('tailwind');
+        if (typeof window.Chart === 'undefined') missingDeps.push('chart');
+        if (typeof window.localforage === 'undefined') missingDeps.push('localforage');
+        if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') missingDeps.push('cryptojs');
+        
+        console.log(`Missing dependencies: ${missingDeps.length > 0 ? missingDeps.join(', ') : 'none'}`);
+        
+        // Load dependencies one by one to ensure proper order
+        if (missingDeps.includes('tailwind')) {
+            await loadDependency('Tailwind', 'https://cdn.tailwindcss.com', 
+                () => typeof window.tailwind !== 'undefined');
+        }
+        
+        if (missingDeps.includes('chart')) {
+            await loadDependency('Chart.js', 'https://cdn.jsdelivr.net/npm/chart.js', 
+                () => typeof window.Chart !== 'undefined');
+        }
+        
+        if (missingDeps.includes('localforage')) {
+            await loadDependency('LocalForage', 'https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js', 
+                () => typeof window.localforage !== 'undefined');
+        }
+        
+        // CryptoJS is critical for authentication, ensure it's loaded
+        if (missingDeps.includes('cryptojs')) {
+            await loadDependency('CryptoJS', 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js', 
+                () => typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined');
             
-            loadDependency('Chart.js', 'https://cdn.jsdelivr.net/npm/chart.js', 
-                () => typeof window.Chart !== 'undefined'),
-            
-            loadDependency('LocalForage', 'https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js', 
-                () => typeof window.localforage !== 'undefined'),
-            
-            loadDependency('CryptoJS', 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js', 
-                () => typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined')
-        ]);
+            // Double-check CryptoJS loaded properly
+            if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') {
+                console.error('CryptoJS failed to load properly - authentication will not work!');
+                
+                // Try one more time with a different CDN
+                await loadDependency('CryptoJS (retry)', 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.js', 
+                    () => typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined');
+            }
+        }
         
         console.log('All dependencies loaded successfully');
+        
+        // Verify CryptoJS is loaded properly
+        if (typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined') {
+            console.log('CryptoJS SHA-256 is properly available');
+            
+            // Test SHA-256 functionality
+            const testHash = window.CryptoJS.SHA256('test').toString();
+            console.log(`Test hash generated: ${testHash.substring(0, 20)}...`);
+        } else {
+            console.error('CryptoJS is still not available - authentication will not work!');
+            
+            // Show a warning to the user
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'p-4 bg-red-100 border-l-4 border-red-500 text-red-700 fixed top-4 right-4 z-50';
+            warningDiv.innerHTML = `
+                <p class="font-bold">Authentication Warning</p>
+                <p>CryptoJS could not be loaded. Authentication may not work properly.</p>
+                <p class="mt-2">Please try refreshing the page or check your internet connection.</p>
+            `;
+            document.body.appendChild(warningDiv);
+        }
         
         // Load app script
         await loadApp();

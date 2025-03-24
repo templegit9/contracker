@@ -150,8 +150,8 @@ function setupTabSwitching() {
     registerTab.addEventListener('click', handleRegisterTabClick);
     
     // Add direct onclick attributes as backup
-    loginTab.setAttribute('onclick', "document.getElementById('login-form').classList.remove('hidden'); document.getElementById('register-form').classList.add('hidden');");
-    registerTab.setAttribute('onclick', "document.getElementById('register-form').classList.remove('hidden'); document.getElementById('login-form').classList.add('hidden');");
+    //loginTab.setAttribute('onclick', "document.getElementById('login-form').classList.remove('hidden'); document.getElementById('register-form').classList.add('hidden');");
+    //registerTab.setAttribute('onclick', "document.getElementById('register-form').classList.remove('hidden'); document.getElementById('login-form').classList.add('hidden');");
 }
 
 /**

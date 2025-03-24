@@ -412,17 +412,22 @@ export async function handleLogout() {
  * @param {string} password - Plain text password
  * @returns {string} Hashed password
  */
+/**
+ * Hash password using SHA-256
+ * @param {string} password - Plain text password
+ * @returns {string|null} Hashed password or null if error
+ */
 export function hashPassword(password) {
     try {
         if (!password) {
             window.authLog('Empty password passed to hashPassword', 'error');
-            return '';
+            return null;
         }
         
         // Check if window is defined (browser environment)
         if (typeof window === 'undefined') {
             window.authLog('hashPassword: window is not defined', 'error');
-            return 'HASH_ERROR';
+            return null;
         }
         
         // Check if CryptoJS is available
@@ -430,29 +435,40 @@ export function hashPassword(password) {
             window.authLog('CryptoJS is not available for password hashing', 'error');
             window.authLog(`Dependencies status: ${JSON.stringify(window.appLoader?.dependenciesReady || 'N/A')}`, 'error');
             
-            // Last resort - hard-coded hash just for demo account
-            if (password === 'password') {
-                window.authLog('Using fallback hash for demo password', 'warn');
-                return '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // SHA-256 of 'password'
+            // Try to load CryptoJS dynamically if it's missing
+            if (window.appLoader && window.appLoader.loadDependency) {
+                window.authLog('Attempting to load CryptoJS dynamically', 'warn');
+                try {
+                    // Load CryptoJS and retry password hashing
+                    window.appLoader.loadDependency(
+                        'CryptoJS', 
+                        'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js', 
+                        () => typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined'
+                    ).then(() => {
+                        window.authLog('CryptoJS loaded successfully via dynamic loading', 'success');
+                        return window.CryptoJS.SHA256(password).toString();
+                    }).catch(error => {
+                        window.authLog(`Failed to load CryptoJS dynamically: ${error.message}`, 'error');
+                        return null;
+                    });
+                } catch (loaderError) {
+                    window.authLog(`Error attempting to load CryptoJS: ${loaderError.message}`, 'error');
+                    return null;
+                }
             }
             
-            return 'HASH_ERROR';
+            // If we get here, we couldn't load CryptoJS
+            return null;
         }
         
+        // Standard path - hash the password
         const hash = window.CryptoJS.SHA256(password).toString();
         window.authLog(`Password hash generated: ${hash.substring(0, 10)}...`);
         return hash;
     } catch (error) {
         window.authLog(`Error hashing password: ${error.message}`, 'error');
         console.error('Full error:', error);
-        
-        // Last resort - hard-coded hash just for demo account
-        if (password === 'password') {
-            window.authLog('Using fallback hash for demo password after error', 'warn');
-            return '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // SHA-256 of 'password'
-        }
-        
-        return 'HASH_ERROR';
+        return null;
     }
 }
 

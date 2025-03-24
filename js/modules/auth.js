@@ -147,6 +147,11 @@ export async function initAuth() {
  * @param {Event} e - Form submit event
  * @returns {Promise} Promise resolving when login is processed
  */
+/**
+ * Handle login form submission
+ * @param {Event} e - Form submit event
+ * @returns {Promise} Promise resolving when login is processed
+ */
 export async function handleLogin(e) {
     window.authLog('Login form submitted via auth.js handler');
     e.preventDefault();
@@ -174,16 +179,43 @@ export async function handleLogin(e) {
         window.authDebug.loginCount++;
         window.authDebug.lastLoginAttempt = { email, time: new Date().toISOString() };
         
+        // Handle empty credentials
+        if (!email || !password) {
+            loginErrorElement.textContent = 'Please enter email and password';
+            loginErrorElement.classList.remove('hidden');
+            window.authLog('Login failed: Empty credentials', 'error');
+            return;
+        }
+        
         // Find user by email
         const user = users.find(u => u.email === email);
         window.authLog('User found:', user ? 'Yes' : 'No');
         
-        // Special case for demo account
-        if (email === 'demo@example.com' && password === 'password') {
-            window.authLog('Demo account login detected', 'success');
-            const demoUser = users.find(u => u.email === 'demo@example.com');
+        // Special case for demo account - make it easy to log in but still secure
+        if (email === 'demo@example.com') {
+            window.authLog('Demo account login attempt detected');
             
-            if (demoUser) {
+            // Make sure we have a demo user
+            let demoUser = users.find(u => u.email === 'demo@example.com');
+            
+            // If demo user doesn't exist for some reason, create it
+            if (!demoUser) {
+                window.authLog('Demo user not found, creating it', 'warn');
+                demoUser = {
+                    id: generateId(),
+                    name: 'Demo User',
+                    email: 'demo@example.com',
+                    password: hashPassword('password'),
+                    createdAt: new Date().toISOString()
+                };
+                users.push(demoUser);
+                await saveUsers(users);
+            }
+            
+            // Only allow demo login with correct password
+            if (password === 'password') {
+                window.authLog('Demo login successful', 'success');
+                
                 // Clear form and error
                 loginFormElement.reset();
                 loginErrorElement.classList.add('hidden');
@@ -195,21 +227,33 @@ export async function handleLogin(e) {
                     localStorage.removeItem('loggedInUser');
                 }
                 
-                window.authLog('Demo login successful', 'success');
                 await loginUser(demoUser);
                 return;
             }
         }
         
-        // Hash password for comparison
-        const hashedPassword = hashPassword(password);
-        window.authLog(`Password hash: ${hashedPassword.substring(0, 10)}...`);
-        
-        if (user) {
-            window.authLog(`Stored hash: ${user.password.substring(0, 10)}...`);
+        // Regular user login flow
+        if (!user) {
+            loginErrorElement.textContent = 'Invalid email or password';
+            loginErrorElement.classList.remove('hidden');
+            window.authLog('Login failed: User not found', 'error');
+            return;
         }
         
-        if (!user || user.password !== hashedPassword) {
+        // Hash password for comparison
+        const hashedPassword = hashPassword(password);
+        
+        if (hashedPassword === null) {
+            loginErrorElement.textContent = 'Authentication error. Please try again.';
+            loginErrorElement.classList.remove('hidden');
+            window.authLog('Login failed: Password hashing error', 'error');
+            return;
+        }
+        
+        window.authLog(`Password hash: ${hashedPassword.substring(0, 10)}...`);
+        window.authLog(`Stored hash: ${user.password.substring(0, 10)}...`);
+        
+        if (user.password !== hashedPassword) {
             loginErrorElement.textContent = 'Invalid email or password';
             loginErrorElement.classList.remove('hidden');
             window.authLog('Login failed: Invalid credentials', 'error');
@@ -234,6 +278,13 @@ export async function handleLogin(e) {
     } catch (error) {
         window.authLog(`Error during login: ${error.message}`, 'error');
         console.error('Full error:', error);
+        
+        // Show error to user
+        const loginErrorElement = document.getElementById('login-error');
+        if (loginErrorElement) {
+            loginErrorElement.textContent = 'An unexpected error occurred. Please try again.';
+            loginErrorElement.classList.remove('hidden');
+        }
     }
 }
 

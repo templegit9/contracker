@@ -170,11 +170,13 @@ function setupFormSubmissions() {
             // Create wrapper functions to ensure 'this' context is preserved
             const loginWrapper = (e) => {
                 console.log('Login form submitted via wrapper');
+                e.preventDefault(); // Ensure we prevent form submission
                 loginHandler(e);
             };
             
             const registerWrapper = (e) => {
                 console.log('Register form submitted via wrapper');
+                e.preventDefault(); // Ensure we prevent form submission
                 registerHandler(e);
             };
             
@@ -186,11 +188,14 @@ function setupFormSubmissions() {
             loginForm.addEventListener('submit', loginWrapper);
             registerForm.addEventListener('submit', registerWrapper);
             
-            // Also add direct onsubmit attributes as a backup
-            loginForm.setAttribute('onsubmit', "event.preventDefault(); console.log('Login form onsubmit triggered'); return false;");
-            registerForm.setAttribute('onsubmit', "event.preventDefault(); console.log('Register form onsubmit triggered'); return false;");
+            // REMOVED: Direct onsubmit attributes override
+            // These were causing the form handlers to fail by returning false
             
             console.log('Form submission handlers successfully attached');
+            
+            // Expose handlers to window for access from HTML as backup
+            window.handleLoginSubmit = loginWrapper;
+            window.handleRegisterSubmit = registerWrapper;
         }).catch(error => {
             console.error('Error importing auth module:', error);
         });

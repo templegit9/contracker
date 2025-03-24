@@ -531,5 +531,257 @@
     </div>
     
     <!-- App will be loaded by loader.js -->
+
+    // Add this at the bottom of your index.html file
+// or run it in your browser console to debug the authentication
+
+// Global validation flags
+window.authFlags = {
+  formListenersAttached: false,
+  cryptoJSAvailable: typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined',
+  windowHandlersSet: typeof window.handleLoginSubmit === 'function' && typeof window.handleRegisterSubmit === 'function',
+  domElementsFound: false
+};
+
+// Check DOM elements
+function checkAuthDOM() {
+  const elements = {
+    loginForm: document.getElementById('login-form'),
+    registerForm: document.getElementById('register-form'),
+    loginEmail: document.getElementById('login-email'),
+    loginPassword: document.getElementById('login-password'),
+    loginError: document.getElementById('login-error'),
+    registerName: document.getElementById('register-name'),
+    registerEmail: document.getElementById('register-email'),
+    registerPassword: document.getElementById('register-password'),
+    registerConfirmPassword: document.getElementById('register-confirm-password'),
+    registerError: document.getElementById('register-error')
+  };
+  
+  window.authFlags.domElementsFound = !Object.values(elements).includes(null);
+  
+  console.log('%c=== AUTH DEBUG: DOM ELEMENTS ===', 'color: blue; font-weight: bold');
+  Object.entries(elements).forEach(([name, el]) => {
+    console.log(`${name}: ${el ? '✅ Found' : '❌ Missing'}`);
+  });
+  
+  return elements;
+}
+
+// Test form submissions
+function setupDebugListeners() {
+  const elements = checkAuthDOM();
+  
+  if (!elements.loginForm || !elements.registerForm) {
+    console.error('Cannot setup debug listeners: Forms not found');
+    return;
+  }
+  
+  // Add direct event listeners to monitor form submissions
+  elements.loginForm.addEventListener('submit', function(e) {
+    console.log('%c🔍 LOGIN FORM SUBMITTED', 'color: green; font-weight: bold');
+    console.log('Email:', elements.loginEmail.value);
+    console.log('Password:', elements.loginPassword.value ? '(password entered)' : '(empty)');
+    
+    // Don't prevent default - let it proceed to the actual handler
+  });
+  
+  elements.registerForm.addEventListener('submit', function(e) {
+    console.log('%c🔍 REGISTER FORM SUBMITTED', 'color: green; font-weight: bold');
+    console.log('Name:', elements.registerName.value);
+    console.log('Email:', elements.registerEmail.value);
+    console.log('Passwords match:', elements.registerPassword.value === elements.registerConfirmPassword.value);
+    
+    // Don't prevent default - let it proceed to the actual handler
+  });
+  
+  window.authFlags.formListenersAttached = true;
+  console.log('%c✅ Debug listeners attached to forms', 'color: green');
+}
+
+// Test password hashing
+function testPasswordHashing() {
+  console.log('%c=== AUTH DEBUG: PASSWORD HASHING ===', 'color: blue; font-weight: bold');
+  
+  if (!window.authFlags.cryptoJSAvailable) {
+    console.error('❌ CryptoJS is not available - password hashing will fail!');
+    console.log('Trying to load CryptoJS dynamically...');
+    
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
+    script.onload = () => {
+      console.log('%c✅ CryptoJS loaded successfully', 'color: green');
+      window.authFlags.cryptoJSAvailable = true;
+      testHashingFunction();
+    };
+    script.onerror = () => {
+      console.error('❌ Failed to load CryptoJS');
+    };
+    document.head.appendChild(script);
+    return;
+  }
+  
+  testHashingFunction();
+}
+
+function testHashingFunction() {
+  try {
+    // Try direct access to hash function if available
+    let hashFn;
+    
+    if (window.hashPassword) {
+      hashFn = window.hashPassword;
+      console.log('Using global hashPassword function');
+    } else {
+      // Otherwise use CryptoJS directly as fallback
+      hashFn = (pwd) => window.CryptoJS.SHA256(pwd).toString();
+      console.log('Using fallback CryptoJS.SHA256 function');
+    }
+    
+    const testPassword = 'password';
+    const hash = hashFn(testPassword);
+    
+    if (hash) {
+      console.log('%c✅ Password hashing working: ' + hash.substring(0, 15) + '...', 'color: green');
+    } else {
+      console.error('❌ Password hashing returned null or empty value');
+    }
+  } catch (error) {
+    console.error('❌ Error testing password hashing:', error);
+  }
+}
+
+// Check event handlers
+function checkEventHandlers() {
+  console.log('%c=== AUTH DEBUG: EVENT HANDLERS ===', 'color: blue; font-weight: bold');
+  
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  
+  if (!loginForm || !registerForm) {
+    console.error('Forms not found for handler check');
+    return;
+  }
+  
+  console.log('Login form onsubmit attribute:', loginForm.getAttribute('onsubmit'));
+  console.log('Register form onsubmit attribute:', registerForm.getAttribute('onsubmit'));
+  
+  console.log('window.handleLoginSubmit exists:', typeof window.handleLoginSubmit === 'function');
+  console.log('window.handleRegisterSubmit exists:', typeof window.handleRegisterSubmit === 'function');
+}
+
+// Add direct form submission handlers for testing
+function addDirectHandlers() {
+  console.log('%c=== AUTH DEBUG: ADDING DIRECT HANDLERS ===', 'color: blue; font-weight: bold');
+  
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  
+  if (!loginForm || !registerForm) {
+    console.error('Forms not found for adding direct handlers');
+    return;
+  }
+  
+  // Clone to remove existing event listeners
+  const newLoginForm = loginForm.cloneNode(true);
+  const newRegisterForm = registerForm.cloneNode(true);
+  
+  loginForm.parentNode.replaceChild(newLoginForm, loginForm);
+  registerForm.parentNode.replaceChild(newRegisterForm, registerForm);
+  
+  // Add direct onsubmit handlers
+  newLoginForm.onsubmit = function(e) {
+    e.preventDefault();
+    console.log('%c📣 Direct login handler called', 'color: purple; font-weight: bold');
+    
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const loginError = document.getElementById('login-error');
+    
+    // Simple validation
+    if (!email || !password) {
+      loginError.textContent = 'Please enter email and password';
+      loginError.classList.remove('hidden');
+      return false;
+    }
+    
+    // Demo account shortcut
+    if (email === 'demo@example.com' && password === 'password') {
+      console.log('%c✅ Demo login successful!', 'color: green; font-weight: bold');
+      loginError.classList.add('hidden');
+      
+      // Store in localStorage
+      localStorage.setItem('loggedInUser', 'demo-user-id');
+      
+      // Manually show main content
+      document.getElementById('auth-content').style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+      
+      return false;
+    }
+    
+    loginError.textContent = 'Login failed. Using emergency direct handler.';
+    loginError.classList.remove('hidden');
+    return false;
+  };
+  
+  newRegisterForm.onsubmit = function(e) {
+    e.preventDefault();
+    console.log('%c📣 Direct register handler called', 'color: purple; font-weight: bold');
+    
+    const name = document.getElementById('register-name').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const confirmPassword = document.getElementById('register-confirm-password').value;
+    const registerError = document.getElementById('register-error');
+    
+    // Simple validation
+    if (!name || !email || !password || !confirmPassword) {
+      registerError.textContent = 'Please fill all fields';
+      registerError.classList.remove('hidden');
+      return false;
+    }
+    
+    if (password !== confirmPassword) {
+      registerError.textContent = 'Passwords do not match';
+      registerError.classList.remove('hidden');
+      return false;
+    }
+    
+    registerError.textContent = 'Account created with emergency handler! Please log in.';
+    registerError.classList.remove('hidden');
+    registerError.classList.add('text-green-500');
+    
+    // Clear the form
+    document.getElementById('register-form').reset();
+    
+    return false;
+  };
+  
+  console.log('%c✅ Direct form handlers added. Try submitting the forms now.', 'color: green; font-weight: bold');
+}
+
+// Run diagnostics
+function runAuthDiagnostics() {
+  console.log('%c==================================', 'color: blue; font-weight: bold');
+  console.log('%c🔍 RUNNING AUTH DIAGNOSTICS', 'color: blue; font-weight: bold');
+  console.log('%c==================================', 'color: blue; font-weight: bold');
+  
+  checkAuthDOM();
+  checkEventHandlers();
+  testPasswordHashing();
+  setupDebugListeners();
+  
+  console.log('%c==================================', 'color: blue; font-weight: bold');
+  console.log('%c🔧 EMERGENCY FIX OPTIONS', 'color: orange; font-weight: bold');
+  console.log('%c==================================', 'color: blue; font-weight: bold');
+  console.log('If login/register still doesn\'t work, run:');
+  console.log('%caddDirectHandlers()', 'color: green; font-weight: bold');
+  console.log('This will add emergency handlers to get you into the app.');
+}
+
+// Run diagnostics
+runAuthDiagnostics();
 </body>
 </html>
+

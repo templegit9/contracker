@@ -128,6 +128,12 @@ function setupEventListeners() {
         }
     });
     updateUrlPlaceholder();
+
+    // Contract form
+    const contractForm = document.getElementById('contract-form');
+    if (contractForm) {
+        contractForm.addEventListener('submit', handleContractFormSubmit);
+    }
 }
 
 /**
@@ -746,4 +752,78 @@ function rebuildUrlContentMap() {
  */
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
+
+/**
+ * Handle contract form submission
+ * @param {Event} e - Form submit event
+ */
+async function handleContractFormSubmit(e) {
+    e.preventDefault();
+    
+    try {
+        const form = e.target;
+        const errorEl = form.querySelector('.error-message');
+        
+        // Get form values
+        const name = form.querySelector('#contract-name').value.trim();
+        const client = form.querySelector('#contract-client').value.trim();
+        const value = parseFloat(form.querySelector('#contract-value').value);
+        const startDate = form.querySelector('#contract-start-date').value;
+        const endDate = form.querySelector('#contract-end-date').value;
+        const description = form.querySelector('#contract-description').value.trim();
+        
+        // Validate required fields
+        if (!name || !client || !value || !startDate || !endDate || !description) {
+            errorEl.textContent = 'Please fill in all required fields';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+        
+        // Get current user
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            errorEl.textContent = 'You must be logged in to add contracts';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+        
+        // Create contract object
+        const newContract = {
+            id: generateId(),
+            name,
+            client,
+            value,
+            startDate,
+            endDate,
+            description,
+            createdAt: new Date().toISOString(),
+            userId: currentUser.id
+        };
+        
+        // Load existing contracts
+        let contracts = await loadUserData(currentUser.id, 'contracts') || [];
+        if (!Array.isArray(contracts)) contracts = [];
+        
+        // Add new contract
+        contracts.push(newContract);
+        
+        // Save updated contracts
+        await saveUserData(currentUser.id, 'contracts', contracts);
+        
+        // Clear form
+        form.reset();
+        errorEl.classList.add('hidden');
+        
+        // Show success message
+        showNotification('Contract added successfully', 'success');
+        
+        // Refresh contracts list
+        await loadDashboard();
+    } catch (error) {
+        console.error('Error adding contract:', error);
+        const errorEl = e.target.querySelector('.error-message');
+        errorEl.textContent = error.message || 'Failed to save contract';
+        errorEl.classList.remove('hidden');
+    }
 }

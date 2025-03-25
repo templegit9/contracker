@@ -11,11 +11,13 @@ import { PLATFORMS, AVG_WATCH_PERCENTAGE } from '../modules/config.js';
 // In-memory data
 let contentItems = [];
 let engagementData = [];
+let contracts = [];
 let urlToContentMap = {};
 
 // DOM elements - initialized in setupDashboard
 let contentList;
 let engagementList;
+let contractsList;
 let totalContentEl;
 let totalEngagementsEl;
 let topPlatformEl;
@@ -35,8 +37,9 @@ export async function loadDashboard() {
         const userData = await loadAllUserData();
         contentItems = Array.isArray(userData.contentItems) ? userData.contentItems : [];
         engagementData = Array.isArray(userData.engagementData) ? userData.engagementData : [];
+        contracts = Array.isArray(userData.contracts) ? userData.contracts : [];
         
-        console.log(`Loaded ${contentItems.length} content items and ${engagementData.length} engagement records`);
+        console.log(`Loaded ${contentItems.length} content items, ${engagementData.length} engagement records, and ${contracts.length} contracts`);
         
         // Rebuild URL to content map
         rebuildUrlContentMap();
@@ -45,14 +48,26 @@ export async function loadDashboard() {
         const publishedDateInput = document.getElementById('content-published');
         if (publishedDateInput) {
             publishedDateInput.valueAsDate = new Date();
-        } else {
-            console.error('Could not find content-published input');
+        }
+        
+        // Set default dates for contract form
+        const contractStartDate = document.getElementById('contract-start-date');
+        const contractEndDate = document.getElementById('contract-end-date');
+        if (contractStartDate) {
+            contractStartDate.valueAsDate = new Date();
+        }
+        if (contractEndDate) {
+            // Set default end date to 1 year from now
+            const endDate = new Date();
+            endDate.setFullYear(endDate.getFullYear() + 1);
+            contractEndDate.valueAsDate = endDate;
         }
         
         // Render data
         console.log('Rendering dashboard data...');
         renderContentItems();
         renderEngagementData();
+        renderContracts();
         updateStats();
         
         // Render charts if all required elements exist
@@ -70,6 +85,7 @@ export async function loadDashboard() {
         console.log('Dashboard loaded successfully');
     } catch (error) {
         console.error('Error loading dashboard:', error);
+        showNotification('Error loading dashboard: ' + error.message, 'error');
     }
 }
 
@@ -80,18 +96,20 @@ function setupDOMReferences() {
     try {
         contentList = document.getElementById('content-list');
         engagementList = document.getElementById('engagement-list');
+        contractsList = document.getElementById('contracts-list');
         totalContentEl = document.getElementById('total-content');
         totalEngagementsEl = document.getElementById('total-engagements');
         topPlatformEl = document.getElementById('top-platform');
         
-        // Validate required elements
-        if (!contentList) console.error('Could not find content-list element');
-        if (!engagementList) console.error('Could not find engagement-list element');
-        if (!totalContentEl) console.error('Could not find total-content element');
-        if (!totalEngagementsEl) console.error('Could not find total-engagements element');
-        if (!topPlatformEl) console.error('Could not find top-platform element');
-        
-        console.log('Dashboard DOM references initialized');
+        // Log which elements were found
+        console.log('DOM references initialized:', {
+            contentList: !!contentList,
+            engagementList: !!engagementList,
+            contractsList: !!contractsList,
+            totalContentEl: !!totalContentEl,
+            totalEngagementsEl: !!totalEngagementsEl,
+            topPlatformEl: !!topPlatformEl
+        });
     } catch (error) {
         console.error('Error setting up dashboard DOM references:', error);
     }
@@ -103,97 +121,69 @@ function setupDOMReferences() {
 function setupEventListeners() {
     // Content form
     const contentForm = document.getElementById('content-form');
-    const contentUrlField = document.getElementById('content-url');
-    contentForm.addEventListener('submit', handleContentFormSubmit);
-    contentUrlField.addEventListener('blur', checkForDuplicateUrl);
-    document.getElementById('fetch-content-info').addEventListener('click', fetchContentInfo);
-    
-    // Data refresh buttons
-    const refreshDataBtn = document.getElementById('refresh-data');
-    const refreshAllDataBtn = document.getElementById('refresh-all-data');
-    refreshDataBtn.addEventListener('click', refreshData);
-    refreshAllDataBtn.addEventListener('click', refreshData);
+    if (contentForm) {
+        contentForm.addEventListener('submit', handleContentFormSubmit);
+        const contentUrlField = document.getElementById('content-url');
+        if (contentUrlField) {
+            contentUrlField.addEventListener('blur', checkForDuplicateUrl);
+        }
+        const fetchContentInfoBtn = document.getElementById('fetch-content-info');
+        if (fetchContentInfoBtn) {
+            fetchContentInfoBtn.addEventListener('click', fetchContentInfo);
+        }
+    }
     
     // Platform selection
-    document.getElementById('content-source').addEventListener('change', function() {
+    const platformSelect = document.getElementById('content-source');
+    if (platformSelect) {
+        platformSelect.addEventListener('change', updateUrlPlaceholder);
         updateUrlPlaceholder();
-        
-        // Show/hide duration field based on platform
-        const platform = this.value;
-        const durationContainer = document.getElementById('duration-container');
-        if (platform === 'youtube') {
-            durationContainer.classList.remove('hidden');
-        } else {
-            durationContainer.classList.add('hidden');
-        }
-    });
-    updateUrlPlaceholder();
-
+    }
+    
     // Contract form
     const contractForm = document.getElementById('contract-form');
     if (contractForm) {
         contractForm.addEventListener('submit', handleContractFormSubmit);
     }
+    
+    // Refresh buttons
+    const refreshDataBtn = document.getElementById('refresh-data');
+    const refreshAllDataBtn = document.getElementById('refresh-all-data');
+    if (refreshDataBtn) refreshDataBtn.addEventListener('click', refreshData);
+    if (refreshAllDataBtn) refreshAllDataBtn.addEventListener('click', refreshData);
 }
 
 /**
  * Setup collapsible sections
  */
 function setupCollapsibleSections() {
-    // Add New Content section
-    const toggleAddContent = document.getElementById('toggle-add-content');
-    const addContentBody = document.getElementById('add-content-body');
-    const addContentIcon = toggleAddContent.querySelector('.material-icons');
+    setupCollapsibleSection('toggle-add-content', 'add-content-body', 'addContentCollapsed');
+    setupCollapsibleSection('toggle-content-library', 'content-library-body', 'contentLibraryCollapsed');
+    setupCollapsibleSection('toggle-engagement-data', 'engagement-data-body', 'engagementDataCollapsed');
+    setupCollapsibleSection('toggle-contracts', 'contracts-body', 'contractsCollapsed');
+}
+
+/**
+ * Setup a single collapsible section
+ */
+function setupCollapsibleSection(toggleId, bodyId, storageKey) {
+    const toggleElement = document.getElementById(toggleId);
+    const bodyElement = document.getElementById(bodyId);
+    if (!toggleElement || !bodyElement) return;
     
-    toggleAddContent.addEventListener('click', () => {
-        addContentBody.classList.toggle('hidden');
-        addContentIcon.classList.toggle('rotate-180');
-        // Store preference in localStorage
-        localStorage.setItem('addContentCollapsed', addContentBody.classList.contains('hidden'));
+    const icon = toggleElement.querySelector('.material-icons');
+    
+    toggleElement.addEventListener('click', () => {
+        bodyElement.classList.toggle('hidden');
+        if (icon) icon.classList.toggle('rotate-180');
+        localStorage.setItem(storageKey, bodyElement.classList.contains('hidden'));
     });
     
-    // Content Library section
-    const toggleContentLibrary = document.getElementById('toggle-content-library');
-    const contentLibraryBody = document.getElementById('content-library-body');
-    const contentLibraryIcon = toggleContentLibrary.querySelector('.material-icons');
-    
-    toggleContentLibrary.addEventListener('click', () => {
-        contentLibraryBody.classList.toggle('hidden');
-        contentLibraryIcon.classList.toggle('rotate-180');
-        // Store preference in localStorage
-        localStorage.setItem('contentLibraryCollapsed', contentLibraryBody.classList.contains('hidden'));
-    });
-    
-    // Engagement Data section
-    const toggleEngagementData = document.getElementById('toggle-engagement-data');
-    const engagementDataBody = document.getElementById('engagement-data-body');
-    const engagementDataIcon = toggleEngagementData.querySelector('.material-icons');
-    
-    toggleEngagementData.addEventListener('click', () => {
-        engagementDataBody.classList.toggle('hidden');
-        engagementDataIcon.classList.toggle('rotate-180');
-        // Store preference in localStorage
-        localStorage.setItem('engagementDataCollapsed', engagementDataBody.classList.contains('hidden'));
-    });
-    
-    // Load saved preferences
-    const addContentCollapsed = localStorage.getItem('addContentCollapsed') === 'true';
-    const contentLibraryCollapsed = localStorage.getItem('contentLibraryCollapsed') === 'true';
-    const engagementDataCollapsed = localStorage.getItem('engagementDataCollapsed') === 'true';
-    
-    if (addContentCollapsed) {
-        addContentBody.classList.add('hidden');
-        addContentIcon.classList.add('rotate-180');
-    }
-    
-    if (contentLibraryCollapsed) {
-        contentLibraryBody.classList.add('hidden');
-        contentLibraryIcon.classList.add('rotate-180');
-    }
-    
-    if (engagementDataCollapsed) {
-        engagementDataBody.classList.add('hidden');
-        engagementDataIcon.classList.add('rotate-180');
+    // Load saved preference
+    const isCollapsed = localStorage.getItem(storageKey) === 'true';
+    if (isCollapsed) {
+        bodyElement.classList.add('hidden');
+        if (icon) icon.classList.add('rotate-180');
     }
 }
 
@@ -202,7 +192,7 @@ function setupCollapsibleSections() {
  */
 function renderContentItems() {
     if (!contentList) {
-        console.error('Cannot render content items: contentList is not defined');
+        console.log('Content list element not found, skipping render');
         return;
     }
     
@@ -216,116 +206,47 @@ function renderContentItems() {
         
         console.log(`Rendering ${contentItems.length} content items`);
         
-    contentItems.forEach(item => {
-        const row = document.createElement('tr');
-        
-        const nameCell = document.createElement('td');
-        nameCell.className = 'px-6 py-4';
-        
-        // Create a div for title and description
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'font-medium text-gray-900 dark:text-white';
-        titleDiv.textContent = item.name;
-        nameCell.appendChild(titleDiv);
-        
-        // Only show description if present
-        if (item.description) {
-            const descriptionDiv = document.createElement('div');
-            descriptionDiv.className = 'text-sm text-gray-500 dark:text-gray-400 mt-1';
-            descriptionDiv.textContent = item.description;
-            nameCell.appendChild(descriptionDiv);
-        }
-        
-        const platformCell = document.createElement('td');
-        platformCell.className = 'px-6 py-4 whitespace-nowrap';
-        const platformSpan = document.createElement('span');
-        platformSpan.textContent = PLATFORMS[item.platform];
-        
-        // Add color based on platform
-        if (item.platform === 'youtube') {
-            platformSpan.className = 'badge youtube';
+        contentItems.forEach(item => {
+            const row = document.createElement('tr');
             
-            // Add duration badge for YouTube videos if available
-            if (item.duration) {
-                const durationSpan = document.createElement('span');
-                durationSpan.className = 'badge bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ml-2 flex items-center';
-                durationSpan.innerHTML = `<span class="material-icons text-xs mr-1">timer</span> ${item.duration}`;
-                platformCell.appendChild(durationSpan);
-            }
-        } else if (item.platform === 'servicenow') {
-            platformSpan.className = 'badge servicenow';
-        } else if (item.platform === 'linkedin') {
-            platformSpan.className = 'badge linkedin';
-        } else {
-            platformSpan.className = 'badge other';
-        }
-        
-        platformCell.appendChild(platformSpan);
-        
-        const publishedCell = document.createElement('td');
-        publishedCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
-        publishedCell.textContent = formatDate(item.publishedDate);
-        
-        const addedCell = document.createElement('td');
-        addedCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400';
-        addedCell.textContent = formatDate(item.createdAt);
-        
-        const urlCell = document.createElement('td');
-        urlCell.className = 'px-6 py-4 whitespace-normal';
-        
-        // Create a link instead of plain text
-        const urlLink = document.createElement('a');
-        urlLink.href = item.url;
-        urlLink.target = '_blank';
-        urlLink.className = 'text-blue-500 dark:text-blue-400 hover:underline text-sm';
-        urlLink.title = item.url;
-        urlLink.textContent = truncateText(item.url, 30);
-        
-        urlCell.appendChild(urlLink);
-        
-        const actionsCell = document.createElement('td');
-        actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm';
-        
-        const viewBtn = document.createElement('button');
-        viewBtn.className = 'btn bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 mr-2 text-sm';
-        viewBtn.innerHTML = '<span class="material-icons text-sm">visibility</span>';
-        viewBtn.title = 'View Details';
-        viewBtn.addEventListener('click', () => showContentDetails(item));
-        
-        const updateBtn = document.createElement('button');
-        updateBtn.className = 'btn btn-primary text-sm mr-2';
-        updateBtn.innerHTML = '<span class="material-icons text-sm">refresh</span>';
-        updateBtn.title = 'Update Data';
-        updateBtn.addEventListener('click', async () => {
-            await fetchEngagementData(contentItems, [item]);
-            renderEngagementData();
-            updateStats();
-            renderCharts(contentItems, engagementData);
+            const nameCell = document.createElement('td');
+            nameCell.className = 'px-6 py-4';
+            nameCell.innerHTML = `
+                <div class="font-medium text-gray-900 dark:text-white">${item.name}</div>
+                ${item.description ? `<div class="text-sm text-gray-500 dark:text-gray-400 mt-1">${item.description}</div>` : ''}
+            `;
+            
+            const platformCell = document.createElement('td');
+            platformCell.className = 'px-6 py-4 whitespace-nowrap';
+            platformCell.innerHTML = `<span class="badge ${item.platform || 'other'}">${PLATFORMS[item.platform] || 'Other'}</span>`;
+            
+            const urlCell = document.createElement('td');
+            urlCell.className = 'px-6 py-4';
+            urlCell.innerHTML = `
+                <a href="${item.url}" target="_blank" class="text-blue-500 hover:underline">
+                    ${truncateText(item.url, 30)}
+                </a>
+            `;
+            
+            const actionsCell = document.createElement('td');
+            actionsCell.className = 'px-6 py-4 text-right';
+            actionsCell.innerHTML = `
+                <button class="btn btn-sm btn-primary mr-2" onclick="viewContent('${item.id}')">View</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteContent('${item.id}')">Delete</button>
+            `;
+            
+            row.appendChild(nameCell);
+            row.appendChild(platformCell);
+            row.appendChild(urlCell);
+            row.appendChild(actionsCell);
+            
+            contentList.appendChild(row);
         });
-        
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn bg-red-500 hover:bg-red-600 text-white text-sm';
-        deleteBtn.innerHTML = '<span class="material-icons text-sm">delete</span>';
-        deleteBtn.title = 'Delete';
-        deleteBtn.addEventListener('click', () => deleteContent(item.id));
-        
-        actionsCell.appendChild(viewBtn);
-        actionsCell.appendChild(updateBtn);
-        actionsCell.appendChild(deleteBtn);
-        
-        row.appendChild(nameCell);
-        row.appendChild(platformCell);
-        row.appendChild(publishedCell);
-        row.appendChild(addedCell);
-        row.appendChild(urlCell);
-        row.appendChild(actionsCell);
-        
-        contentList.appendChild(row);
-    });
-    
     } catch (error) {
         console.error('Error rendering content items:', error);
-        contentList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error rendering content items</td></tr>';
+        if (contentList) {
+            contentList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error rendering content items</td></tr>';
+        }
     }
 }
 
@@ -334,7 +255,7 @@ function renderContentItems() {
  */
 function renderEngagementData() {
     if (!engagementList) {
-        console.error('Cannot render engagement data: engagementList is not defined');
+        console.log('Engagement list element not found, skipping render');
         return;
     }
     
@@ -342,105 +263,84 @@ function renderEngagementData() {
         engagementList.innerHTML = '';
         
         if (!engagementData || engagementData.length === 0) {
-            engagementList.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No engagement data available</td></tr>';
+            engagementList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No engagement data available</td></tr>';
             return;
         }
         
         console.log(`Rendering ${engagementData.length} engagement records`);
-    
-    // Group engagement data by content URL (not ID) and get the latest record for each
-    // This ensures duplicate URLs show the same engagement data
-    const latestEngagementByUrl = {};
-    engagementData.forEach(engagement => {
-        if (!latestEngagementByUrl[engagement.contentUrl] || 
-            new Date(engagement.timestamp) > new Date(latestEngagementByUrl[engagement.contentUrl].timestamp)) {
-            latestEngagementByUrl[engagement.contentUrl] = engagement;
-        }
-    });
-    
-    Object.values(latestEngagementByUrl).forEach(engagement => {
-        // Find content item based on URL, not ID
-        // For items with duplicate URLs, we'll use the first one found
-        const contentItem = contentItems.find(item => normalizeUrl(item.url) === engagement.contentUrl);
-        if (!contentItem) return; // Skip if content was deleted
         
-        const row = document.createElement('tr');
-        
-        const nameCell = document.createElement('td');
-        nameCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white';
-        nameCell.textContent = contentItem.name;
-        
-        const platformCell = document.createElement('td');
-        platformCell.className = 'px-6 py-4 whitespace-nowrap';
-        const platformSpan = document.createElement('span');
-        platformSpan.textContent = PLATFORMS[contentItem.platform];
-        
-        // Add color based on platform
-        if (contentItem.platform === 'youtube') {
-            platformSpan.className = 'badge youtube';
-        } else if (contentItem.platform === 'servicenow') {
-            platformSpan.className = 'badge servicenow';
-        } else if (contentItem.platform === 'linkedin') {
-            platformSpan.className = 'badge linkedin';
-        } else {
-            platformSpan.className = 'badge other';
-        }
-        
-        platformCell.appendChild(platformSpan);
-        
-        const viewsCell = document.createElement('td');
-        viewsCell.className = 'px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white';
-        viewsCell.textContent = engagement.views.toLocaleString();
-        
-        // Add total hours of views (only for YouTube)
-        const totalHoursCell = document.createElement('td');
-        totalHoursCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
-        
-        if (contentItem.platform === 'youtube') {
-            // Calculate total watch hours
-            const totalHours = calculateWatchHours(
-                engagement.views, 
-                contentItem.duration,
-                AVG_WATCH_PERCENTAGE
-            );
+        engagementData.forEach(item => {
+            const row = document.createElement('tr');
             
-            // Format with appropriate decimal places
-            totalHoursCell.textContent = formatWatchHours(totalHours);
+            row.innerHTML = `
+                <td class="px-6 py-4">${item.contentName || 'Unknown'}</td>
+                <td class="px-6 py-4">${item.views?.toLocaleString() || '0'}</td>
+                <td class="px-6 py-4">${item.likes?.toLocaleString() || '0'}</td>
+                <td class="px-6 py-4">${item.comments?.toLocaleString() || '0'}</td>
+                <td class="px-6 py-4 text-gray-500">${formatDateTime(item.timestamp)}</td>
+            `;
             
-            // Add a tooltip for explanation
-            totalHoursCell.title = `Estimated total hours watched (views × video duration × average retention rate)`;
-        } else {
-            totalHoursCell.textContent = '-';
-            totalHoursCell.className += ' text-gray-400 dark:text-gray-500';
-        }
-        
-        const likesCell = document.createElement('td');
-        likesCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
-        likesCell.textContent = engagement.likes.toLocaleString();
-        
-        const commentsCell = document.createElement('td');
-        commentsCell.className = 'px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-200';
-        commentsCell.textContent = engagement.comments.toLocaleString();
-        
-        const updatedCell = document.createElement('td');
-        updatedCell.className = 'px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400 text-sm';
-        updatedCell.textContent = formatDateTime(engagement.timestamp);
-        
-        row.appendChild(nameCell);
-        row.appendChild(platformCell);
-        row.appendChild(viewsCell);
-        row.appendChild(totalHoursCell);
-        row.appendChild(likesCell);
-        row.appendChild(commentsCell);
-        row.appendChild(updatedCell);
-        
-        engagementList.appendChild(row);
-    });
-    
+            engagementList.appendChild(row);
+        });
     } catch (error) {
         console.error('Error rendering engagement data:', error);
-        engagementList.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Error rendering engagement data</td></tr>';
+        if (engagementList) {
+            engagementList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error rendering engagement data</td></tr>';
+        }
     }
+}
+
+/**
+ * Render contracts
+ */
+function renderContracts() {
+    if (!contractsList) {
+        console.log('Contracts list element not found, skipping render');
+        return;
+    }
+    
+    try {
+        contractsList.innerHTML = '';
+        
+        if (!contracts || contracts.length === 0) {
+            contractsList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No contracts added yet</td></tr>';
+            return;
+        }
+        
+        console.log(`Rendering ${contracts.length} contracts`);
+        
+        contracts.forEach(contract => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    <div class="font-medium text-gray-900 dark:text-white">${contract.name}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">${contract.client}</div>
+                </td>
+                <td class="px-6 py-4">${formatCurrency(contract.value)}</td>
+                <td class="px-6 py-4">${formatDate(contract.startDate)} - ${formatDate(contract.endDate)}</td>
+                <td class="px-6 py-4 text-right">
+                    <button class="btn btn-sm btn-primary mr-2" onclick="viewContract('${contract.id}')">View</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteContract('${contract.id}')">Delete</button>
+                </td>
+            `;
+            
+            contractsList.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error rendering contracts:', error);
+        if (contractsList) {
+            contractsList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error rendering contracts</td></tr>';
+        }
+    }
+}
+
+/**
+ * Format currency value
+ */
+function formatCurrency(value) {
+    if (!value && value !== 0) return '-';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 }
 
 /**
@@ -448,247 +348,235 @@ function renderEngagementData() {
  */
 function updateStats() {
     try {
-        if (!totalContentEl || !totalEngagementsEl || !topPlatformEl) {
-            console.error('Cannot update stats: Missing DOM elements');
-            return;
+        if (totalContentEl) {
+            totalContentEl.textContent = contentItems ? contentItems.length : 0;
         }
         
-        // Total content items
-        totalContentEl.textContent = contentItems ? contentItems.length : 0;
-        
-        // Calculate total engagements (views from latest record for each URL)
-        let totalViews = 0;
-        let engagementsByPlatform = {};
-    
-    // Get the latest engagement data for each content URL
-    const latestEngagementByUrl = {};
-    engagementData.forEach(engagement => {
-        if (!latestEngagementByUrl[engagement.contentUrl] || 
-            new Date(engagement.timestamp) > new Date(latestEngagementByUrl[engagement.contentUrl].timestamp)) {
-            latestEngagementByUrl[engagement.contentUrl] = engagement;
+        if (totalEngagementsEl) {
+            let totalViews = 0;
+            engagementData.forEach(item => {
+                totalViews += item.views || 0;
+            });
+            totalEngagementsEl.textContent = totalViews.toLocaleString();
         }
-    });
-    
-    // Calculate totals and by platform
-    Object.values(latestEngagementByUrl).forEach(engagement => {
-        const contentItem = contentItems.find(item => normalizeUrl(item.url) === engagement.contentUrl);
-        if (!contentItem) return;
         
-        totalViews += engagement.views;
-        
-        engagementsByPlatform[contentItem.platform] = (engagementsByPlatform[contentItem.platform] || 0) + engagement.views;
-    });
-    
-    totalEngagementsEl.textContent = totalViews.toLocaleString();
-    
-    // Find top platform
-    const topPlatform = Object.keys(engagementsByPlatform).reduce((a, b) => 
-        engagementsByPlatform[a] > engagementsByPlatform[b] ? a : b, null);
-    
-    if (topPlatform && engagementsByPlatform[topPlatform] > 0) {
-        topPlatformEl.textContent = PLATFORMS[topPlatform];
-    } else {
-        topPlatformEl.textContent = '-';
-    }
-    
+        if (topPlatformEl) {
+            // Count content by platform
+            const platformCounts = {};
+            contentItems.forEach(item => {
+                platformCounts[item.platform] = (platformCounts[item.platform] || 0) + 1;
+            });
+            
+            // Find top platform
+            let topPlatform = null;
+            let maxCount = 0;
+            
+            Object.entries(platformCounts).forEach(([platform, count]) => {
+                if (count > maxCount) {
+                    maxCount = count;
+                    topPlatform = platform;
+                }
+            });
+            
+            topPlatformEl.textContent = topPlatform ? (PLATFORMS[topPlatform] || topPlatform) : '-';
+        }
     } catch (error) {
         console.error('Error updating dashboard statistics:', error);
     }
 }
 
 /**
- * Refresh all engagement data
- */
-async function refreshData() {
-    if (contentItems.length === 0) {
-        showNotification('No content items to refresh', 'error');
-        return;
-    }
-    
-    const refreshBtn = document.getElementById('refresh-data');
-    const refreshAllBtn = document.getElementById('refresh-all-data');
-    
-    refreshBtn.disabled = true;
-    refreshAllBtn.disabled = true;
-    refreshBtn.innerHTML = '<span class="material-icons animate-spin">refresh</span> Refreshing...';
-    refreshAllBtn.innerHTML = '<span class="material-icons animate-spin">refresh</span> Refreshing...';
-    
-    try {
-        await fetchEngagementData(contentItems);
-        renderEngagementData();
-        updateStats();
-        renderCharts(contentItems, engagementData);
-        
-        showNotification('Engagement data refreshed successfully');
-    } catch (error) {
-        console.error('Error refreshing data:', error);
-        showNotification('Error refreshing data', 'error');
-    } finally {
-        refreshBtn.disabled = false;
-        refreshAllBtn.disabled = false;
-        refreshBtn.innerHTML = '<span class="material-icons mr-1">refresh</span> Refresh Data';
-        refreshAllBtn.innerHTML = '<span class="material-icons mr-1">refresh</span> Refresh All';
-    }
-}
-
-/**
- * Delete content
- * @param {string} id - Content ID
- */
-async function deleteContent(id) {
-    if (confirm('Are you sure you want to delete this content? This operation cannot be undone.')) {
-        // Get the content item
-        const contentItem = contentItems.find(c => c.id === id);
-        if (!contentItem) return;
-        
-        // Find all content items with the same URL
-        const normalizedUrl = normalizeUrl(contentItem.url);
-        const sameUrlContentItems = contentItems.filter(c => normalizeUrl(c.url) === normalizedUrl);
-        
-        if (sameUrlContentItems.length > 1) {
-            // If there are other content items with the same URL, just remove this one
-            contentItems = contentItems.filter(c => c.id !== id);
-        } else {
-            // If this is the only content item with this URL, remove it and its engagement data
-            contentItems = contentItems.filter(c => c.id !== id);
-            engagementData = engagementData.filter(e => e.contentUrl !== normalizedUrl);
-            
-            // Remove from URL map
-            delete urlToContentMap[normalizedUrl];
-        }
-        
-        // Save to user-specific storage
-        await saveUserData('contentItems', contentItems);
-        await saveUserData('engagementData', engagementData);
-        
-        // Update UI
-        renderContentItems();
-        renderEngagementData();
-        updateStats();
-        renderCharts(contentItems, engagementData);
-        
-        showNotification('Content deleted successfully');
-    }
-}
-
-/**
  * Handle content form submission
- * @param {Event} e - Form submit event
  */
 async function handleContentFormSubmit(e) {
     e.preventDefault();
+    console.log('Content form submitted');
     
-    const contentName = document.getElementById('content-name').value;
-    const contentDescription = document.getElementById('content-description').value;
-    const platform = document.getElementById('content-source').value;
-    const contentUrl = document.getElementById('content-url').value;
-    const publishedDate = document.getElementById('content-published').value;
-    
-    // Normalize the URL
-    const normalizedUrl = normalizeUrl(contentUrl);
-    
-    // Check if URL already exists
-    const existingContentId = urlToContentMap[normalizedUrl];
-    if (existingContentId) {
-        // Find the existing content item
-        const existingContent = contentItems.find(item => item.id === existingContentId);
+    try {
+        // Get form values
+        const form = e.target;
+        const contentName = form.querySelector('#content-name').value.trim();
+        const platform = form.querySelector('#content-source').value;
+        const contentUrl = form.querySelector('#content-url').value.trim();
+        const publishedDate = form.querySelector('#content-published').value;
+        const description = form.querySelector('#content-description')?.value.trim() || '';
         
-        if (confirm(`This URL has already been added as "${existingContent.name}". Do you want to update its information?`)) {
-            // Update existing content item
-            existingContent.name = contentName;
-            existingContent.description = contentDescription;
-            existingContent.publishedDate = publishedDate;
-            
-            // Update duration for YouTube videos
-            if (platform === 'youtube') {
-                existingContent.duration = document.getElementById('content-duration').value;
-            }
-            
-            // Save to localforage
-            await saveUserData('contentItems', contentItems);
-            
-            // Update UI
-            renderContentItems();
-            renderEngagementData();
-            updateStats();
-            renderCharts(contentItems, engagementData);
-            
-            showNotification('Content updated successfully');
+        // Validate required fields
+        if (!contentName || !contentUrl || !publishedDate) {
+            showNotification('Please fill in all required fields', 'error');
+            return;
         }
         
-        // Reset form
-        document.getElementById('content-form').reset();
-        document.getElementById('content-published').valueAsDate = new Date();
-        document.getElementById('duplicate-warning').classList.add('hidden');
+        // Create new content item
+        const newContentItem = {
+            id: generateId(),
+            name: contentName,
+            platform: platform,
+            url: contentUrl,
+            publishedDate: publishedDate,
+            description: description,
+            createdAt: new Date().toISOString()
+        };
         
-        return;
+        // Get current user
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            showNotification('You must be logged in to add content', 'error');
+            return;
+        }
+        
+        // Add to content items array
+        contentItems.push(newContentItem);
+        
+        // Save to user-specific storage
+        await saveUserData(currentUser.id, 'contentItems', contentItems);
+        
+        // Reset form
+        form.reset();
+        
+        // Set today's date for published date
+        const publishedDateInput = form.querySelector('#content-published');
+        if (publishedDateInput) {
+            publishedDateInput.valueAsDate = new Date();
+        }
+        
+        // Update UI
+        renderContentItems();
+        updateStats();
+        
+        // Show success message
+        showNotification('Content added successfully', 'success');
+    } catch (error) {
+        console.error('Error adding content:', error);
+        showNotification('Error adding content: ' + error.message, 'error');
     }
+}
+
+/**
+ * Handle contract form submission
+ */
+async function handleContractFormSubmit(e) {
+    e.preventDefault();
+    console.log('Contract form submitted');
     
-    // Extract content ID from URL
-    const contentId = extractContentId(contentUrl, platform);
-    
-    // Get duration for YouTube videos
-    const duration = platform === 'youtube' ? document.getElementById('content-duration').value : null;
-    
-    // Create new content item
-    const newContentItem = {
-        id: generateId(),
-        name: contentName,
-        description: contentDescription || '', // Optional description
-        platform: platform,
-        url: contentUrl,
-        contentId: contentId,
-        publishedDate: publishedDate,
-        duration: duration, // Only for YouTube videos
-        createdAt: new Date().toISOString(),
-        lastUpdated: null
-    };
-    
-    // Add to data structure
-    contentItems.push(newContentItem);
-    
-    // Update URL map
-    urlToContentMap[normalizedUrl] = newContentItem.id;
-    
-    // Save to user-specific storage
-    await saveUserData('contentItems', contentItems);
-    
-    // Fetch initial engagement data
-    await fetchEngagementData(contentItems, [newContentItem]);
-    
-    // Update UI
-    renderContentItems();
-    renderEngagementData();
-    updateStats();
-    renderCharts(contentItems, engagementData);
-    
-    // Reset form
-    document.getElementById('content-form').reset();
-    document.getElementById('content-published').valueAsDate = new Date();
-    document.getElementById('duplicate-warning').classList.add('hidden');
-    
-    showNotification('Content added successfully');
+    try {
+        // Get form values
+        const form = e.target;
+        const errorEl = form.querySelector('.error-message');
+        
+        // Get form values
+        const name = form.querySelector('#contract-name').value.trim();
+        const client = form.querySelector('#contract-client').value.trim();
+        const value = parseFloat(form.querySelector('#contract-value').value);
+        const startDate = form.querySelector('#contract-start-date').value;
+        const endDate = form.querySelector('#contract-end-date').value;
+        const description = form.querySelector('#contract-description').value.trim();
+        
+        // Validate required fields
+        if (!name || !client || isNaN(value) || !startDate || !endDate || !description) {
+            if (errorEl) {
+                errorEl.textContent = 'Please fill in all required fields';
+                errorEl.classList.remove('hidden');
+            } else {
+                showNotification('Please fill in all required fields', 'error');
+            }
+            return;
+        }
+        
+        // Get current user
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            if (errorEl) {
+                errorEl.textContent = 'You must be logged in to add contracts';
+                errorEl.classList.remove('hidden');
+            } else {
+                showNotification('You must be logged in to add contracts', 'error');
+            }
+            return;
+        }
+        
+        // Create contract object
+        const newContract = {
+            id: generateId(),
+            name,
+            client,
+            value,
+            startDate,
+            endDate,
+            description,
+            createdAt: new Date().toISOString(),
+            userId: currentUser.id
+        };
+        
+        // Load existing contracts
+        let userContracts = await loadUserData(currentUser.id, 'contracts') || [];
+        if (!Array.isArray(userContracts)) userContracts = [];
+        
+        // Add new contract
+        userContracts.push(newContract);
+        
+        // Save updated contracts
+        await saveUserData(currentUser.id, 'contracts', userContracts);
+        
+        // Update local contracts array
+        contracts = userContracts;
+        
+        // Clear form
+        form.reset();
+        if (errorEl) {
+            errorEl.classList.add('hidden');
+        }
+        
+        // Reset dates
+        const contractStartDateInput = form.querySelector('#contract-start-date');
+        const contractEndDateInput = form.querySelector('#contract-end-date');
+        if (contractStartDateInput) {
+            contractStartDateInput.valueAsDate = new Date();
+        }
+        if (contractEndDateInput) {
+            const endDate = new Date();
+            endDate.setFullYear(endDate.getFullYear() + 1);
+            contractEndDateInput.valueAsDate = endDate;
+        }
+        
+        // Update UI
+        renderContracts();
+        
+        // Show success message
+        showNotification('Contract added successfully', 'success');
+    } catch (error) {
+        console.error('Error adding contract:', error);
+        const errorEl = e.target.querySelector('.error-message');
+        if (errorEl) {
+            errorEl.textContent = error.message || 'Failed to save contract';
+            errorEl.classList.remove('hidden');
+        } else {
+            showNotification('Error adding contract: ' + error.message, 'error');
+        }
+    }
 }
 
 /**
  * Update URL placeholder based on selected platform
  */
 function updateUrlPlaceholder() {
-    const platform = document.getElementById('content-source').value;
+    const platformSelect = document.getElementById('content-source');
     const urlField = document.getElementById('content-url');
+    if (!platformSelect || !urlField) return;
     
+    const platform = platformSelect.value;
     switch (platform) {
         case 'youtube':
             urlField.placeholder = 'https://youtube.com/watch?v=XXXX';
             break;
-        case 'servicenow':
-            urlField.placeholder = 'https://community.servicenow.com/blog/XXXX';
-            break;
         case 'linkedin':
             urlField.placeholder = 'https://www.linkedin.com/posts/XXXX';
             break;
+        case 'servicenow':
+            urlField.placeholder = 'https://community.servicenow.com/XXXX';
+            break;
         default:
-            urlField.placeholder = 'https://example.com';
+            urlField.placeholder = 'https://example.com/content';
     }
 }
 
@@ -698,41 +586,122 @@ function updateUrlPlaceholder() {
 function checkForDuplicateUrl() {
     const contentUrlField = document.getElementById('content-url');
     const duplicateWarning = document.getElementById('duplicate-warning');
-    const url = contentUrlField.value;
+    if (!contentUrlField || !duplicateWarning) return;
     
+    const url = contentUrlField.value.trim();
     if (!url) return;
     
     const normalizedUrl = normalizeUrl(url);
-    const existingContentId = urlToContentMap[normalizedUrl];
+    const existingItem = contentItems.find(item => normalizeUrl(item.url) === normalizedUrl);
     
-    if (existingContentId) {
-        // Show warning
+    if (existingItem) {
+        duplicateWarning.textContent = `Warning: This URL has already been added as "${existingItem.name}"`;
         duplicateWarning.classList.remove('hidden');
-        
-        // Find the existing content item
-        const existingContent = contentItems.find(item => item.id === existingContentId);
-        if (existingContent) {
-            duplicateWarning.textContent = `Warning: This URL has already been added as "${existingContent.name}".`;
-        }
     } else {
-        // Hide warning
         duplicateWarning.classList.add('hidden');
     }
 }
 
 /**
- * Fetch content information
+ * Fetch content info automatically
  */
 async function fetchContentInfo() {
-    // Implementation from original file...
+    // This would be implemented to fetch metadata from URLs
+    // For now, just show a notification
+    showNotification('This feature is not yet implemented', 'info');
 }
 
 /**
- * Show content details
- * @param {Object} contentItem - Content item
+ * Refresh data
  */
-function showContentDetails(contentItem) {
-    // Implementation from original file...
+async function refreshData() {
+    try {
+        showNotification('Refreshing data...', 'info');
+        await loadDashboard();
+        showNotification('Data refreshed successfully', 'success');
+    } catch (error) {
+        console.error('Error refreshing data:', error);
+        showNotification('Error refreshing data: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Delete content
+ */
+function deleteContent(id) {
+    if (!confirm('Are you sure you want to delete this content?')) return;
+    
+    try {
+        // Remove from array
+        contentItems = contentItems.filter(item => item.id !== id);
+        
+        // Save changes
+        const currentUser = getCurrentUser();
+        if (currentUser) {
+            saveUserData(currentUser.id, 'contentItems', contentItems)
+                .then(() => {
+                    renderContentItems();
+                    updateStats();
+                    showNotification('Content deleted successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error saving after delete:', error);
+                    showNotification('Error saving changes', 'error');
+                });
+        }
+    } catch (error) {
+        console.error('Error deleting content:', error);
+        showNotification('Error deleting content', 'error');
+    }
+}
+
+/**
+ * Delete contract
+ */
+function deleteContract(id) {
+    if (!confirm('Are you sure you want to delete this contract?')) return;
+    
+    try {
+        // Remove from array
+        contracts = contracts.filter(item => item.id !== id);
+        
+        // Save changes
+        const currentUser = getCurrentUser();
+        if (currentUser) {
+            saveUserData(currentUser.id, 'contracts', contracts)
+                .then(() => {
+                    renderContracts();
+                    showNotification('Contract deleted successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error saving after delete:', error);
+                    showNotification('Error saving changes', 'error');
+                });
+        }
+    } catch (error) {
+        console.error('Error deleting contract:', error);
+        showNotification('Error deleting contract', 'error');
+    }
+}
+
+/**
+ * View content details
+ */
+function viewContent(id) {
+    const content = contentItems.find(item => item.id === id);
+    if (!content) return;
+    
+    alert(`Content Details:\n\nName: ${content.name}\nPlatform: ${PLATFORMS[content.platform] || content.platform}\nURL: ${content.url}\nPublished: ${formatDate(content.publishedDate)}\nDescription: ${content.description || 'None'}`);
+}
+
+/**
+ * View contract details
+ */
+function viewContract(id) {
+    const contract = contracts.find(item => item.id === id);
+    if (!contract) return;
+    
+    alert(`Contract Details:\n\nName: ${contract.name}\nClient: ${contract.client}\nValue: ${formatCurrency(contract.value)}\nDuration: ${formatDate(contract.startDate)} - ${formatDate(contract.endDate)}\nDescription: ${contract.description || 'None'}`);
 }
 
 /**
@@ -754,76 +723,8 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-/**
- * Handle contract form submission
- * @param {Event} e - Form submit event
- */
-async function handleContractFormSubmit(e) {
-    e.preventDefault();
-    
-    try {
-        const form = e.target;
-        const errorEl = form.querySelector('.error-message');
-        
-        // Get form values
-        const name = form.querySelector('#contract-name').value.trim();
-        const client = form.querySelector('#contract-client').value.trim();
-        const value = parseFloat(form.querySelector('#contract-value').value);
-        const startDate = form.querySelector('#contract-start-date').value;
-        const endDate = form.querySelector('#contract-end-date').value;
-        const description = form.querySelector('#contract-description').value.trim();
-        
-        // Validate required fields
-        if (!name || !client || !value || !startDate || !endDate || !description) {
-            errorEl.textContent = 'Please fill in all required fields';
-            errorEl.classList.remove('hidden');
-            return;
-        }
-        
-        // Get current user
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
-            errorEl.textContent = 'You must be logged in to add contracts';
-            errorEl.classList.remove('hidden');
-            return;
-        }
-        
-        // Create contract object
-        const newContract = {
-            id: generateId(),
-            name,
-            client,
-            value,
-            startDate,
-            endDate,
-            description,
-            createdAt: new Date().toISOString(),
-            userId: currentUser.id
-        };
-        
-        // Load existing contracts
-        let contracts = await loadUserData(currentUser.id, 'contracts') || [];
-        if (!Array.isArray(contracts)) contracts = [];
-        
-        // Add new contract
-        contracts.push(newContract);
-        
-        // Save updated contracts
-        await saveUserData(currentUser.id, 'contracts', contracts);
-        
-        // Clear form
-        form.reset();
-        errorEl.classList.add('hidden');
-        
-        // Show success message
-        showNotification('Contract added successfully', 'success');
-        
-        // Refresh contracts list
-        await loadDashboard();
-    } catch (error) {
-        console.error('Error adding contract:', error);
-        const errorEl = e.target.querySelector('.error-message');
-        errorEl.textContent = error.message || 'Failed to save contract';
-        errorEl.classList.remove('hidden');
-    }
-}
+// Make functions available in the global scope
+window.viewContent = viewContent;
+window.deleteContent = deleteContent;
+window.viewContract = viewContract;
+window.deleteContract = deleteContract;

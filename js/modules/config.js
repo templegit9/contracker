@@ -1,13 +1,28 @@
 /**
- * Configuration module for Platform Engagement Tracker
+ * Configuration values for Platform Engagement Tracker
  */
 
-// Platform configuration
+// Platform names and display values
 export const PLATFORMS = {
-    youtube: 'Youtube',
-    servicenow: 'ServiceNow Community',
-    linkedin: 'LinkedIn'
+    youtube: 'YouTube',
+    linkedin: 'LinkedIn',
+    servicenow: 'ServiceNow',
+    other: 'Other'
 };
+
+// Average watch percentage for YouTube videos (0-1)
+export const AVG_WATCH_PERCENTAGE = 0.4; // 40% of video duration on average
+
+// API retry settings
+export const API_RETRY_ATTEMPTS = 3;
+export const API_RETRY_DELAY = 1000; // milliseconds
+
+// Version information
+export const APP_VERSION = '1.0.0';
+export const APP_BUILD_DATE = '2024-04-24';
+
+// Default pagination limits
+export const DEFAULT_PAGE_SIZE = 10;
 
 // Default API configuration
 export const DEFAULT_API_CONFIG = {
@@ -17,5 +32,4 @@ export const DEFAULT_API_CONFIG = {
 };
 
 // Constants for watch time calculation
-export const AVG_WATCH_PERCENTAGE = 0.55; // Average viewer watches 55% of content
 export const AVG_VIDEO_LENGTH_MINUTES = 4.4; // Default when duration isn't available

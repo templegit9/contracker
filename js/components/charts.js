@@ -1,376 +1,326 @@
 /**
- * Charts component for Platform Engagement Tracker
+ * Charts module for Platform Engagement Tracker
  */
 
-import { formatDate } from '../modules/utils.js';
-import { PLATFORMS } from '../modules/config.js';
-
-// Chart references
-let viewsChart = null;
-let engagementChart = null;
-let platformDistributionChart = null;
-
 /**
- * Render all dashboard charts
- * @param {Array} contentItems - Content items array
- * @param {Array} engagementData - Engagement data array
+ * Render charts based on content and engagement data
+ * @param {Array} contentItems - Content items
+ * @param {Array} engagementData - Engagement data
  */
 export function renderCharts(contentItems, engagementData) {
-    if (!contentItems || !engagementData || contentItems.length === 0) return;
+    console.log('Charts rendering initiated');
     
-    // Group engagement data by content URL (not ID) and get the latest record for each
-    const latestEngagementByUrl = {};
-    engagementData.forEach(engagement => {
-        if (!latestEngagementByUrl[engagement.contentUrl] || 
-            new Date(engagement.timestamp) > new Date(latestEngagementByUrl[engagement.contentUrl].timestamp)) {
-            latestEngagementByUrl[engagement.contentUrl] = engagement;
+    try {
+        // Check if Chart.js is available
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not available, skipping chart rendering');
+            return;
         }
-    });
-    
-    // Find matching content items for each engagement record
-    const combinedData = [];
-    Object.values(latestEngagementByUrl).forEach(engagement => {
-        const contentItem = contentItems.find(item => normalizeUrl(item.url) === engagement.contentUrl);
-        if (contentItem) {
-            combinedData.push({
-                ...contentItem,
-                ...engagement
-            });
-        }
-    });
-    
-    // Sort by views (descending)
-    combinedData.sort((a, b) => b.views - a.views);
-    
-    // Render individual charts
-    renderViewsChart(combinedData);
-    renderEngagementChart(combinedData);
-    renderPlatformDistributionChart(contentItems);
-    
-    // Listen for dark mode changes to update chart styles
-    document.addEventListener('darkModeChanged', updateChartStyles);
-}
-
-/**
- * Render views chart
- * @param {Array} combinedData - Combined content and engagement data
- */
-function renderViewsChart(combinedData) {
-    const ctx = document.getElementById('views-chart').getContext('2d');
-    
-    // Prepare data for top 10 content items by views
-    const top10 = combinedData.slice(0, 10);
-    const labels = top10.map(item => truncateText(item.name, 20));
-    const data = top10.map(item => item.views);
-    const colors = top10.map(item => getPlatformColor(item.platform));
-    
-    // Check if chart already exists and destroy if needed
-    if (viewsChart) {
-        viewsChart.destroy();
-    }
-    
-    // Create chart
-    viewsChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Views',
-                data: data,
-                backgroundColor: colors,
-                borderColor: colors,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `Views: ${context.raw.toLocaleString()}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    grid: {
-                        color: isDarkMode() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
-                    },
-                    ticks: {
-                        color: isDarkMode() ? '#e5e7eb' : '#374151'
-                    }
-                },
-                y: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: isDarkMode() ? '#e5e7eb' : '#374151'
-                    }
-                }
-            }
-        }
-    });
-}
-
-/**
- * Render engagement chart (likes and comments)
- * @param {Array} combinedData - Combined content and engagement data
- */
-function renderEngagementChart(combinedData) {
-    const ctx = document.getElementById('engagement-chart').getContext('2d');
-    
-    // Prepare data for top 5 content items by engagement
-    const top5 = combinedData
-        .sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments))
-        .slice(0, 5);
         
-    const labels = top5.map(item => truncateText(item.name, 20));
-    const likesData = top5.map(item => item.likes);
-    const commentsData = top5.map(item => item.comments);
-    
-    // Check if chart already exists and destroy if needed
-    if (engagementChart) {
-        engagementChart.destroy();
-    }
-    
-    // Create chart
-    engagementChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Likes',
-                    data: likesData,
-                    backgroundColor: '#10B981',
-                    borderColor: '#059669',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Comments',
-                    data: commentsData,
-                    backgroundColor: '#3B82F6',
-                    borderColor: '#2563EB',
-                    borderWidth: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        color: isDarkMode() ? '#e5e7eb' : '#374151'
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.dataset.label || '';
-                            return `${label}: ${context.raw.toLocaleString()}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        color: isDarkMode() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
-                    },
-                    ticks: {
-                        color: isDarkMode() ? '#e5e7eb' : '#374151'
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: isDarkMode() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
-                    },
-                    ticks: {
-                        color: isDarkMode() ? '#e5e7eb' : '#374151'
-                    }
-                }
-            }
+        // Get canvas elements
+        const platformDistribution = document.getElementById('platform-distribution-chart');
+        const engagementOverTime = document.getElementById('engagement-over-time-chart');
+        const performanceByPlatform = document.getElementById('performance-by-platform-chart');
+        
+        // Log which chart canvases were found
+        console.log('Chart canvases found:', {
+            platformDistribution: !!platformDistribution,
+            engagementOverTime: !!engagementOverTime,
+            performanceByPlatform: !!performanceByPlatform
+        });
+        
+        // Render charts if canvases are available
+        if (platformDistribution) {
+            renderPlatformDistribution(platformDistribution, contentItems);
         }
-    });
+        
+        if (engagementOverTime) {
+            renderEngagementOverTime(engagementOverTime, engagementData);
+        }
+        
+        if (performanceByPlatform) {
+            renderPerformanceByPlatform(performanceByPlatform, contentItems, engagementData);
+        }
+        
+        console.log('Charts rendered successfully');
+    } catch (error) {
+        console.error('Error rendering charts:', error);
+    }
 }
 
 /**
  * Render platform distribution chart
- * @param {Array} contentItems - Content items array
+ * @param {HTMLElement} canvas - Canvas element
+ * @param {Array} contentItems - Content items
  */
-function renderPlatformDistributionChart(contentItems) {
-    const ctx = document.getElementById('platform-chart').getContext('2d');
-    
-    // Group content by platform
-    const platformCounts = {};
-    
+function renderPlatformDistribution(canvas, contentItems) {
+    // Count content by platform
+    const platforms = {};
     contentItems.forEach(item => {
-        platformCounts[item.platform] = (platformCounts[item.platform] || 0) + 1;
+        platforms[item.platform] = (platforms[item.platform] || 0) + 1;
     });
     
-    const labels = Object.keys(platformCounts).map(key => PLATFORMS[key]);
-    const data = Object.values(platformCounts);
-    const colors = Object.keys(platformCounts).map(getPlatformColor);
+    // Chart data
+    const labels = Object.keys(platforms);
+    const data = Object.values(platforms);
+    const colors = labels.map(platform => getPlatformColor(platform));
     
-    // Check if chart already exists and destroy if needed
-    if (platformDistributionChart) {
-        platformDistributionChart.destroy();
+    // Create or update chart
+    if (canvas._chart) {
+        canvas._chart.destroy();
     }
     
-    // Create chart
-    platformDistributionChart = new Chart(ctx, {
+    canvas._chart = new Chart(canvas, {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels: labels.map(formatPlatformName),
             datasets: [{
                 data: data,
                 backgroundColor: colors,
-                borderColor: colors,
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        color: isDarkMode() ? '#e5e7eb' : '#374151'
-                    }
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563'
                 }
+            },
+            title: {
+                display: true,
+                text: 'Content Distribution by Platform',
+                fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563'
             }
         }
     });
 }
 
 /**
- * Update chart styles based on dark mode
- * @param {Event} e - Custom event with dark mode state
+ * Render engagement over time chart
+ * @param {HTMLElement} canvas - Canvas element
+ * @param {Array} engagementData - Engagement data
  */
-function updateChartStyles(e) {
-    const isDarkMode = e.detail.isDarkMode;
+function renderEngagementOverTime(canvas, engagementData) {
+    // Group engagement data by date and sum views
+    const viewsByDate = {};
+    engagementData.forEach(item => {
+        const date = item.timestamp.split('T')[0];
+        viewsByDate[date] = (viewsByDate[date] || 0) + (item.views || 0);
+    });
     
-    if (viewsChart) {
-        updateChartAxesColors(viewsChart, isDarkMode);
-        viewsChart.update();
+    // Sort dates and prepare data
+    const dates = Object.keys(viewsByDate).sort();
+    const views = dates.map(date => viewsByDate[date]);
+    
+    // Create or update chart
+    if (canvas._chart) {
+        canvas._chart.destroy();
     }
     
-    if (engagementChart) {
-        updateChartAxesColors(engagementChart, isDarkMode);
-        engagementChart.update();
+    canvas._chart = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Views',
+                data: views,
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{
+                    ticks: {
+                        fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563'
+                    },
+                    gridLines: {
+                        color: isDarkMode() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563',
+                        beginAtZero: true
+                    },
+                    gridLines: {
+                        color: isDarkMode() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                    }
+                }]
+            },
+            legend: {
+                labels: {
+                    fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563'
+                }
+            },
+            title: {
+                display: true,
+                text: 'Engagement Over Time',
+                fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563'
+            }
+        }
+    });
+}
+
+/**
+ * Render performance by platform chart
+ * @param {HTMLElement} canvas - Canvas element
+ * @param {Array} contentItems - Content items
+ * @param {Array} engagementData - Engagement data
+ */
+function renderPerformanceByPlatform(canvas, contentItems, engagementData) {
+    // Map content to platform
+    const contentPlatformMap = {};
+    contentItems.forEach(item => {
+        contentPlatformMap[normalizeUrl(item.url)] = item.platform;
+    });
+    
+    // Calculate average views by platform
+    const viewsByPlatform = {};
+    const countByPlatform = {};
+    
+    engagementData.forEach(item => {
+        const platform = contentPlatformMap[item.contentUrl];
+        if (platform) {
+            viewsByPlatform[platform] = (viewsByPlatform[platform] || 0) + (item.views || 0);
+            countByPlatform[platform] = (countByPlatform[platform] || 0) + 1;
+        }
+    });
+    
+    // Calculate averages
+    const platforms = Object.keys(viewsByPlatform);
+    const avgViews = platforms.map(platform => {
+        return viewsByPlatform[platform] / countByPlatform[platform];
+    });
+    
+    // Create or update chart
+    if (canvas._chart) {
+        canvas._chart.destroy();
     }
     
-    if (platformDistributionChart) {
-        updateChartLegendColors(platformDistributionChart, isDarkMode);
-        platformDistributionChart.update();
+    canvas._chart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: platforms.map(formatPlatformName),
+            datasets: [{
+                label: 'Average Views',
+                data: avgViews,
+                backgroundColor: platforms.map(getPlatformColor),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{
+                    ticks: {
+                        fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563'
+                    },
+                    gridLines: {
+                        color: isDarkMode() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563',
+                        beginAtZero: true
+                    },
+                    gridLines: {
+                        color: isDarkMode() ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                    }
+                }]
+            },
+            legend: {
+                labels: {
+                    fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563'
+                }
+            },
+            title: {
+                display: true,
+                text: 'Average Performance by Platform',
+                fontColor: isDarkMode() ? '#e5e7eb' : '#4b5563'
+            }
+        }
+    });
+}
+
+/**
+ * Format platform name
+ * @param {string} platform - Platform key
+ * @returns {string} Formatted platform name
+ */
+function formatPlatformName(platform) {
+    switch (platform) {
+        case 'youtube':
+            return 'YouTube';
+        case 'linkedin':
+            return 'LinkedIn';
+        case 'servicenow':
+            return 'ServiceNow';
+        default:
+            return platform || 'Other';
     }
 }
 
 /**
- * Update chart axes colors for dark mode
- * @param {Chart} chart - Chart.js instance
- * @param {boolean} isDarkMode - Dark mode state
- */
-function updateChartAxesColors(chart, isDarkMode) {
-    // Update grid colors
-    if (chart.options.scales.x) {
-        chart.options.scales.x.grid.color = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-        chart.options.scales.x.ticks.color = isDarkMode ? '#e5e7eb' : '#374151';
-    }
-    
-    if (chart.options.scales.y) {
-        chart.options.scales.y.grid.color = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-        chart.options.scales.y.ticks.color = isDarkMode ? '#e5e7eb' : '#374151';
-    }
-    
-    // Update legend colors
-    if (chart.options.plugins && chart.options.plugins.legend) {
-        chart.options.plugins.legend.labels.color = isDarkMode ? '#e5e7eb' : '#374151';
-    }
-}
-
-/**
- * Update chart legend colors for dark mode
- * @param {Chart} chart - Chart.js instance
- * @param {boolean} isDarkMode - Dark mode state
- */
-function updateChartLegendColors(chart, isDarkMode) {
-    if (chart.options.plugins && chart.options.plugins.legend) {
-        chart.options.plugins.legend.labels.color = isDarkMode ? '#e5e7eb' : '#374151';
-    }
-}
-
-/**
- * Get color for platform
- * @param {string} platform - Platform name
- * @returns {string} Color code
+ * Get platform color
+ * @param {string} platform - Platform key
+ * @returns {string} Color for platform
  */
 function getPlatformColor(platform) {
     switch (platform) {
         case 'youtube':
-            return '#FF0000';
-        case 'servicenow':
-            return '#00c487';
+            return 'rgba(255, 0, 0, 0.7)';  // YouTube red
         case 'linkedin':
-            return '#0A66C2';
+            return 'rgba(10, 102, 194, 0.7)';  // LinkedIn blue
+        case 'servicenow':
+            return 'rgba(0, 196, 135, 0.7)';  // ServiceNow green
         default:
-            return '#6B7280';
+            return 'rgba(107, 114, 128, 0.7)';  // Gray
     }
 }
 
 /**
- * Check if dark mode is enabled
- * @returns {boolean} Dark mode state
+ * Normalize URL for comparison
+ * @param {string} url - URL to normalize
+ * @returns {string} Normalized URL
+ */
+function normalizeUrl(url) {
+    if (!url) return '';
+    url = url.toLowerCase().trim();
+    
+    // Remove protocols, www, trailing slashes
+    return url.replace(/^(https?:\/\/)?(www\.)?/, '')
+        .replace(/\/$/, '');
+}
+
+/**
+ * Check if dark mode is active
+ * @returns {boolean} True if dark mode is active
  */
 function isDarkMode() {
     return document.documentElement.classList.contains('dark');
 }
 
-/**
- * Truncate text with ellipsis
- * @param {string} text - Text to truncate
- * @param {number} maxLength - Maximum length
- * @returns {string} Truncated text
- */
-function truncateText(text, maxLength) {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-}
-
-/**
- * Normalize URL by removing tracking parameters
- * @param {string} url - URL to normalize
- * @returns {string} Normalized URL
- */
-function normalizeUrl(url) {
+// Listen for dark mode changes to update charts
+document.addEventListener('darkModeChanged', (e) => {
+    console.log('Dark mode changed, updating charts');
     try {
-        const urlObj = new URL(url);
-        // Remove common tracking parameters
-        urlObj.searchParams.delete('utm_source');
-        urlObj.searchParams.delete('utm_medium');
-        urlObj.searchParams.delete('utm_campaign');
-        urlObj.searchParams.delete('utm_content');
-        urlObj.searchParams.delete('utm_term');
-        urlObj.searchParams.delete('feature');
-        // Remove hash
-        urlObj.hash = '';
-        return urlObj.toString();
-    } catch (e) {
-        // If URL parsing fails, return original
-        return url;
+        const contentItems = window.contentItems || [];
+        const engagementData = window.engagementData || [];
+        renderCharts(contentItems, engagementData);
+    } catch (error) {
+        console.error('Error updating charts after dark mode change:', error);
     }
-}
+});

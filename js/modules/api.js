@@ -260,76 +260,188 @@ function simulateLinkedInEngagement(postId) {
 }
 
 /**
- * Fetch engagement data for all content items or specific ones
- * @param {Array} contentItems - Content items to fetch engagement for
- * @param {Array} itemsToFetch - Specific items to fetch (optional)
- * @returns {Promise<Array>} Updated engagement data
+ * Fetch engagement data for multiple content items
+ * @param {Array} contentItems - Array of content items
+ * @param {Array|null} itemsToFetch - Optional list of content IDs to fetch, if null fetch all
+ * @returns {Promise<Array>} Array of engagement data objects
  */
 export async function fetchEngagementData(contentItems, itemsToFetch = null) {
-    const engagementData = await loadUserData('engagementData', []);
-    const itemsToProcess = itemsToFetch || contentItems;
-    
-    if (itemsToProcess.length === 0) {
-        return engagementData;
-    }
-    
-    // Create a timestamp for this fetch
-    const timestamp = new Date().toISOString();
-    
-    for (const item of itemsToProcess) {
-        const normalizedUrl = normalizeUrl(item.url);
+    try {
+        console.log(`Starting to fetch engagement data for ${itemsToFetch ? itemsToFetch.length : 'all'} items`);
         
-        // Get engagement metrics based on platform
-        let metrics = null;
-        
-        switch (item.platform) {
-            case 'youtube':
-                metrics = await fetchYouTubeEngagement(item.contentId);
-                break;
-            
-            case 'servicenow':
-                metrics = await fetchServiceNowEngagement(item.contentId);
-                break;
-            
-            case 'linkedin':
-                metrics = await fetchLinkedInEngagement(item.contentId);
-                break;
-            
-            default:
-                metrics = {
-                    views: 0,
-                    likes: 0,
-                    comments: 0,
-                    shares: 0,
-                    otherMetrics: {}
-                };
+        // Ensure we have content items
+        if (!contentItems || !Array.isArray(contentItems) || contentItems.length === 0) {
+            console.warn('No content items available, returning empty engagement data');
+            return [];
         }
         
-        if (!metrics) continue;
+        // Filter content items if specific ones are requested
+        const itemsToProcess = itemsToFetch 
+            ? contentItems.filter(item => itemsToFetch.includes(item.id))
+            : contentItems;
         
-        // Create engagement record
-        const engagementRecord = {
-            contentUrl: normalizedUrl,
-            timestamp: timestamp,
-            views: metrics.views,
-            likes: metrics.likes,
-            comments: metrics.comments,
-            shares: metrics.shares,
-            otherMetrics: metrics.otherMetrics || {}
-        };
+        if (itemsToProcess.length === 0) {
+            console.warn('No matching content items found to fetch engagement data');
+            return [];
+        }
         
-        // Add to data structure
-        engagementData.push(engagementRecord);
+        console.log(`Processing engagement data for ${itemsToProcess.length} content items`);
         
-        // Update content item's last updated timestamp
-        item.lastUpdated = timestamp;
+        // Process each content item
+        const engagementPromises = itemsToProcess.map(async (item) => {
+            try {
+                if (!item || !item.url || !item.platform) {
+                    console.warn('Skipping invalid content item:', item);
+                    return null;
+                }
+                
+                // Extract content ID from URL
+                const contentId = item.contentId || extractContentId(item.url, item.platform);
+                
+                if (!contentId) {
+                    console.warn(`Could not extract content ID from ${item.url}`);
+                    return null;
+                }
+                
+                // Fetch engagement based on platform
+                let engagement;
+                switch (item.platform) {
+                    case 'youtube':
+                        engagement = await fetchYouTubeEngagement(contentId);
+                        break;
+                    case 'servicenow':
+                        engagement = await fetchServiceNowEngagement(contentId);
+                        break;
+                    case 'linkedin':
+                        engagement = await fetchLinkedInEngagement(contentId);
+                        break;
+                    default:
+                        // For unknown platforms, generate simulated data
+                        engagement = simulateEngagement(contentId);
+                }
+                
+                // Add metadata to engagement data
+                return {
+                    id: 'eng_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    contentId: item.id,
+                    contentUrl: item.url,
+                    contentName: item.name || item.title || 'Untitled',
+                    platform: item.platform,
+                    date: new Date().toISOString().split('T')[0],
+                    timestamp: new Date().toISOString(),
+                    ...engagement
+                };
+            } catch (itemError) {
+                console.error(`Error processing content item ${item.id}:`, itemError);
+                return null;
+            }
+        });
+        
+        // Wait for all engagement data to be fetched
+        const engagementResults = await Promise.all(engagementPromises);
+        
+        // Filter out nulls (failed fetches)
+        const validEngagementData = engagementResults.filter(item => item !== null);
+        
+        console.log(`Successfully fetched ${validEngagementData.length} engagement records`);
+        return validEngagementData;
+    } catch (error) {
+        console.error('Error fetching engagement data:', error);
+        return [];
     }
-    
-    // Save updated engagement data
-    await saveUserData('engagementData', engagementData);
-    
-    // Save updated content items (for lastUpdated timestamps)
-    await saveUserData('contentItems', contentItems);
-    
-    return engagementData;
 }
+
+/**
+ * Extract content ID from URL based on platform
+ * @param {string} url - Content URL
+ * @param {string} platform - Platform name
+ * @returns {string} Content ID
+ */
+function extractContentId(url, platform) {
+    try {
+        if (!url) return '';
+        
+        // Handle missing protocol
+        if (!url.startsWith('http')) {
+            url = 'https://' + url;
+        }
+        
+        const urlObj = new URL(url);
+        
+        switch (platform) {
+            case 'youtube':
+                // Extract YouTube video ID
+                // First try: from query parameter v
+                let videoId = urlObj.searchParams.get('v');
+                
+                if (videoId) return videoId;
+                
+                // Second try: from youtu.be URLs
+                if (urlObj.hostname === 'youtu.be') {
+                    return urlObj.pathname.substring(1); // Remove the leading slash
+                }
+                
+                // Third try: from /embed/ URLs
+                if (urlObj.pathname.includes('/embed/')) {
+                    return urlObj.pathname.split('/embed/')[1].split('/')[0];
+                }
+                
+                // Fourth try: from /v/ URLs
+                if (urlObj.pathname.includes('/v/')) {
+                    return urlObj.pathname.split('/v/')[1].split('/')[0];
+                }
+                
+                // Last resort: just the last part of the URL
+                return url.split('/').pop();
+            
+            case 'servicenow':
+                // Extract ServiceNow blog ID (last part of path)
+                return urlObj.pathname.split('/').pop();
+            
+            case 'linkedin':
+                // Extract LinkedIn post ID (end part of URL)
+                // Try to match the pattern for LinkedIn posts
+                const linkedInMatch = urlObj.pathname.match(/\/posts\/([^\/]+)/);
+                if (linkedInMatch && linkedInMatch[1]) {
+                    return linkedInMatch[1];
+                }
+                
+                // Fallback to the last segment
+                return urlObj.pathname.split('-').pop();
+            
+            default:
+                return url.split('/').pop();
+        }
+    } catch (e) {
+        console.error('Error extracting content ID:', e);
+        // If URL parsing fails, return a fallback
+        return url.split('/').pop();
+    }
+}
+
+/**
+ * Generate generic simulated engagement data
+ * @param {string} contentId - Content ID
+ * @returns {Object} Simulated engagement data
+ */
+function simulateEngagement(contentId) {
+    const seed = hashCode(contentId);
+    const rng = seededRandom(seed);
+    
+    return {
+        views: Math.floor(rng() * 2000) + 500,
+        likes: Math.floor(rng() * 150),
+        comments: Math.floor(rng() * 30),
+        shares: Math.floor(rng() * 20)
+    };
+}
+
+// Ensure all required handler functions are exported
+export { 
+    fetchYouTubeContentInfo,
+    fetchYouTubeEngagement,
+    fetchServiceNowContentInfo,
+    fetchServiceNowEngagement,
+    fetchLinkedInContentInfo,
+    fetchLinkedInEngagement
+};

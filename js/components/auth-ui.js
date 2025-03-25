@@ -214,7 +214,7 @@ function setupFormSubmissions() {
                 }
             };
             
-            // Clone the forms to remove any existing listeners
+            // Remove any existing event listeners
             const newLoginForm = loginForm.cloneNode(true);
             const newRegisterForm = registerForm.cloneNode(true);
             
@@ -226,54 +226,64 @@ function setupFormSubmissions() {
                 registerForm.parentNode.replaceChild(newRegisterForm, registerForm);
             }
             
-            // Update form references
+            // Update references
             loginForm = newLoginForm;
             registerForm = newRegisterForm;
             
-            // Add event listeners to the new forms
+            // Add the event listeners
+            console.log('Adding login form submit listener');
             loginForm.addEventListener('submit', loginWrapper);
+            
+            console.log('Adding register form submit listener');
             registerForm.addEventListener('submit', registerWrapper);
             
-            // Also expose handlers globally for direct HTML access
-            window.handleLoginSubmit = loginWrapper;
-            window.handleRegisterSubmit = registerWrapper;
-            
-            console.log('Form submission handlers successfully attached');
-        }).catch(error => {
-            console.error('Error importing auth module:', error);
-            
-            // Add fallback handlers for critical error case
+            // Add fallback handlers in case the event listeners don't work
             const fallbackLoginHandler = (e) => {
+                console.log('Fallback login handler triggered');
                 e.preventDefault();
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-                
-                if (email === 'demo@example.com' && password === 'password') {
-                    // Emergency fallback for demo account
-                    console.log('Emergency demo login triggered');
-                    document.getElementById('auth-content').style.display = 'none';
-                    document.getElementById('main-content').style.display = 'block';
-                    
-                    // Set current user name
-                    const userNameEl = document.getElementById('current-user-name');
-                    if (userNameEl) {
-                        userNameEl.textContent = 'Demo User';
-                    }
-                } else {
-                    const loginError = document.getElementById('login-error');
-                    if (loginError) {
-                        loginError.textContent = 'Invalid email or password';
-                        loginError.classList.remove('hidden');
-                    }
-                }
+                loginWrapper(e);
+            };
+            
+            const fallbackRegisterHandler = (e) => {
+                console.log('Fallback register handler triggered');
+                e.preventDefault();
+                registerWrapper(e);
             };
             
             // Add fallback handlers
-            loginForm.addEventListener('submit', fallbackLoginHandler);
-            window.handleLoginSubmit = fallbackLoginHandler;
+            loginForm.onsubmit = fallbackLoginHandler;
+            registerForm.onsubmit = fallbackRegisterHandler;
+            
+            console.log('Form submission handlers setup complete');
+        }).catch(error => {
+            console.error('Error importing auth module:', error);
+            
+            // Show error to user
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            errorDiv.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md">
+                    <h2 class="text-xl font-bold text-red-600 mb-4">Critical Error</h2>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">
+                        The application could not load the authentication system. 
+                        Please try the following:
+                    </p>
+                    <ul class="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300">
+                        <li>Refresh the page</li>
+                        <li>Check your internet connection</li>
+                        <li>Try using a different browser</li>
+                        <li>Clear your browser cache</li>
+                    </ul>
+                    <button onclick="window.location.reload()" 
+                            class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors">
+                        Refresh Page
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
         });
     } else {
-        console.error('Cannot set up form submissions: forms not found in DOM');
+        console.error('Could not set up form submissions: Forms not found');
     }
 }
 

@@ -165,7 +165,7 @@ export async function handleLogin(e) {
             throw new Error('Login form elements missing');
         }
         
-        const email = loginEmail.value;
+        const email = loginEmail.value.trim();
         const password = loginPassword.value;
         const rememberMe = rememberMeCheckbox ? rememberMeCheckbox.checked : false;
         
@@ -192,6 +192,14 @@ export async function handleLogin(e) {
             return;
         }
         
+        // Check if CryptoJS is available
+        if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') {
+            loginErrorElement.textContent = 'Authentication service unavailable. Please refresh the page.';
+            loginErrorElement.classList.remove('hidden');
+            window.authLog('Login failed: CryptoJS not available', 'error');
+            return;
+        }
+        
         // Special case for demo account
         if (email === 'demo@example.com' && password === 'password') {
             window.authLog('Demo account login attempt detected');
@@ -206,7 +214,7 @@ export async function handleLogin(e) {
                     id: generateId(),
                     name: 'Demo User',
                     email: 'demo@example.com',
-                    password: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', // SHA-256 of 'password'
+                    password: hashPassword('password'),
                     createdAt: new Date().toISOString()
                 };
                 users.push(demoUser);
@@ -239,14 +247,6 @@ export async function handleLogin(e) {
             loginErrorElement.textContent = 'No account found with this email address';
             loginErrorElement.classList.remove('hidden');
             window.authLog('Login failed: User not found', 'error');
-            return;
-        }
-        
-        // Check if CryptoJS is available
-        if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') {
-            loginErrorElement.textContent = 'Authentication service unavailable. Please try again later.';
-            loginErrorElement.classList.remove('hidden');
-            window.authLog('Login failed: CryptoJS not available', 'error');
             return;
         }
         
@@ -479,6 +479,7 @@ export async function loginUser(user) {
             window.authLog('Updated user name in header', 'success');
         } else {
             window.authLog('Could not find user-name element in DOM', 'error');
+            throw new Error('User name element not found');
         }
         
         // Hide auth screen and show main content
@@ -491,6 +492,7 @@ export async function loginUser(user) {
             window.authLog('Auth screen hidden, main content shown', 'success');
         } else {
             window.authLog('Could not find auth-content or main-content elements', 'error');
+            throw new Error('Required DOM elements not found');
         }
         
         // Load dashboard data
@@ -500,10 +502,33 @@ export async function loginUser(user) {
             window.authLog('Dashboard loaded successfully', 'success');
         } catch (error) {
             window.authLog(`Error loading dashboard: ${error.message}`, 'error');
+            // Don't throw here, as the user is still logged in
         }
     } catch (error) {
         window.authLog(`Error during user login: ${error.message}`, 'error');
         console.error('Full error:', error);
+        
+        // Show error to user
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        errorDiv.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md">
+                <h2 class="text-xl font-bold text-red-600 mb-4">Login Error</h2>
+                <p class="text-gray-700 dark:text-gray-300 mb-4">
+                    There was an error during login. Please try the following:
+                </p>
+                <ul class="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300">
+                    <li>Refresh the page</li>
+                    <li>Try logging in again</li>
+                    <li>Check your internet connection</li>
+                </ul>
+                <button onclick="this.parentElement.parentElement.remove()" 
+                        class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors">
+                    Close
+                </button>
+            </div>
+        `;
+        document.body.appendChild(errorDiv);
     }
 }
 

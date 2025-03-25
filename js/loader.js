@@ -157,16 +157,55 @@ async function initializeApp() {
         
         // CryptoJS is critical for authentication, ensure it's loaded
         if (missingDeps.includes('cryptojs')) {
-            await loadDependency('CryptoJS', 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js', 
-                () => typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined');
+            // Try multiple CDN sources for CryptoJS
+            const cryptoJsUrls = [
+                'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.js',
+                'https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js'
+            ];
             
-            // Double-check CryptoJS loaded properly
-            if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') {
-                console.error('CryptoJS failed to load properly - authentication will not work!');
+            let cryptoJsLoaded = false;
+            for (const url of cryptoJsUrls) {
+                try {
+                    await loadDependency('CryptoJS', url, 
+                        () => typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined');
+                    
+                    if (typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined') {
+                        cryptoJsLoaded = true;
+                        break;
+                    }
+                } catch (error) {
+                    console.warn(`Failed to load CryptoJS from ${url}:`, error);
+                }
+            }
+            
+            if (!cryptoJsLoaded) {
+                console.error('Failed to load CryptoJS from all sources - authentication will not work!');
                 
-                // Try one more time with a different CDN
-                await loadDependency('CryptoJS (retry)', 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.js', 
-                    () => typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined');
+                // Show a critical error to the user
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                errorDiv.innerHTML = `
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md">
+                        <h2 class="text-xl font-bold text-red-600 mb-4">Critical Error</h2>
+                        <p class="text-gray-700 dark:text-gray-300 mb-4">
+                            The application cannot load the required security components. 
+                            Please try the following:
+                        </p>
+                        <ul class="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300">
+                            <li>Refresh the page</li>
+                            <li>Check your internet connection</li>
+                            <li>Try using a different browser</li>
+                            <li>Clear your browser cache</li>
+                        </ul>
+                        <button onclick="window.location.reload()" 
+                                class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors">
+                            Refresh Page
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(errorDiv);
+                return; // Stop app initialization
             }
         }
         

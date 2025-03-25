@@ -32,8 +32,7 @@ export function getCurrentUser() {
 export async function saveUserData(key, data) {
     try {
         if (!currentUser) {
-            console.error('saveUserData: No current user');
-            return;
+            throw new Error('No current user');
         }
         
         const userPrefix = `user_${currentUser.id}_`;
@@ -162,26 +161,50 @@ export function loadPreference(key, defaultValue = null) {
  */
 export async function saveUsers(users) {
     try {
+        // Validate users array
+        if (!Array.isArray(users)) {
+            throw new Error('Invalid users data: must be an array');
+        }
+        
+        // Validate each user object
+        users.forEach(user => {
+            if (!user || typeof user !== 'object') {
+                throw new Error('Invalid user object in users array');
+            }
+            if (!user.id || typeof user.id !== 'string') {
+                throw new Error('Invalid user ID in users array');
+            }
+            if (!user.email || typeof user.email !== 'string') {
+                throw new Error('Invalid user email in users array');
+            }
+            if (!user.password || typeof user.password !== 'string') {
+                throw new Error('Invalid user password in users array');
+            }
+        });
+        
         const usersJson = JSON.stringify(users);
         
         // Try localforage first
         if (typeof window !== 'undefined' && window.localforage) {
-            await window.localforage.setItem('users', usersJson);
-            console.log(`Saved ${users.length} users to localforage`);
-        } else {
-            // Fallback to localStorage
+            try {
+                await window.localforage.setItem('users', usersJson);
+                console.log(`Saved ${users.length} users to localforage`);
+            } catch (localforageError) {
+                console.warn(`Error saving with localforage, will try localStorage: ${localforageError.message}`);
+                // Continue to localStorage fallback
+            }
+        }
+        
+        // Fallback to localStorage
+        try {
             localStorage.setItem('users', usersJson);
             console.log(`Saved ${users.length} users to localStorage (fallback)`);
+        } catch (localStorageError) {
+            throw new Error(`Failed to save users: ${localStorageError.message}`);
         }
     } catch (error) {
         console.error('Error saving users:', error);
-        
-        // Last resort fallback
-        try {
-            localStorage.setItem('users', JSON.stringify(users));
-        } catch (innerError) {
-            console.error('Failed to save users even with localStorage fallback:', innerError);
-        }
+        throw error; // Re-throw to allow caller to handle
     }
 }
 
@@ -195,27 +218,66 @@ export async function loadUsers() {
         
         // Try localforage first
         if (typeof window !== 'undefined' && window.localforage) {
-            usersData = await window.localforage.getItem('users');
-            console.log('Loaded users from localforage');
+            try {
+                usersData = await window.localforage.getItem('users');
+                console.log('Loaded users from localforage');
+            } catch (localforageError) {
+                console.warn(`Error loading from localforage, will try localStorage: ${localforageError.message}`);
+            }
         }
         
         // If localforage failed or didn't find users, try localStorage
         if (usersData === null) {
-            const localData = localStorage.getItem('users');
-            if (localData) {
-                usersData = localData;
-                console.log('Loaded users from localStorage (fallback)');
+            try {
+                const localData = localStorage.getItem('users');
+                if (localData) {
+                    usersData = localData;
+                    console.log('Loaded users from localStorage (fallback)');
+                }
+            } catch (localStorageError) {
+                console.warn(`Error loading from localStorage: ${localStorageError.message}`);
             }
         }
         
-        // Parse and return users
+        // Parse and validate users
         if (usersData) {
             try {
                 const users = JSON.parse(usersData);
+                
+                // Validate users array
+                if (!Array.isArray(users)) {
+                    throw new Error('Invalid users data: must be an array');
+                }
+                
+                // Validate each user object
+                users.forEach(user => {
+                    if (!user || typeof user !== 'object') {
+                        throw new Error('Invalid user object in users array');
+                    }
+                    if (!user.id || typeof user.id !== 'string') {
+                        throw new Error('Invalid user ID in users array');
+                    }
+                    if (!user.email || typeof user.email !== 'string') {
+                        throw new Error('Invalid user email in users array');
+                    }
+                    if (!user.password || typeof user.password !== 'string') {
+                        throw new Error('Invalid user password in users array');
+                    }
+                });
+                
                 console.log(`Loaded ${users.length} users`);
                 return users;
             } catch (parseError) {
                 console.error('Error parsing users JSON:', parseError);
+                // If data is corrupted, clear it
+                try {
+                    localStorage.removeItem('users');
+                    if (window.localforage) {
+                        await window.localforage.removeItem('users');
+                    }
+                } catch (clearError) {
+                    console.error('Error clearing corrupted users data:', clearError);
+                }
                 return [];
             }
         }

@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+build/
+
+# Database backups
+*.backup
+*.gz
+
+# PowerShell scripts (temporary)
+decompress.ps1
+restore_db.bat
+verify_db.bat
+verify_db.ps1
+
+# Coverage
+coverage/

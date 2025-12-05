@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,6 +28,7 @@
         }
     </script>
 </head>
+
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-200">
     <!-- Loading indicator -->
     <div id="loading-indicator" class="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900">
@@ -36,87 +38,20 @@
             <p class="text-gray-600 dark:text-gray-400">Please wait while we prepare everything...</p>
         </div>
     </div>
-    <!-- Authentication content (shown before login) -->
-    <div id="auth-content" class="min-h-screen flex flex-col justify-center">
+    <!-- Session panel (shown briefly on load, then hidden) -->
+    <div id="auth-content" class="min-h-screen flex flex-col justify-center" style="display: none;">
         <div class="max-w-md mx-auto p-6">
             <div class="mb-8 text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Platform Engagement Tracker</h1>
-                <p class="text-gray-600 dark:text-gray-400">Track and manage your content performance across platforms</p>
+                <p class="text-gray-600 dark:text-gray-400">Track and manage your content performance across platforms
+                </p>
             </div>
-            
+
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-                <!-- Login/Register tabs -->
-                <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-                    <button id="login-tab" 
-                            class="px-4 py-2 border-b-2 border-green-500 text-green-600 dark:text-green-400 font-medium"
-                            onclick="document.getElementById('login-form').classList.remove('hidden'); document.getElementById('register-form').classList.add('hidden'); this.classList.add('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400'); this.classList.remove('text-gray-500', 'dark:text-gray-400'); document.getElementById('register-tab').classList.remove('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400'); document.getElementById('register-tab').classList.add('text-gray-500', 'dark:text-gray-400');">Login</button>
-                    <button id="register-tab" 
-                            class="px-4 py-2 text-gray-600 dark:text-gray-400 font-medium"
-                            onclick="document.getElementById('register-form').classList.remove('hidden'); document.getElementById('login-form').classList.add('hidden'); this.classList.add('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400'); this.classList.remove('text-gray-500', 'dark:text-gray-400'); document.getElementById('login-tab').classList.remove('border-b-2', 'border-green-500', 'text-green-600', 'dark:text-green-400'); document.getElementById('login-tab').classList.add('text-gray-500', 'dark:text-gray-400');">Register</button>
+                <div class="text-center">
+                    <span class="material-icons text-5xl text-green-500 mb-4">hourglass_empty</span>
+                    <p class="text-gray-600 dark:text-gray-400">Loading your session...</p>
                 </div>
-                
-                <!-- Login form -->
-                <form id="login-form" method="post" novalidate>
-                    <div class="mb-4">
-                        <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                        <input type="email" id="login-email" name="email" autocomplete="email" required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
-                    </div>
-                    <div class="mb-4">
-                        <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                        <input type="password" id="login-password" name="password" autocomplete="current-password" required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
-                    </div>
-                    <div class="flex items-center mb-4">
-                        <input type="checkbox" id="remember-me" class="rounded border-gray-300 dark:border-gray-600 text-green-500 dark:bg-gray-700">
-                        <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Remember me</label>
-                    </div>
-                    <div class="mt-6">
-                        <button type="submit" class="w-full btn btn-primary">
-                            <span class="material-icons mr-1">login</span> Login
-                        </button>
-                    </div>
-                    <div id="login-error" class="mt-2 text-red-500 text-sm hidden"></div>
-                </form>
-                
-                <!-- Register form (hidden initially) -->
-                <form id="register-form" class="hidden" method="post" novalidate>
-                    <div class="mb-4">
-                        <label for="register-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-                        <input type="text" id="register-name" name="name" autocomplete="name" required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
-                    </div>
-                    <div class="mb-4">
-                        <label for="register-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                        <input type="email" id="register-email" name="email" autocomplete="email" required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
-                    </div>
-                    <div class="mb-4">
-                        <label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                        <input type="password" id="register-password" name="password" autocomplete="new-password" required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
-                    </div>
-                    <div class="mb-4">
-                        <label for="register-confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
-                        <input type="password" id="register-confirm-password" name="confirm-password" autocomplete="new-password" required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
-                    </div>
-                    <div class="mt-6">
-                        <button type="submit" class="w-full btn btn-primary">
-                            <span class="material-icons mr-1">person_add</span> Register
-                        </button>
-                    </div>
-                    <div id="register-error" class="mt-2 text-red-500 text-sm hidden"></div>
-                </form>
-                
-                <!-- Dark mode toggle in auth screen -->
-                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Dark Mode</span>
-                        <div class="relative inline-block w-12 mr-2 align-middle select-none">
-                            <input type="checkbox" id="auth-dark-mode-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in" />
-                            <label for="auth-dark-mode-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                <p>Demo account: demo@example.com / password</p>
             </div>
         </div>
     </div>
@@ -132,39 +67,45 @@
                 </h1>
                 <div class="flex items-center space-x-4">
                     <div class="relative">
-                        <button id="user-menu-button" class="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                            <span class="material-icons mr-1">account_circle</span>
-                            <span id="current-user-name">User</span>
+                        <button id="session-menu-button"
+                            class="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                            <span class="material-icons mr-1">badge</span>
+                            <code id="current-session-id"
+                                class="text-sm font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">--------</code>
                             <span class="material-icons text-sm">arrow_drop_down</span>
                         </button>
-                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 hidden">
-                            <a href="#" id="edit-profile" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <span class="material-icons text-sm mr-1">edit</span> Edit Profile
+                        <div id="session-dropdown"
+                            class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg py-2 hidden z-50">
+                            <a href="#" id="new-session-btn"
+                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <span class="material-icons text-sm mr-1">add_circle</span> New Session
                             </a>
-                            <a href="#" id="api-settings" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <a href="#" id="api-settings"
+                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span class="material-icons text-sm mr-1">settings</span> API Settings
                             </a>
-                            <a href="#" id="import-export" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <a href="#" id="import-export"
+                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span class="material-icons text-sm mr-1">import_export</span> Import/Export
                             </a>
-                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <span class="material-icons text-sm mr-1">logout</span> Logout
-                            </a>
+
                         </div>
                     </div>
-                    
+
                     <!-- Dark mode toggle -->
                     <div class="flex items-center">
                         <span class="material-icons text-gray-500 dark:text-gray-400 mr-1">brightness_4</span>
                         <div class="relative inline-block w-12 mr-2 align-middle select-none">
-                            <input type="checkbox" id="dark-mode-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in" />
-                            <label for="dark-mode-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
+                            <input type="checkbox" id="dark-mode-toggle"
+                                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in" />
+                            <label for="dark-mode-toggle"
+                                class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
                         </div>
                     </div>
                 </div>
             </div>
         </header>
-        
+
         <!-- Main dashboard -->
         <main class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -173,29 +114,35 @@
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                         <div class="px-4 py-5 sm:p-6">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Content Items</dt>
-                                <dd class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white" id="total-content">0</dd>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Content
+                                    Items</dt>
+                                <dd class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white"
+                                    id="total-content">0</dd>
                             </dl>
                         </div>
                     </div>
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                         <div class="px-4 py-5 sm:p-6">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Engagements</dt>
-                                <dd class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white" id="total-engagements">0</dd>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total
+                                    Engagements</dt>
+                                <dd class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white"
+                                    id="total-engagements">0</dd>
                             </dl>
                         </div>
                     </div>
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                         <div class="px-4 py-5 sm:p-6">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Top Platform</dt>
-                                <dd class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white" id="top-platform">-</dd>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Top Platform
+                                </dt>
+                                <dd class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white" id="top-platform">
+                                    -</dd>
                             </dl>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Charts -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
@@ -217,11 +164,13 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Add New Content -->
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
-                    <div class="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 cursor-pointer" id="toggle-add-content">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center justify-between">
+                    <div class="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 cursor-pointer"
+                        id="toggle-add-content">
+                        <h3
+                            class="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center justify-between">
                             Add New Content
                             <span class="material-icons transition-transform duration-200">expand_more</span>
                         </h3>
@@ -230,11 +179,14 @@
                         <form id="content-form">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label for="content-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content Name</label>
+                                    <label for="content-name"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content
+                                        Name</label>
                                     <input type="text" id="content-name" placeholder="Content title or name" required>
                                 </div>
                                 <div>
-                                    <label for="content-source" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform</label>
+                                    <label for="content-source"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform</label>
                                     <select id="content-source" required>
                                         <option value="youtube">YouTube</option>
                                         <option value="servicenow">ServiceNow Community</option>
@@ -242,25 +194,36 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="content-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content URL</label>
+                                    <label for="content-url"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content
+                                        URL</label>
                                     <div class="flex">
-                                        <input type="url" id="content-url" placeholder="https://youtube.com/watch?v=XXXX" required class="flex-1">
-                                        <button type="button" id="fetch-content-info" class="ml-2 btn bg-blue-500 hover:bg-blue-600 text-white">
+                                        <input type="url" id="content-url"
+                                            placeholder="https://youtube.com/watch?v=XXXX" required class="flex-1">
+                                        <button type="button" id="fetch-content-info"
+                                            class="ml-2 btn bg-blue-500 hover:bg-blue-600 text-white">
                                             <span class="material-icons">info</span>
                                         </button>
                                     </div>
                                     <div id="duplicate-warning" class="text-yellow-500 text-xs mt-1 hidden"></div>
                                 </div>
                                 <div>
-                                    <label for="content-published" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Published Date</label>
+                                    <label for="content-published"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Published
+                                        Date</label>
                                     <input type="date" id="content-published" required>
                                 </div>
                                 <div>
-                                    <label for="content-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (Optional)</label>
-                                    <input type="text" id="content-description" placeholder="Brief description of the content">
+                                    <label for="content-description"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description
+                                        (Optional)</label>
+                                    <input type="text" id="content-description"
+                                        placeholder="Brief description of the content">
                                 </div>
                                 <div id="duration-container">
-                                    <label for="content-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (YouTube only)</label>
+                                    <label for="content-duration"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration
+                                        (YouTube only)</label>
                                     <input type="text" id="content-duration" placeholder="e.g. 5:30">
                                 </div>
                             </div>
@@ -272,11 +235,13 @@
                         </form>
                     </div>
                 </div>
-                
+
                 <!-- Content Library -->
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
-                    <div class="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 cursor-pointer" id="toggle-content-library">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center justify-between">
+                    <div class="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 cursor-pointer"
+                        id="toggle-content-library">
+                        <h3
+                            class="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center justify-between">
                             Content Library
                             <span class="material-icons transition-transform duration-200">expand_more</span>
                         </h3>
@@ -285,29 +250,44 @@
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Published</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">URL</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Name</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Platform</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Published</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Added</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        URL</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="content-list" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody id="content-list"
+                                class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <!-- Content items will be inserted here -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-                
+
                 <!-- Engagement Data -->
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
-                    <div class="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 cursor-pointer flex justify-between items-center" id="toggle-engagement-data">
+                    <div class="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 cursor-pointer flex justify-between items-center"
+                        id="toggle-engagement-data">
                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                             Engagement Data
                         </h3>
                         <div class="flex space-x-2">
-                            <button id="refresh-data" class="btn bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">
+                            <button id="refresh-data"
+                                class="btn bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">
                                 <span class="material-icons mr-1">refresh</span> Refresh Data
                             </button>
                             <span class="material-icons transition-transform duration-200">expand_more</span>
@@ -317,20 +297,35 @@
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Views</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Hours</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Likes</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Comments</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Updated</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Name</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Platform</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Views</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Total Hours</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Likes</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Comments</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Last Updated</th>
                                 </tr>
                             </thead>
-                            <tbody id="engagement-list" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody id="engagement-list"
+                                class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <!-- Engagement data will be inserted here -->
                             </tbody>
                         </table>
-                        
+
                         <div class="p-4 flex justify-center">
                             <button id="refresh-all-data" class="btn bg-green-500 hover:bg-green-600 text-white">
                                 <span class="material-icons mr-1">refresh</span> Refresh All
@@ -341,12 +336,13 @@
             </div>
         </main>
     </div>
-    
+
     <!-- Modals -->
     <div id="content-modal" class="modal">
         <div class="modal-content max-w-lg w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white" id="content-modal-title">Content Details</h3>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white" id="content-modal-title">Content Details
+                </h3>
                 <button id="close-content-modal" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                     <span class="material-icons">close</span>
                 </button>
@@ -356,7 +352,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="api-modal" class="modal">
         <div class="modal-content max-w-lg w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -370,39 +366,48 @@
                     <div class="mb-4">
                         <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">YouTube API</h4>
                         <div class="mb-2">
-                            <label for="youtube-api-key" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
+                            <label for="youtube-api-key"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
                             <input type="text" id="youtube-api-key" class="w-full">
                         </div>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">ServiceNow API</h4>
                         <div class="mb-2">
-                            <label for="servicenow-instance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instance URL</label>
+                            <label for="servicenow-instance"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instance
+                                URL</label>
                             <input type="text" id="servicenow-instance" class="w-full">
                         </div>
                         <div class="mb-2">
-                            <label for="servicenow-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                            <label for="servicenow-username"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
                             <input type="text" id="servicenow-username" class="w-full">
                         </div>
                         <div class="mb-2">
-                            <label for="servicenow-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <label for="servicenow-password"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                             <input type="password" id="servicenow-password" class="w-full">
                         </div>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">LinkedIn API</h4>
                         <div class="mb-2">
-                            <label for="linkedin-client-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client ID</label>
+                            <label for="linkedin-client-id"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client
+                                ID</label>
                             <input type="text" id="linkedin-client-id" class="w-full">
                         </div>
                         <div class="mb-2">
-                            <label for="linkedin-client-secret" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Secret</label>
+                            <label for="linkedin-client-secret"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client
+                                Secret</label>
                             <input type="text" id="linkedin-client-secret" class="w-full">
                         </div>
                     </div>
-                    
+
                     <div class="flex justify-end">
                         <button type="submit" class="btn btn-primary">
                             <span class="material-icons mr-1">save</span> Save Settings
@@ -412,7 +417,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="import-modal" class="modal">
         <div class="modal-content max-w-lg w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -424,21 +429,24 @@
             <div class="p-4">
                 <div class="mb-4">
                     <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Export Data</h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Download your content and engagement data as a JSON file.</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Download your content and engagement data
+                        as a JSON file.</p>
                     <button id="export-data" class="btn bg-blue-500 hover:bg-blue-600 text-white w-full">
                         <span class="material-icons mr-1">file_download</span> Export All Data
                     </button>
                 </div>
-                
+
                 <div class="border-t border-gray-200 dark:border-gray-700 my-4 pt-4">
                     <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Import Data</h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Import data from a previously exported JSON file.</p>
-                    
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Import data from a previously exported JSON
+                        file.</p>
+
                     <div class="mb-2">
-                        <label for="import-file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select File</label>
+                        <label for="import-file"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select File</label>
                         <input type="file" id="import-file" accept=".json" class="w-full py-2">
                     </div>
-                    
+
                     <div class="mb-4">
                         <label class="flex items-center">
                             <input type="radio" name="import-mode" value="merge" checked class="mr-2">
@@ -449,7 +457,7 @@
                             <span class="text-sm text-gray-700 dark:text-gray-300">Replace all existing data</span>
                         </label>
                     </div>
-                    
+
                     <button id="import-data" class="btn bg-blue-500 hover:bg-blue-600 text-white w-full">
                         <span class="material-icons mr-1">file_upload</span> Import Data
                     </button>
@@ -458,7 +466,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="profile-modal" class="modal">
         <div class="modal-content max-w-lg w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -470,30 +478,38 @@
             <div class="p-4">
                 <form id="profile-form">
                     <div class="mb-4">
-                        <label for="profile-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                        <label for="profile-name"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
                         <input type="text" id="profile-name" required>
                     </div>
                     <div class="mb-4">
-                        <label for="profile-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <label for="profile-email"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                         <input type="email" id="profile-email" required>
                     </div>
-                    
+
                     <div class="mb-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Change Password</h4>
                         <div class="mb-2">
-                            <label for="profile-current-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
+                            <label for="profile-current-password"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current
+                                Password</label>
                             <input type="password" id="profile-current-password">
                         </div>
                         <div class="mb-2">
-                            <label for="profile-new-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                            <label for="profile-new-password"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New
+                                Password</label>
                             <input type="password" id="profile-new-password">
                         </div>
                         <div class="mb-2">
-                            <label for="profile-confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
+                            <label for="profile-confirm-password"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New
+                                Password</label>
                             <input type="password" id="profile-confirm-password">
                         </div>
                     </div>
-                    
+
                     <div class="flex justify-between">
                         <button type="button" id="delete-account" class="btn bg-red-500 hover:bg-red-600 text-white">
                             <span class="material-icons mr-1">delete</span> Delete Account
@@ -508,7 +524,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="confirm-delete-modal" class="modal">
         <div class="modal-content max-w-md w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -516,10 +532,12 @@
             </div>
             <div class="p-4">
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.
+                    Are you sure you want to delete your account? This action cannot be undone and all your data will be
+                    permanently removed.
                 </p>
                 <div class="flex justify-end space-x-2">
-                    <button id="cancel-delete" class="btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">
+                    <button id="cancel-delete"
+                        class="btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">
                         Cancel
                     </button>
                     <button id="confirm-delete" class="btn bg-red-500 hover:bg-red-600 text-white">
@@ -529,358 +547,358 @@
             </div>
         </div>
     </div>
-    
+
     <!-- App will be loaded by loader.js -->
     <script>
-    /**
- * Verify critical dependencies before app initialization
- * Add this script before your main app code in index.html
- */
-(function() {
-    console.log('Verifying critical dependencies...');
-    
-    // Check if CryptoJS is loaded properly
-    if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') {
-        console.error('CryptoJS not loaded correctly - attempting emergency load');
-        
-        // Create a script tag to load CryptoJS
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
-        script.async = false; // Load synchronously
-        
-        // Add load event
-        script.onload = function() {
-            console.log('CryptoJS loaded successfully via emergency loader');
-            
-            // Test hash generation
-            if (typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined') {
-                const testHash = window.CryptoJS.SHA256('test').toString();
-                console.log('Test hash generated:', testHash.substring(0, 10) + '...');
-            }
-        };
-        
-        // Add error event
-        script.onerror = function() {
-            console.error('Failed to load CryptoJS - password functions may not work');
-            
-            // Add a fallback SHA-256 implementation
-            window.CryptoJS = window.CryptoJS || {};
-            window.CryptoJS.SHA256 = function(str) {
-                console.warn('Using fallback SHA-256 implementation');
-                
-                // This is only for demo account login - not secure but allows the app to function
-                if (str === 'password') {
-                    return {
-                        toString: function() {
-                            return '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8';
+            /**
+         * Verify critical dependencies before app initialization
+         * Add this script before your main app code in index.html
+         */
+            (function () {
+                console.log('Verifying critical dependencies...');
+
+                // Check if CryptoJS is loaded properly
+                if (typeof window.CryptoJS === 'undefined' || typeof window.CryptoJS.SHA256 === 'undefined') {
+                    console.error('CryptoJS not loaded correctly - attempting emergency load');
+
+                    // Create a script tag to load CryptoJS
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
+                    script.async = false; // Load synchronously
+
+                    // Add load event
+                    script.onload = function () {
+                        console.log('CryptoJS loaded successfully via emergency loader');
+
+                        // Test hash generation
+                        if (typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined') {
+                            const testHash = window.CryptoJS.SHA256('test').toString();
+                            console.log('Test hash generated:', testHash.substring(0, 10) + '...');
                         }
                     };
+
+                    // Add error event
+                    script.onerror = function () {
+                        console.error('Failed to load CryptoJS - password functions may not work');
+
+                        // Add a fallback SHA-256 implementation
+                        window.CryptoJS = window.CryptoJS || {};
+                        window.CryptoJS.SHA256 = function (str) {
+                            console.warn('Using fallback SHA-256 implementation');
+
+                            // This is only for demo account login - not secure but allows the app to function
+                            if (str === 'password') {
+                                return {
+                                    toString: function () {
+                                        return '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8';
+                                    }
+                                };
+                            }
+
+                            // For other passwords, generate a simple hash (not secure but better than nothing)
+                            let hash = 0;
+                            for (let i = 0; i < str.length; i++) {
+                                const char = str.charCodeAt(i);
+                                hash = ((hash << 5) - hash) + char;
+                                hash = hash & hash;
+                            }
+
+                            return {
+                                toString: function () {
+                                    return Math.abs(hash).toString(16).padStart(64, '0');
+                                }
+                            };
+                        };
+                    };
+
+                    // Add to document
+                    document.head.appendChild(script);
+                } else {
+                    console.log('CryptoJS is properly loaded');
+
+                    // Test hash generation
+                    const testHash = window.CryptoJS.SHA256('test').toString();
+                    console.log('Test hash generated:', testHash.substring(0, 10) + '...');
                 }
-                
-                // For other passwords, generate a simple hash (not secure but better than nothing)
-                let hash = 0;
-                for (let i = 0; i < str.length; i++) {
-                    const char = str.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash;
-                }
-                
-                return {
-                    toString: function() {
-                        return Math.abs(hash).toString(16).padStart(64, '0');
+
+                // Add emergency login handler to window
+                window.emergencyLogin = function () {
+                    const email = document.getElementById('login-email').value;
+                    const password = document.getElementById('login-password').value;
+
+                    if (email === 'demo@example.com' && password === 'password') {
+                        // Handle demo account login
+                        document.getElementById('auth-content').style.display = 'none';
+                        document.getElementById('main-content').style.display = 'block';
+
+                        // Set user name
+                        const userNameEl = document.getElementById('current-user-name');
+                        if (userNameEl) {
+                            userNameEl.textContent = 'Demo User';
+                        }
+
+                        console.log('Emergency login successful');
+                        return true;
                     }
+
+                    return false;
                 };
-            };
+            })();
+
+
+        // Add this at the bottom of your index.html file
+        // or run it in your browser console to debug the authentication
+
+        // Global validation flags
+        window.authFlags = {
+            formListenersAttached: false,
+            cryptoJSAvailable: typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined',
+            windowHandlersSet: typeof window.handleLoginSubmit === 'function' && typeof window.handleRegisterSubmit === 'function',
+            domElementsFound: false
         };
-        
-        // Add to document
-        document.head.appendChild(script);
-    } else {
-        console.log('CryptoJS is properly loaded');
-        
-        // Test hash generation
-        const testHash = window.CryptoJS.SHA256('test').toString();
-        console.log('Test hash generated:', testHash.substring(0, 10) + '...');
-    }
-    
-    // Add emergency login handler to window
-    window.emergencyLogin = function() {
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        
-        if (email === 'demo@example.com' && password === 'password') {
-            // Handle demo account login
-            document.getElementById('auth-content').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            
-            // Set user name
-            const userNameEl = document.getElementById('current-user-name');
-            if (userNameEl) {
-                userNameEl.textContent = 'Demo User';
-            }
-            
-            console.log('Emergency login successful');
-            return true;
+
+        // Check DOM elements
+        function checkAuthDOM() {
+            const elements = {
+                loginForm: document.getElementById('login-form'),
+                registerForm: document.getElementById('register-form'),
+                loginEmail: document.getElementById('login-email'),
+                loginPassword: document.getElementById('login-password'),
+                loginError: document.getElementById('login-error'),
+                registerName: document.getElementById('register-name'),
+                registerEmail: document.getElementById('register-email'),
+                registerPassword: document.getElementById('register-password'),
+                registerConfirmPassword: document.getElementById('register-confirm-password'),
+                registerError: document.getElementById('register-error')
+            };
+
+            window.authFlags.domElementsFound = !Object.values(elements).includes(null);
+
+            console.log('%c=== AUTH DEBUG: DOM ELEMENTS ===', 'color: blue; font-weight: bold');
+            Object.entries(elements).forEach(([name, el]) => {
+                console.log(`${name}: ${el ? '✅ Found' : '❌ Missing'}`);
+            });
+
+            return elements;
         }
-        
-        return false;
-    };
-})();
 
-    
-    // Add this at the bottom of your index.html file
-// or run it in your browser console to debug the authentication
+        // Test form submissions
+        function setupDebugListeners() {
+            const elements = checkAuthDOM();
 
-// Global validation flags
-window.authFlags = {
-  formListenersAttached: false,
-  cryptoJSAvailable: typeof window.CryptoJS !== 'undefined' && typeof window.CryptoJS.SHA256 !== 'undefined',
-  windowHandlersSet: typeof window.handleLoginSubmit === 'function' && typeof window.handleRegisterSubmit === 'function',
-  domElementsFound: false
-};
+            if (!elements.loginForm || !elements.registerForm) {
+                console.error('Cannot setup debug listeners: Forms not found');
+                return;
+            }
 
-// Check DOM elements
-function checkAuthDOM() {
-  const elements = {
-    loginForm: document.getElementById('login-form'),
-    registerForm: document.getElementById('register-form'),
-    loginEmail: document.getElementById('login-email'),
-    loginPassword: document.getElementById('login-password'),
-    loginError: document.getElementById('login-error'),
-    registerName: document.getElementById('register-name'),
-    registerEmail: document.getElementById('register-email'),
-    registerPassword: document.getElementById('register-password'),
-    registerConfirmPassword: document.getElementById('register-confirm-password'),
-    registerError: document.getElementById('register-error')
-  };
-  
-  window.authFlags.domElementsFound = !Object.values(elements).includes(null);
-  
-  console.log('%c=== AUTH DEBUG: DOM ELEMENTS ===', 'color: blue; font-weight: bold');
-  Object.entries(elements).forEach(([name, el]) => {
-    console.log(`${name}: ${el ? '✅ Found' : '❌ Missing'}`);
-  });
-  
-  return elements;
-}
+            // Add direct event listeners to monitor form submissions
+            elements.loginForm.addEventListener('submit', function (e) {
+                console.log('%c🔍 LOGIN FORM SUBMITTED', 'color: green; font-weight: bold');
+                console.log('Email:', elements.loginEmail.value);
+                console.log('Password:', elements.loginPassword.value ? '(password entered)' : '(empty)');
 
-// Test form submissions
-function setupDebugListeners() {
-  const elements = checkAuthDOM();
-  
-  if (!elements.loginForm || !elements.registerForm) {
-    console.error('Cannot setup debug listeners: Forms not found');
-    return;
-  }
-  
-  // Add direct event listeners to monitor form submissions
-  elements.loginForm.addEventListener('submit', function(e) {
-    console.log('%c🔍 LOGIN FORM SUBMITTED', 'color: green; font-weight: bold');
-    console.log('Email:', elements.loginEmail.value);
-    console.log('Password:', elements.loginPassword.value ? '(password entered)' : '(empty)');
-    
-    // Don't prevent default - let it proceed to the actual handler
-  });
-  
-  elements.registerForm.addEventListener('submit', function(e) {
-    console.log('%c🔍 REGISTER FORM SUBMITTED', 'color: green; font-weight: bold');
-    console.log('Name:', elements.registerName.value);
-    console.log('Email:', elements.registerEmail.value);
-    console.log('Passwords match:', elements.registerPassword.value === elements.registerConfirmPassword.value);
-    
-    // Don't prevent default - let it proceed to the actual handler
-  });
-  
-  window.authFlags.formListenersAttached = true;
-  console.log('%c✅ Debug listeners attached to forms', 'color: green');
-}
+                // Don't prevent default - let it proceed to the actual handler
+            });
 
-// Test password hashing
-function testPasswordHashing() {
-  console.log('%c=== AUTH DEBUG: PASSWORD HASHING ===', 'color: blue; font-weight: bold');
-  
-  if (!window.authFlags.cryptoJSAvailable) {
-    console.error('❌ CryptoJS is not available - password hashing will fail!');
-    console.log('Trying to load CryptoJS dynamically...');
-    
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
-    script.onload = () => {
-      console.log('%c✅ CryptoJS loaded successfully', 'color: green');
-      window.authFlags.cryptoJSAvailable = true;
-      testHashingFunction();
-    };
-    script.onerror = () => {
-      console.error('❌ Failed to load CryptoJS');
-    };
-    document.head.appendChild(script);
-    return;
-  }
-  
-  testHashingFunction();
-}
+            elements.registerForm.addEventListener('submit', function (e) {
+                console.log('%c🔍 REGISTER FORM SUBMITTED', 'color: green; font-weight: bold');
+                console.log('Name:', elements.registerName.value);
+                console.log('Email:', elements.registerEmail.value);
+                console.log('Passwords match:', elements.registerPassword.value === elements.registerConfirmPassword.value);
 
-function testHashingFunction() {
-  try {
-    // Try direct access to hash function if available
-    let hashFn;
-    
-    if (window.hashPassword) {
-      hashFn = window.hashPassword;
-      console.log('Using global hashPassword function');
-    } else {
-      // Otherwise use CryptoJS directly as fallback
-      hashFn = (pwd) => window.CryptoJS.SHA256(pwd).toString();
-      console.log('Using fallback CryptoJS.SHA256 function');
-    }
-    
-    const testPassword = 'password';
-    const hash = hashFn(testPassword);
-    
-    if (hash) {
-      console.log('%c✅ Password hashing working: ' + hash.substring(0, 15) + '...', 'color: green');
-    } else {
-      console.error('❌ Password hashing returned null or empty value');
-    }
-  } catch (error) {
-    console.error('❌ Error testing password hashing:', error);
-  }
-}
+                // Don't prevent default - let it proceed to the actual handler
+            });
 
-// Check event handlers
-function checkEventHandlers() {
-  console.log('%c=== AUTH DEBUG: EVENT HANDLERS ===', 'color: blue; font-weight: bold');
-  
-  const loginForm = document.getElementById('login-form');
-  const registerForm = document.getElementById('register-form');
-  
-  if (!loginForm || !registerForm) {
-    console.error('Forms not found for handler check');
-    return;
-  }
-  
-  console.log('Login form onsubmit attribute:', loginForm.getAttribute('onsubmit'));
-  console.log('Register form onsubmit attribute:', registerForm.getAttribute('onsubmit'));
-  
-  console.log('window.handleLoginSubmit exists:', typeof window.handleLoginSubmit === 'function');
-  console.log('window.handleRegisterSubmit exists:', typeof window.handleRegisterSubmit === 'function');
-}
+            window.authFlags.formListenersAttached = true;
+            console.log('%c✅ Debug listeners attached to forms', 'color: green');
+        }
 
-// Add direct form submission handlers for testing
-function addDirectHandlers() {
-  console.log('%c=== AUTH DEBUG: ADDING DIRECT HANDLERS ===', 'color: blue; font-weight: bold');
-  
-  const loginForm = document.getElementById('login-form');
-  const registerForm = document.getElementById('register-form');
-  
-  if (!loginForm || !registerForm) {
-    console.error('Forms not found for adding direct handlers');
-    return;
-  }
-  
-  // Clone to remove existing event listeners
-  const newLoginForm = loginForm.cloneNode(true);
-  const newRegisterForm = registerForm.cloneNode(true);
-  
-  loginForm.parentNode.replaceChild(newLoginForm, loginForm);
-  registerForm.parentNode.replaceChild(newRegisterForm, registerForm);
-  
-  // Add direct onsubmit handlers
-  newLoginForm.onsubmit = function(e) {
-    e.preventDefault();
-    console.log('%c📣 Direct login handler called', 'color: purple; font-weight: bold');
-    
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    const loginError = document.getElementById('login-error');
-    
-    // Simple validation
-    if (!email || !password) {
-      loginError.textContent = 'Please enter email and password';
-      loginError.classList.remove('hidden');
-      return false;
-    }
-    
-    // Demo account shortcut
-    if (email === 'demo@example.com' && password === 'password') {
-      console.log('%c✅ Demo login successful!', 'color: green; font-weight: bold');
-      loginError.classList.add('hidden');
-      
-      // Store in localStorage
-      localStorage.setItem('loggedInUser', 'demo-user-id');
-      
-      // Manually show main content
-      document.getElementById('auth-content').style.display = 'none';
-      document.getElementById('main-content').style.display = 'block';
-      
-      return false;
-    }
-    
-    loginError.textContent = 'Login failed. Using emergency direct handler.';
-    loginError.classList.remove('hidden');
-    return false;
-  };
-  
-  newRegisterForm.onsubmit = function(e) {
-    e.preventDefault();
-    console.log('%c📣 Direct register handler called', 'color: purple; font-weight: bold');
-    
-    const name = document.getElementById('register-name').value;
-    const email = document.getElementById('register-email').value;
-    const password = document.getElementById('register-password').value;
-    const confirmPassword = document.getElementById('register-confirm-password').value;
-    const registerError = document.getElementById('register-error');
-    
-    // Simple validation
-    if (!name || !email || !password || !confirmPassword) {
-      registerError.textContent = 'Please fill all fields';
-      registerError.classList.remove('hidden');
-      return false;
-    }
-    
-    if (password !== confirmPassword) {
-      registerError.textContent = 'Passwords do not match';
-      registerError.classList.remove('hidden');
-      return false;
-    }
-    
-    registerError.textContent = 'Account created with emergency handler! Please log in.';
-    registerError.classList.remove('hidden');
-    registerError.classList.add('text-green-500');
-    
-    // Clear the form
-    document.getElementById('register-form').reset();
-    
-    return false;
-  };
-  
-  console.log('%c✅ Direct form handlers added. Try submitting the forms now.', 'color: green; font-weight: bold');
-}
+        // Test password hashing
+        function testPasswordHashing() {
+            console.log('%c=== AUTH DEBUG: PASSWORD HASHING ===', 'color: blue; font-weight: bold');
 
-// Run diagnostics
-function runAuthDiagnostics() {
-  console.log('%c==================================', 'color: blue; font-weight: bold');
-  console.log('%c🔍 RUNNING AUTH DIAGNOSTICS', 'color: blue; font-weight: bold');
-  console.log('%c==================================', 'color: blue; font-weight: bold');
-  
-  checkAuthDOM();
-  checkEventHandlers();
-  testPasswordHashing();
-  setupDebugListeners();
-  
-  console.log('%c==================================', 'color: blue; font-weight: bold');
-  console.log('%c🔧 EMERGENCY FIX OPTIONS', 'color: orange; font-weight: bold');
-  console.log('%c==================================', 'color: blue; font-weight: bold');
-  console.log('If login/register still doesn\'t work, run:');
-  console.log('%caddDirectHandlers()', 'color: green; font-weight: bold');
-  console.log('This will add emergency handlers to get you into the app.');
-}
+            if (!window.authFlags.cryptoJSAvailable) {
+                console.error('❌ CryptoJS is not available - password hashing will fail!');
+                console.log('Trying to load CryptoJS dynamically...');
 
-// Run diagnostics
-runAuthDiagnostics();
-        
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
+                script.onload = () => {
+                    console.log('%c✅ CryptoJS loaded successfully', 'color: green');
+                    window.authFlags.cryptoJSAvailable = true;
+                    testHashingFunction();
+                };
+                script.onerror = () => {
+                    console.error('❌ Failed to load CryptoJS');
+                };
+                document.head.appendChild(script);
+                return;
+            }
+
+            testHashingFunction();
+        }
+
+        function testHashingFunction() {
+            try {
+                // Try direct access to hash function if available
+                let hashFn;
+
+                if (window.hashPassword) {
+                    hashFn = window.hashPassword;
+                    console.log('Using global hashPassword function');
+                } else {
+                    // Otherwise use CryptoJS directly as fallback
+                    hashFn = (pwd) => window.CryptoJS.SHA256(pwd).toString();
+                    console.log('Using fallback CryptoJS.SHA256 function');
+                }
+
+                const testPassword = 'password';
+                const hash = hashFn(testPassword);
+
+                if (hash) {
+                    console.log('%c✅ Password hashing working: ' + hash.substring(0, 15) + '...', 'color: green');
+                } else {
+                    console.error('❌ Password hashing returned null or empty value');
+                }
+            } catch (error) {
+                console.error('❌ Error testing password hashing:', error);
+            }
+        }
+
+        // Check event handlers
+        function checkEventHandlers() {
+            console.log('%c=== AUTH DEBUG: EVENT HANDLERS ===', 'color: blue; font-weight: bold');
+
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+
+            if (!loginForm || !registerForm) {
+                console.error('Forms not found for handler check');
+                return;
+            }
+
+            console.log('Login form onsubmit attribute:', loginForm.getAttribute('onsubmit'));
+            console.log('Register form onsubmit attribute:', registerForm.getAttribute('onsubmit'));
+
+            console.log('window.handleLoginSubmit exists:', typeof window.handleLoginSubmit === 'function');
+            console.log('window.handleRegisterSubmit exists:', typeof window.handleRegisterSubmit === 'function');
+        }
+
+        // Add direct form submission handlers for testing
+        function addDirectHandlers() {
+            console.log('%c=== AUTH DEBUG: ADDING DIRECT HANDLERS ===', 'color: blue; font-weight: bold');
+
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+
+            if (!loginForm || !registerForm) {
+                console.error('Forms not found for adding direct handlers');
+                return;
+            }
+
+            // Clone to remove existing event listeners
+            const newLoginForm = loginForm.cloneNode(true);
+            const newRegisterForm = registerForm.cloneNode(true);
+
+            loginForm.parentNode.replaceChild(newLoginForm, loginForm);
+            registerForm.parentNode.replaceChild(newRegisterForm, registerForm);
+
+            // Add direct onsubmit handlers
+            newLoginForm.onsubmit = function (e) {
+                e.preventDefault();
+                console.log('%c📣 Direct login handler called', 'color: purple; font-weight: bold');
+
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                const loginError = document.getElementById('login-error');
+
+                // Simple validation
+                if (!email || !password) {
+                    loginError.textContent = 'Please enter email and password';
+                    loginError.classList.remove('hidden');
+                    return false;
+                }
+
+                // Demo account shortcut
+                if (email === 'demo@example.com' && password === 'password') {
+                    console.log('%c✅ Demo login successful!', 'color: green; font-weight: bold');
+                    loginError.classList.add('hidden');
+
+                    // Store in localStorage
+                    localStorage.setItem('loggedInUser', 'demo-user-id');
+
+                    // Manually show main content
+                    document.getElementById('auth-content').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+
+                    return false;
+                }
+
+                loginError.textContent = 'Login failed. Using emergency direct handler.';
+                loginError.classList.remove('hidden');
+                return false;
+            };
+
+            newRegisterForm.onsubmit = function (e) {
+                e.preventDefault();
+                console.log('%c📣 Direct register handler called', 'color: purple; font-weight: bold');
+
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+                const registerError = document.getElementById('register-error');
+
+                // Simple validation
+                if (!name || !email || !password || !confirmPassword) {
+                    registerError.textContent = 'Please fill all fields';
+                    registerError.classList.remove('hidden');
+                    return false;
+                }
+
+                if (password !== confirmPassword) {
+                    registerError.textContent = 'Passwords do not match';
+                    registerError.classList.remove('hidden');
+                    return false;
+                }
+
+                registerError.textContent = 'Account created with emergency handler! Please log in.';
+                registerError.classList.remove('hidden');
+                registerError.classList.add('text-green-500');
+
+                // Clear the form
+                document.getElementById('register-form').reset();
+
+                return false;
+            };
+
+            console.log('%c✅ Direct form handlers added. Try submitting the forms now.', 'color: green; font-weight: bold');
+        }
+
+        // Run diagnostics
+        function runAuthDiagnostics() {
+            console.log('%c==================================', 'color: blue; font-weight: bold');
+            console.log('%c🔍 RUNNING AUTH DIAGNOSTICS', 'color: blue; font-weight: bold');
+            console.log('%c==================================', 'color: blue; font-weight: bold');
+
+            checkAuthDOM();
+            checkEventHandlers();
+            testPasswordHashing();
+            setupDebugListeners();
+
+            console.log('%c==================================', 'color: blue; font-weight: bold');
+            console.log('%c🔧 EMERGENCY FIX OPTIONS', 'color: orange; font-weight: bold');
+            console.log('%c==================================', 'color: blue; font-weight: bold');
+            console.log('If login/register still doesn\'t work, run:');
+            console.log('%caddDirectHandlers()', 'color: green; font-weight: bold');
+            console.log('This will add emergency handlers to get you into the app.');
+        }
+
+        // Run diagnostics
+        runAuthDiagnostics();
+
     </script>
-    
-</body>
-</html>
 
+</body>
+
+</html>
